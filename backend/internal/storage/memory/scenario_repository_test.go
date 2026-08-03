@@ -48,10 +48,10 @@ func TestScenarioRepositoryList(t *testing.T) {
 		filter scenario.Filter
 		want   int
 	}{
-		{name: "без фильтра", filter: scenario.Filter{}, want: 2},
-		{name: "только активные", filter: scenario.Filter{OnlyActive: true}, want: 2},
-		{name: "роль покупателя", filter: scenario.Filter{Role: scenario.RoleBuyer}, want: 1},
-		{name: "роль продавца", filter: scenario.Filter{Role: scenario.RoleSeller}, want: 1},
+		{name: "без фильтра", filter: scenario.Filter{}, want: 6},
+		{name: "только активные", filter: scenario.Filter{OnlyActive: true}, want: 6},
+		{name: "роль покупателя", filter: scenario.Filter{Role: scenario.RoleBuyer}, want: 3},
+		{name: "роль продавца", filter: scenario.Filter{Role: scenario.RoleSeller}, want: 3},
 		{name: "неизвестная роль", filter: scenario.Filter{Role: "courier"}, want: 0},
 	}
 
