@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/attempt"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
 )
 
@@ -13,8 +14,10 @@ import (
 const (
 	CodeNotFound         = "NOT_FOUND"
 	CodeInternalError    = "INTERNAL_ERROR"
+	CodeInvalidRequest   = "INVALID_REQUEST"
 	CodeScenarioNotFound = "SCENARIO_NOT_FOUND"
 	CodeUnsupportedRole  = "UNSUPPORTED_ROLE"
+	CodeAttemptNotFound  = "ATTEMPT_NOT_FOUND"
 )
 
 // errorEnvelope — единый формат ошибки для всех endpoint.
@@ -63,6 +66,8 @@ func writeDomainError(w http.ResponseWriter, r *http.Request, err error) {
 		writeError(w, r, http.StatusNotFound, CodeScenarioNotFound, "Сценарий не найден.")
 	case errors.Is(err, scenario.ErrUnsupportedRole):
 		writeError(w, r, http.StatusBadRequest, CodeUnsupportedRole, "Указана неподдерживаемая роль.")
+	case errors.Is(err, attempt.ErrNotFound):
+		writeError(w, r, http.StatusNotFound, CodeAttemptNotFound, "Попытка не найдена.")
 	default:
 		// Неожиданная ошибка логируется один раз, на границе HTTP.
 		loggerFrom(r.Context()).ErrorContext(r.Context(), "необработанная ошибка запроса",

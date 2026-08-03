@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/attempt"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/identifier"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
 )
@@ -14,17 +15,21 @@ type RouterDeps struct {
 	RequestIDs      identifier.Generator
 	MaxRequestBytes int64
 	Scenarios       *scenario.Service
+	Attempts        *attempt.Service
 }
 
 // NewRouter собирает маршруты и цепочку middleware.
 func NewRouter(deps RouterDeps) http.Handler {
 	scenarios := &scenarioHandler{scenarios: deps.Scenarios}
+	attempts := &attemptHandler{attempts: deps.Attempts}
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /healthz", handleHealth)
 	mux.HandleFunc("GET /api/v1/scenarios", scenarios.list)
 	mux.HandleFunc("GET /api/v1/scenarios/{scenarioId}", scenarios.get)
+	mux.HandleFunc("POST /api/v1/attempts", attempts.start)
+	mux.HandleFunc("GET /api/v1/attempts/{attemptId}", attempts.get)
 	// Общий маршрут перехватывает неизвестные пути, чтобы клиент всегда
 	// получал JSON-ошибку вместо стандартного текстового ответа ServeMux.
 	mux.HandleFunc("/", handleNotFound)

@@ -8,7 +8,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/attempt"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/clock"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/identifier"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/storage/memory"
@@ -33,8 +36,14 @@ func newTestRouter(t *testing.T) http.Handler {
 	return NewRouter(RouterDeps{
 		Logger:          slog.New(slog.NewJSONHandler(io.Discard, nil)),
 		RequestIDs:      &identifier.Sequential{Prefix: "request"},
-		MaxRequestBytes: 1024,
+		MaxRequestBytes: 4096,
 		Scenarios:       scenario.NewService(repository),
+		Attempts: attempt.NewService(
+			repository,
+			memory.NewAttemptRepository(),
+			&clock.Fixed{Moment: time.Date(2026, time.August, 3, 12, 0, 0, 0, time.UTC), Step: time.Minute},
+			&identifier.Sequential{Prefix: "attempt"},
+		),
 	})
 }
 

@@ -8,8 +8,10 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/attempt"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/config"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/httpapi"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/clock"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/identifier"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/storage/memory"
@@ -40,11 +42,19 @@ func New(cfg config.Config, logger *slog.Logger) (*Application, error) {
 
 	logger.Info("каталог сценариев загружен", slog.Int("scenarios", len(catalog)))
 
+	attemptIDs := identifier.Random{}
+
 	handler := httpapi.NewRouter(httpapi.RouterDeps{
 		Logger:          logger,
 		RequestIDs:      identifier.Random{},
 		MaxRequestBytes: cfg.MaxRequestBytes,
 		Scenarios:       scenario.NewService(scenarioRepository),
+		Attempts: attempt.NewService(
+			scenarioRepository,
+			memory.NewAttemptRepository(),
+			clock.System{},
+			attemptIDs,
+		),
 	})
 
 	return &Application{
