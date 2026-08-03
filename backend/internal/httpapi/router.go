@@ -30,6 +30,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 	mux.HandleFunc("GET /api/v1/scenarios/{scenarioId}", scenarios.get)
 	mux.HandleFunc("POST /api/v1/attempts", attempts.start)
 	mux.HandleFunc("GET /api/v1/attempts/{attemptId}", attempts.get)
+	mux.HandleFunc("POST /api/v1/attempts/{attemptId}/choices", attempts.submitChoice)
 	// Общий маршрут перехватывает неизвестные пути, чтобы клиент всегда
 	// получал JSON-ошибку вместо стандартного текстового ответа ServeMux.
 	mux.HandleFunc("/", handleNotFound)

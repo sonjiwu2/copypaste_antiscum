@@ -141,6 +141,64 @@ func attemptResponseOf(view attempt.View) attemptResponse {
 	return response
 }
 
+// submitChoiceRequest — тело запроса на применение выбора.
+//
+// Следующего узла, изменения результата и эффектов здесь нет намеренно:
+// эти значения считает только сервер.
+type submitChoiceRequest struct {
+	NodeID         string `json:"nodeId"`
+	ChoiceID       string `json:"choiceId"`
+	IdempotencyKey string `json:"idempotencyKey"`
+}
+
+// transitionResponse — результат одного шага прохождения.
+type transitionResponse struct {
+	AttemptID      string             `json:"attemptId"`
+	Status         string             `json:"status"`
+	Score          int                `json:"score"`
+	Outcome        string             `json:"outcome,omitempty"`
+	AcceptedChoice acceptedChoice     `json:"acceptedChoice"`
+	Consequence    attemptConsequence `json:"consequence"`
+	RevealedNodes  []attemptNode      `json:"revealedNodes"`
+	CurrentNodeID  string             `json:"currentNodeId"`
+	CompletedAt    *string            `json:"completedAt,omitempty"`
+}
+
+type acceptedChoice struct {
+	NodeID   string `json:"nodeId"`
+	ChoiceID string `json:"choiceId"`
+	Label    string `json:"label"`
+}
+
+func transitionResponseOf(transition attempt.Transition) transitionResponse {
+	response := transitionResponse{
+		AttemptID: string(transition.AttemptID),
+		Status:    string(transition.Status),
+		Score:     transition.Score,
+		Outcome:   string(transition.Outcome),
+		AcceptedChoice: acceptedChoice{
+			NodeID:   string(transition.Accepted.NodeID),
+			ChoiceID: string(transition.Accepted.ChoiceID),
+			Label:    transition.Accepted.Label,
+		},
+		Consequence: attemptConsequence{
+			Severity:      string(transition.Consequence.Severity),
+			Title:         transition.Consequence.Title,
+			Explanation:   transition.Consequence.Explanation,
+			RealWorldRule: transition.Consequence.RealWorldRule,
+		},
+		RevealedNodes: attemptNodesOf(transition.RevealedNodes),
+		CurrentNodeID: string(transition.CurrentNodeID),
+	}
+
+	if transition.CompletedAt != nil {
+		completedAt := transition.CompletedAt.Format(time.RFC3339)
+		response.CompletedAt = &completedAt
+	}
+
+	return response
+}
+
 func attemptNodesOf(nodes []attempt.PublicNode) []attemptNode {
 	converted := make([]attemptNode, 0, len(nodes))
 

@@ -69,6 +69,65 @@ type View struct {
 	CompletedAt   *time.Time
 }
 
+// AcceptedChoice — выбор, который сервер принял и применил.
+type AcceptedChoice struct {
+	NodeID   scenario.NodeID
+	ChoiceID scenario.ChoiceID
+	Label    string
+}
+
+// Transition — результат одного шага прохождения.
+//
+// Состояние берётся из снимка, сохранённого вместе с решением, поэтому повтор
+// запроса с тем же ключом возвращает точно такой же ответ.
+type Transition struct {
+	AttemptID     ID
+	Status        Status
+	Score         int
+	Outcome       scenario.OutcomeType
+	Accepted      AcceptedChoice
+	Consequence   scenario.Consequence
+	RevealedNodes []PublicNode
+	CurrentNodeID scenario.NodeID
+	CompletedAt   *time.Time
+}
+
+// transitionOf собирает публичный результат шага по записанному решению.
+func transitionOf(source Attempt, definition scenario.Scenario, decision Decision) (Transition, error) {
+	revealedNodes := make([]PublicNode, 0, len(decision.RevealedNodeIDs))
+
+	for _, nodeID := range decision.RevealedNodeIDs {
+		node, found := definition.Node(nodeID)
+		if !found {
+			return Transition{}, fmt.Errorf("%w: узел %q сценария %q", ErrBrokenScenario, nodeID, definition.ID)
+		}
+
+		revealedNodes = append(revealedNodes, publicNodeOf(node))
+	}
+
+	transition := Transition{
+		AttemptID: source.ID,
+		Status:    StatusInProgress,
+		Score:     decision.ScoreAfter,
+		Accepted: AcceptedChoice{
+			NodeID:   decision.NodeID,
+			ChoiceID: decision.ChoiceID,
+			Label:    decision.ChoiceLabel,
+		},
+		Consequence:   decision.Consequence,
+		RevealedNodes: revealedNodes,
+		CurrentNodeID: decision.ResultingNodeID,
+	}
+
+	if decision.Completed {
+		transition.Status = StatusCompleted
+		transition.Outcome = decision.Outcome
+		transition.CompletedAt = source.CompletedAt
+	}
+
+	return transition, nil
+}
+
 // viewOf собирает публичное состояние попытки по её истории и сценарию.
 func viewOf(source Attempt, definition scenario.Scenario) (View, error) {
 	revealedNodes := make([]PublicNode, 0, len(source.RevealedNodeIDs))

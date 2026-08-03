@@ -7,7 +7,7 @@ info:
     Публичный API интерактивного антискам-тренажёра.
 
     Реализованная часть: проверка живости, каталог учебных сценариев, запуск
-    и восстановление попытки. Отправка выбора появится в следующей версии.
+    попытки, восстановление её состояния и отправка выбора.
 
     Скрытие будущего хода сценария — часть контракта:
 
@@ -242,6 +242,115 @@ paths:
                 error:
                   code: ATTEMPT_NOT_FOUND
                   message: Попытка не найдена.
+                  requestId: 7b2c1a9e4f
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/attempts/{attemptId}/choices:
+    post:
+      tags: [attempts]
+      summary: Отправить выбор
+      description: |
+        Применяет выбор пользователя и продвигает прохождение до следующего
+        решения или до финала.
+
+        Сервер проверяет запрос по своим данным: попытка не завершена, узел
+        совпадает с текущим, узел действительно является точкой решения,
+        а вариант принадлежит этому узлу зафиксированной версии сценария.
+
+        Влияние выбора на результат и навыки берётся только из сценария —
+        клиент не может прислать ни очки, ни эффекты.
+
+        ### Повторная отправка
+
+        `idempotencyKey` защищает от двойного применения при обрыве связи:
+
+        - тот же ключ с теми же `nodeId` и `choiceId` возвращает **тот же**
+          ответ, эффекты повторно не применяются;
+        - тот же ключ с другими данными — `409 IDEMPOTENCY_KEY_CONFLICT`;
+        - ключ действует в пределах одной попытки.
+
+        Клиент должен генерировать ключ сам и повторять запрос с тем же
+        значением, а не с новым.
+      operationId: submitChoice
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitChoiceRequest"
+            example:
+              nodeId: channel-decision
+              choiceId: stay-on-platform
+              idempotencyKey: 0f8c2a1b-7d4e-4a19-9c3f-2b6e5d1a8c47
+      responses:
+        "200":
+          description: Выбор применён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transition"
+        "400":
+          description: Тело запроса некорректно или не заполнены обязательные поля
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: INVALID_REQUEST
+                  message: Поле idempotencyKey обязательно.
+                  requestId: 7b2c1a9e4f
+        "404":
+          description: Попытка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: ATTEMPT_NOT_FOUND
+                  message: Попытка не найдена.
+                  requestId: 7b2c1a9e4f
+        "409":
+          description: |
+            Состояние попытки не позволяет применить выбор:
+
+            - `ATTEMPT_ALREADY_COMPLETED` — прохождение завершено;
+            - `STALE_NODE` — прислан не тот узел, на котором стоит попытка;
+            - `IDEMPOTENCY_KEY_CONFLICT` — ключ повтора уже использован с другими данными;
+            - `CONCURRENT_TRANSITION` — попытку изменил другой запрос.
+
+            В каждом случае нужно перечитать состояние попытки.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: STALE_NODE
+                  message: Присланный узел не совпадает с текущим. Перечитайте состояние попытки.
+                  requestId: 7b2c1a9e4f
+        "422":
+          description: |
+            Выбор не применим к текущему узлу:
+
+            - `NODE_NOT_DECISION` — на текущем узле выбор не принимается;
+            - `CHOICE_NOT_FOUND` — вариант не принадлежит текущему узлу.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: CHOICE_NOT_FOUND
+                  message: Такой вариант выбора недоступен на текущем узле.
                   requestId: 7b2c1a9e4f
         "500":
           $ref: "#/components/responses/InternalError"
@@ -521,6 +630,80 @@ components:
           format: date-time
           description: Проставляется один раз, при достижении финала.
 
+    SubmitChoiceRequest:
+      type: object
+      description: |
+        Запрос содержит только то, что сервер не может вычислить сам.
+        Следующего узла, изменения результата и эффектов здесь нет намеренно.
+      required: [nodeId, choiceId, idempotencyKey]
+      properties:
+        nodeId:
+          type: string
+          description: |
+            Узел, который видел пользователь. Служит для сверки с текущим узлом
+            попытки: расхождение даёт `409 STALE_NODE`.
+          example: channel-decision
+        choiceId:
+          type: string
+          description: Выбранный вариант из числа показанных на этом узле.
+          example: stay-on-platform
+        idempotencyKey:
+          type: string
+          description: |
+            Уникальное значение, которое генерирует клиент. При повторе того же
+            запроса используйте тот же ключ, чтобы эффекты не применились дважды.
+          example: 0f8c2a1b-7d4e-4a19-9c3f-2b6e5d1a8c47
+
+    AcceptedChoice:
+      type: object
+      description: Выбор, который сервер принял и применил.
+      required: [nodeId, choiceId, label]
+      properties:
+        nodeId:
+          type: string
+        choiceId:
+          type: string
+        label:
+          type: string
+
+    Transition:
+      type: object
+      description: |
+        Результат одного шага прохождения: что было принято, чему это учит и
+        что показать дальше. Содержит только новые узлы — уже показанные
+        клиент получил раньше.
+      required:
+        [attemptId, status, score, acceptedChoice, consequence, revealedNodes, currentNodeId]
+      properties:
+        attemptId:
+          type: string
+        status:
+          $ref: "#/components/schemas/AttemptStatus"
+        score:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: Результат попытки после применения выбора.
+        outcome:
+          $ref: "#/components/schemas/OutcomeType"
+        acceptedChoice:
+          $ref: "#/components/schemas/AcceptedChoice"
+        consequence:
+          $ref: "#/components/schemas/AttemptConsequence"
+        revealedNodes:
+          type: array
+          description: Узлы, раскрытые этим шагом, в порядке появления.
+          items:
+            $ref: "#/components/schemas/AttemptNode"
+        currentNodeId:
+          type: string
+          description: Узел, на котором прохождение остановилось.
+        completedAt:
+          type: string
+          format: date-time
+          description: Заполняется, когда шаг довёл попытку до финала.
+
     ErrorResponse:
       type: object
       description: Единый формат ошибки для всех endpoint.
@@ -541,6 +724,12 @@ components:
                 - SCENARIO_NOT_FOUND
                 - UNSUPPORTED_ROLE
                 - ATTEMPT_NOT_FOUND
+                - ATTEMPT_ALREADY_COMPLETED
+                - STALE_NODE
+                - IDEMPOTENCY_KEY_CONFLICT
+                - CONCURRENT_TRANSITION
+                - NODE_NOT_DECISION
+                - CHOICE_NOT_FOUND
                 - INTERNAL_ERROR
             message:
               type: string

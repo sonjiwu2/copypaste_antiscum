@@ -18,6 +18,13 @@ const (
 	CodeScenarioNotFound = "SCENARIO_NOT_FOUND"
 	CodeUnsupportedRole  = "UNSUPPORTED_ROLE"
 	CodeAttemptNotFound  = "ATTEMPT_NOT_FOUND"
+
+	CodeAttemptAlreadyCompleted = "ATTEMPT_ALREADY_COMPLETED"
+	CodeStaleNode               = "STALE_NODE"
+	CodeIdempotencyKeyConflict  = "IDEMPOTENCY_KEY_CONFLICT"
+	CodeConcurrentTransition    = "CONCURRENT_TRANSITION"
+	CodeNodeNotDecision         = "NODE_NOT_DECISION"
+	CodeChoiceNotFound          = "CHOICE_NOT_FOUND"
 )
 
 // errorEnvelope — единый формат ошибки для всех endpoint.
@@ -68,6 +75,24 @@ func writeDomainError(w http.ResponseWriter, r *http.Request, err error) {
 		writeError(w, r, http.StatusBadRequest, CodeUnsupportedRole, "Указана неподдерживаемая роль.")
 	case errors.Is(err, attempt.ErrNotFound):
 		writeError(w, r, http.StatusNotFound, CodeAttemptNotFound, "Попытка не найдена.")
+	case errors.Is(err, attempt.ErrAlreadyCompleted):
+		writeError(w, r, http.StatusConflict, CodeAttemptAlreadyCompleted,
+			"Попытка уже завершена.")
+	case errors.Is(err, attempt.ErrStaleNode):
+		writeError(w, r, http.StatusConflict, CodeStaleNode,
+			"Присланный узел не совпадает с текущим. Перечитайте состояние попытки.")
+	case errors.Is(err, attempt.ErrIdempotencyConflict):
+		writeError(w, r, http.StatusConflict, CodeIdempotencyKeyConflict,
+			"Ключ повтора уже использован с другими данными.")
+	case errors.Is(err, attempt.ErrConcurrentUpdate):
+		writeError(w, r, http.StatusConflict, CodeConcurrentTransition,
+			"Попытку изменил другой запрос. Перечитайте состояние попытки.")
+	case errors.Is(err, attempt.ErrNodeNotDecision):
+		writeError(w, r, http.StatusUnprocessableEntity, CodeNodeNotDecision,
+			"На текущем узле выбор не принимается.")
+	case errors.Is(err, attempt.ErrChoiceNotFound):
+		writeError(w, r, http.StatusUnprocessableEntity, CodeChoiceNotFound,
+			"Такой вариант выбора недоступен на текущем узле.")
 	default:
 		// Неожиданная ошибка логируется один раз, на границе HTTP.
 		loggerFrom(r.Context()).ErrorContext(r.Context(), "необработанная ошибка запроса",

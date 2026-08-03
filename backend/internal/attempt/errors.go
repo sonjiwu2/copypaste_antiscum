@@ -28,6 +28,12 @@ var (
 
 	// ErrScenarioVersionChanged — сценарий изменился после начала попытки.
 	ErrScenarioVersionChanged = errors.New("версия сценария попытки недоступна")
+
+	// ErrNodeNotDecision — на текущем узле выбор не принимается.
+	ErrNodeNotDecision = errors.New("текущий узел не является узлом решения")
+
+	// ErrChoiceNotFound — выбор не принадлежит текущему узлу попытки.
+	ErrChoiceNotFound = errors.New("вариант выбора недоступен на текущем узле")
 )
 
 // Ошибки некорректных исходных данных попытки.
