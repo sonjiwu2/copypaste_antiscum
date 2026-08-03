@@ -4,6 +4,8 @@
 // только доменными типами.
 package scenario
 
+import "slices"
+
 // ID — устойчивый идентификатор сценария.
 type ID string
 
@@ -240,10 +242,16 @@ func New(draft Draft) (Scenario, error) {
 }
 
 // Node возвращает узел сценария по идентификатору.
+//
+// Возвращается независимая копия: сценарий живёт в общем хранилище, и
+// вызывающий код не должен иметь возможности изменить его через слайсы узла.
 func (s Scenario) Node(id NodeID) (Node, bool) {
 	node, found := s.nodes[id]
+	if !found {
+		return Node{}, false
+	}
 
-	return node, found
+	return node.clone(), true
 }
 
 // NodeCount возвращает количество узлов сценария.
@@ -255,11 +263,37 @@ func (s Scenario) NodeCount() int {
 func (n Node) Choice(id ChoiceID) (Choice, bool) {
 	for _, choice := range n.Choices {
 		if choice.ID == id {
-			return choice, true
+			return choice.clone(), true
 		}
 	}
 
 	return Choice{}, false
+}
+
+func (n Node) clone() Node {
+	cloned := n
+
+	if n.Choices != nil {
+		cloned.Choices = make([]Choice, len(n.Choices))
+		for i, choice := range n.Choices {
+			cloned.Choices[i] = choice.clone()
+		}
+	}
+
+	if n.TerminalOutcome != nil {
+		outcome := *n.TerminalOutcome
+		cloned.TerminalOutcome = &outcome
+	}
+
+	return cloned
+}
+
+func (c Choice) clone() Choice {
+	cloned := c
+	cloned.RiskTags = slices.Clone(c.RiskTags)
+	cloned.SkillEffects = slices.Clone(c.SkillEffects)
+
+	return cloned
 }
 
 // transitions возвращает узлы, в которые можно перейти из текущего.

@@ -1,8 +1,19 @@
 package scenario
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+)
+
+// Доменные ошибки каталога сценариев.
+var (
+	// ErrNotFound возвращается и для отсутствующего, и для отключённого
+	// сценария: клиенту не сообщается о существовании скрытого содержимого.
+	ErrNotFound = errors.New("сценарий не найден")
+
+	// ErrUnsupportedRole сообщает о запросе с неизвестной ролью.
+	ErrUnsupportedRole = errors.New("роль не поддерживается")
 )
 
 // ValidationRule — нарушенное правило описания сценария.

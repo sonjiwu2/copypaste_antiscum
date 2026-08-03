@@ -11,17 +11,41 @@ import (
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/config"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/httpapi"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/identifier"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/storage/memory"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/scenarios"
 )
 
 // Application владеет собранным HTTP-сервером.
 type Application struct {
-	config config.Config
-	logger *slog.Logger
-	server *http.Server
+	config    config.Config
+	logger    *slog.Logger
+	server    *http.Server
+	scenarios *scenario.Service
+}
+
+// Scenarios возвращает сервис каталога сценариев.
+func (a *Application) Scenarios() *scenario.Service {
+	return a.scenarios
 }
 
 // New собирает приложение из конфигурации и логгера.
-func New(cfg config.Config, logger *slog.Logger) *Application {
+//
+// Каталог сценариев загружается и проверяется здесь: неисправная фикстура
+// обязана остановить запуск, а не всплыть при первом запросе пользователя.
+func New(cfg config.Config, logger *slog.Logger) (*Application, error) {
+	catalog, err := scenario.LoadFS(scenarios.Files())
+	if err != nil {
+		return nil, fmt.Errorf("загрузить сценарии: %w", err)
+	}
+
+	scenarioRepository, err := memory.NewScenarioRepository(catalog)
+	if err != nil {
+		return nil, fmt.Errorf("собрать каталог сценариев: %w", err)
+	}
+
+	logger.Info("каталог сценариев загружен", slog.Int("scenarios", len(catalog)))
+
 	handler := httpapi.NewRouter(httpapi.RouterDeps{
 		Logger:          logger,
 		RequestIDs:      identifier.Random{},
@@ -29,8 +53,9 @@ func New(cfg config.Config, logger *slog.Logger) *Application {
 	})
 
 	return &Application{
-		config: cfg,
-		logger: logger,
+		config:    cfg,
+		logger:    logger,
+		scenarios: scenario.NewService(scenarioRepository),
 		server: &http.Server{
 			Addr:              cfg.HTTPAddr,
 			Handler:           handler,
@@ -39,7 +64,7 @@ func New(cfg config.Config, logger *slog.Logger) *Application {
 			WriteTimeout:      cfg.WriteTimeout,
 			IdleTimeout:       cfg.IdleTimeout,
 		},
-	}
+	}, nil
 }
 
 // Handler возвращает HTTP-обработчик приложения. Нужен интеграционным тестам,

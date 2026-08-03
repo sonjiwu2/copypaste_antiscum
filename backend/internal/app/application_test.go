@@ -18,7 +18,10 @@ func TestRunShutsDownOnContextCancel(t *testing.T) {
 	cfg.HTTPAddr = freeAddr(t)
 	cfg.ShutdownTimeout = 2 * time.Second
 
-	application := app.New(cfg, slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	application, err := app.New(cfg, slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	if err != nil {
+		t.Fatalf("не удалось собрать приложение: %v", err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	runErr := make(chan error, 1)
@@ -40,6 +43,24 @@ func TestRunShutsDownOnContextCancel(t *testing.T) {
 	}
 }
 
+// Приложение обязано подняться с рабочим каталогом сценариев:
+// проверка фикстур на старте — часть контракта запуска.
+func TestNewLoadsScenarioCatalog(t *testing.T) {
+	application, err := app.New(config.Default(), slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	if err != nil {
+		t.Fatalf("не удалось собрать приложение: %v", err)
+	}
+
+	catalog, err := application.Scenarios().List(context.Background(), "")
+	if err != nil {
+		t.Fatalf("каталог недоступен: %v", err)
+	}
+
+	if len(catalog) < 2 {
+		t.Fatalf("в каталоге %d сценариев, ожидалось минимум 2", len(catalog))
+	}
+}
+
 func TestRunFailsOnBusyAddress(t *testing.T) {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -51,7 +72,10 @@ func TestRunFailsOnBusyAddress(t *testing.T) {
 	cfg := config.Default()
 	cfg.HTTPAddr = listener.Addr().String()
 
-	application := app.New(cfg, slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	application, err := app.New(cfg, slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	if err != nil {
+		t.Fatalf("не удалось собрать приложение: %v", err)
+	}
 
 	if err := application.Run(context.Background()); err == nil {
 		t.Fatal("ожидалась ошибка запуска на занятом адресе")

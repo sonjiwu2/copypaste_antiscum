@@ -30,8 +30,13 @@ func run() error {
 
 	logger := logging.New(os.Stdout, cfg.LogLevel)
 
+	application, err := app.New(cfg, logger)
+	if err != nil {
+		return err
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	return app.New(cfg, logger).Run(ctx)
+	return application.Run(ctx)
 }
