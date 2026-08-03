@@ -122,6 +122,5 @@ $RECYCLE.BIN/
 artifacts/
 reports/generated/
 
-# Local application overrides
 docker-compose.override.yml
 compose.override.yml
