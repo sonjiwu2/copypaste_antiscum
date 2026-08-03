@@ -10,13 +10,31 @@ import (
 	"testing"
 
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/identifier"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/storage/memory"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/scenarios"
 )
 
-func newTestRouter() http.Handler {
+// newTestRouter собирает роутер поверх встроенных сценариев,
+// чтобы HTTP-тесты работали с тем же каталогом, что и приложение.
+func newTestRouter(t *testing.T) http.Handler {
+	t.Helper()
+
+	catalog, err := scenario.LoadFS(scenarios.Files())
+	if err != nil {
+		t.Fatalf("не удалось загрузить сценарии: %v", err)
+	}
+
+	repository, err := memory.NewScenarioRepository(catalog)
+	if err != nil {
+		t.Fatalf("не удалось собрать каталог: %v", err)
+	}
+
 	return NewRouter(RouterDeps{
 		Logger:          slog.New(slog.NewJSONHandler(io.Discard, nil)),
 		RequestIDs:      &identifier.Sequential{Prefix: "request"},
 		MaxRequestBytes: 1024,
+		Scenarios:       scenario.NewService(repository),
 	})
 }
 
@@ -50,7 +68,7 @@ func TestRoutes(t *testing.T) {
 		},
 	}
 
-	router := newTestRouter()
+	router := newTestRouter(t)
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -76,7 +94,7 @@ func TestRoutes(t *testing.T) {
 
 func TestHealthResponseBody(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	newTestRouter().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+	newTestRouter(t).ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/healthz", nil))
 
 	var body healthResponse
 	if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
@@ -90,7 +108,7 @@ func TestHealthResponseBody(t *testing.T) {
 
 func TestRequestIDIsGeneratedAndReturned(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	newTestRouter().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/unknown", nil))
+	newTestRouter(t).ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/unknown", nil))
 
 	header := recorder.Header().Get(requestHeaderName)
 	if header == "" {
@@ -114,7 +132,7 @@ func TestRequestIDFromClientIsPreserved(t *testing.T) {
 	request.Header.Set(requestHeaderName, clientRequestID)
 
 	recorder := httptest.NewRecorder()
-	newTestRouter().ServeHTTP(recorder, request)
+	newTestRouter(t).ServeHTTP(recorder, request)
 
 	if got := recorder.Header().Get(requestHeaderName); got != clientRequestID {
 		t.Errorf("X-Request-ID = %q, ожидался %q", got, clientRequestID)

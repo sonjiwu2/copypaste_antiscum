@@ -1,0 +1,255 @@
+openapi: 3.0.3
+
+info:
+  title: Anti-Scam Trainer API
+  version: 0.1.0
+  description: |
+    Публичный API интерактивного антискам-тренажёра.
+
+    Реализованная часть: проверка живости и каталог учебных сценариев.
+    Запуск попытки и отправка выбора появятся в следующих версиях.
+
+    Скрытие содержимого сценария — часть контракта. Каталог отдаёт только
+    метаданные: узлы, варианты выбора, последствия, переходы и внутренние
+    коэффициенты не публикуются никогда.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+# Пустой список означает, что аутентификация не требуется намеренно:
+# в MVP тренажёр не хранит персональные данные и не имеет учётных записей.
+security: []
+
+servers:
+  - url: http://localhost:8080
+    description: Локальный запуск
+
+tags:
+  - name: health
+    description: Проверка работоспособности сервиса
+  - name: scenarios
+    description: Каталог учебных сценариев
+
+paths:
+  /healthz:
+    get:
+      tags: [health]
+      summary: Проверка живости
+      description: |
+        Подтверждает, что процесс запущен и отвечает.
+        Внешние системы намеренно не проверяются.
+      operationId: getHealth
+      responses:
+        "200":
+          description: Сервис работает
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: ok
+
+  /api/v1/scenarios:
+    get:
+      tags: [scenarios]
+      summary: Список доступных сценариев
+      description: |
+        Возвращает активные сценарии, отсортированные по идентификатору.
+        Порядок стабилен: одинаковый запрос даёт одинаковый ответ.
+      operationId: listScenarios
+      parameters:
+        - name: role
+          in: query
+          required: false
+          description: Фильтр по роли. Без параметра возвращаются сценарии всех ролей.
+          schema:
+            $ref: "#/components/schemas/ScenarioRole"
+      responses:
+        "200":
+          description: Каталог сценариев
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenarioListResponse"
+              example:
+                scenarios:
+                  - id: buyer-fake-delivery
+                    version: 1
+                    slug: buyer-fake-delivery
+                    role: buyer
+                    title: Ссылка на доставку
+                    description: "Покупка товара с доставкой: продавец предлагает оплату по ссылке."
+                    difficulty: medium
+                    estimatedMinutes: 4
+        "400":
+          description: Указана неподдерживаемая роль
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: UNSUPPORTED_ROLE
+                  message: Указана неподдерживаемая роль.
+                  requestId: 7b2c1a9e4f
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/scenarios/{scenarioId}:
+    get:
+      tags: [scenarios]
+      summary: Описание одного сценария
+      description: |
+        Возвращает метаданные сценария.
+
+        Отключённый сценарий отвечает так же, как несуществующий: клиенту не
+        сообщается о наличии скрытого содержимого.
+      operationId: getScenario
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          description: Идентификатор сценария
+          schema:
+            type: string
+          example: buyer-fake-delivery
+      responses:
+        "200":
+          description: Метаданные сценария
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scenario"
+              example:
+                id: seller-payment-already-sent
+                version: 1
+                slug: seller-payment-already-sent
+                role: seller
+                title: Оплата уже отправлена
+                description: "Продажа товара: покупатель уверяет, что деньги уже перевёл."
+                difficulty: hard
+                estimatedMinutes: 5
+        "404":
+          description: Сценарий не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: SCENARIO_NOT_FOUND
+                  message: Сценарий не найден.
+                  requestId: 7b2c1a9e4f
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  responses:
+    InternalError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: Внутренняя ошибка сервера.
+              requestId: 7b2c1a9e4f
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+
+    ScenarioRole:
+      type: string
+      description: Роль, в которой пользователь проходит сценарий.
+      enum: [buyer, seller]
+
+    ScenarioDifficulty:
+      type: string
+      description: Субъективная сложность сценария.
+      enum: [easy, medium, hard]
+
+    Scenario:
+      type: object
+      description: |
+        Метаданные сценария. Содержимое графа сюда не входит по соображениям
+        безопасности: иначе клиент увидел бы правильные ответы заранее.
+      required:
+        [id, version, slug, role, title, description, difficulty, estimatedMinutes]
+      properties:
+        id:
+          type: string
+          description: Устойчивый идентификатор сценария.
+          example: buyer-fake-delivery
+        version:
+          type: integer
+          format: int32
+          minimum: 1
+          description: |
+            Версия содержимого. Начатая попытка закрепляется за версией,
+            поэтому правка сценария не меняет уже идущее прохождение.
+          example: 1
+        slug:
+          type: string
+          description: Человекочитаемый идентификатор для ссылок.
+          example: buyer-fake-delivery
+        role:
+          $ref: "#/components/schemas/ScenarioRole"
+        title:
+          type: string
+          example: Ссылка на доставку
+        description:
+          type: string
+          example: "Покупка товара с доставкой: продавец предлагает оплату по ссылке."
+        difficulty:
+          $ref: "#/components/schemas/ScenarioDifficulty"
+        estimatedMinutes:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Ожидаемая длительность прохождения в минутах.
+          example: 4
+
+    ScenarioListResponse:
+      type: object
+      required: [scenarios]
+      properties:
+        scenarios:
+          type: array
+          items:
+            $ref: "#/components/schemas/Scenario"
+
+    ErrorResponse:
+      type: object
+      description: Единый формат ошибки для всех endpoint.
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: |
+                Стабильный код ошибки. Клиент опирается на код, а не на текст
+                сообщения: текст может меняться.
+              enum:
+                - NOT_FOUND
+                - SCENARIO_NOT_FOUND
+                - UNSUPPORTED_ROLE
+                - INTERNAL_ERROR
+            message:
+              type: string
+              description: Понятное человеку описание без внутренних подробностей.
+            requestId:
+              type: string
+              description: |
+                Идентификатор запроса, совпадает с заголовком `X-Request-ID`.
+                Используется для поиска записи в логах.

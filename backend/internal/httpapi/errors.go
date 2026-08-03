@@ -2,14 +2,19 @@ package httpapi
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
+
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
 )
 
 // Коды публичных ошибок API. Клиент опирается на код, а не на текст сообщения.
 const (
-	CodeNotFound      = "NOT_FOUND"
-	CodeInternalError = "INTERNAL_ERROR"
+	CodeNotFound         = "NOT_FOUND"
+	CodeInternalError    = "INTERNAL_ERROR"
+	CodeScenarioNotFound = "SCENARIO_NOT_FOUND"
+	CodeUnsupportedRole  = "UNSUPPORTED_ROLE"
 )
 
 // errorEnvelope — единый формат ошибки для всех endpoint.
@@ -46,4 +51,23 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, code, messag
 		Message:   message,
 		RequestID: RequestIDFrom(r.Context()),
 	}})
+}
+
+// writeDomainError переводит доменную ошибку в публичный ответ.
+//
+// Это единственное место перевода: тексты и коды ошибок не расползаются
+// по handler'ам, а внутренние подробности не доходят до клиента.
+func writeDomainError(w http.ResponseWriter, r *http.Request, err error) {
+	switch {
+	case errors.Is(err, scenario.ErrNotFound):
+		writeError(w, r, http.StatusNotFound, CodeScenarioNotFound, "Сценарий не найден.")
+	case errors.Is(err, scenario.ErrUnsupportedRole):
+		writeError(w, r, http.StatusBadRequest, CodeUnsupportedRole, "Указана неподдерживаемая роль.")
+	default:
+		// Неожиданная ошибка логируется один раз, на границе HTTP.
+		loggerFrom(r.Context()).ErrorContext(r.Context(), "необработанная ошибка запроса",
+			slog.String("error", err.Error()))
+
+		writeError(w, r, http.StatusInternalServerError, CodeInternalError, "Внутренняя ошибка сервера.")
+	}
 }

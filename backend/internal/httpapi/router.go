@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/identifier"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
 )
 
 // RouterDeps — зависимости HTTP-слоя.
@@ -12,13 +13,18 @@ type RouterDeps struct {
 	Logger          *slog.Logger
 	RequestIDs      identifier.Generator
 	MaxRequestBytes int64
+	Scenarios       *scenario.Service
 }
 
 // NewRouter собирает маршруты и цепочку middleware.
 func NewRouter(deps RouterDeps) http.Handler {
+	scenarios := &scenarioHandler{scenarios: deps.Scenarios}
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /healthz", handleHealth)
+	mux.HandleFunc("GET /api/v1/scenarios", scenarios.list)
+	mux.HandleFunc("GET /api/v1/scenarios/{scenarioId}", scenarios.get)
 	// Общий маршрут перехватывает неизвестные пути, чтобы клиент всегда
 	// получал JSON-ошибку вместо стандартного текстового ответа ServeMux.
 	mux.HandleFunc("/", handleNotFound)

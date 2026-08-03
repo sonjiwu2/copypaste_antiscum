@@ -18,15 +18,9 @@ import (
 
 // Application владеет собранным HTTP-сервером.
 type Application struct {
-	config    config.Config
-	logger    *slog.Logger
-	server    *http.Server
-	scenarios *scenario.Service
-}
-
-// Scenarios возвращает сервис каталога сценариев.
-func (a *Application) Scenarios() *scenario.Service {
-	return a.scenarios
+	config config.Config
+	logger *slog.Logger
+	server *http.Server
 }
 
 // New собирает приложение из конфигурации и логгера.
@@ -50,12 +44,12 @@ func New(cfg config.Config, logger *slog.Logger) (*Application, error) {
 		Logger:          logger,
 		RequestIDs:      identifier.Random{},
 		MaxRequestBytes: cfg.MaxRequestBytes,
+		Scenarios:       scenario.NewService(scenarioRepository),
 	})
 
 	return &Application{
-		config:    cfg,
-		logger:    logger,
-		scenarios: scenario.NewService(scenarioRepository),
+		config: cfg,
+		logger: logger,
 		server: &http.Server{
 			Addr:              cfg.HTTPAddr,
 			Handler:           handler,

@@ -2,10 +2,12 @@ package app_test
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -45,19 +47,31 @@ func TestRunShutsDownOnContextCancel(t *testing.T) {
 
 // Приложение обязано подняться с рабочим каталогом сценариев:
 // проверка фикстур на старте — часть контракта запуска.
-func TestNewLoadsScenarioCatalog(t *testing.T) {
+func TestNewServesScenarioCatalog(t *testing.T) {
 	application, err := app.New(config.Default(), slog.New(slog.NewJSONHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatalf("не удалось собрать приложение: %v", err)
 	}
 
-	catalog, err := application.Scenarios().List(context.Background(), "")
-	if err != nil {
-		t.Fatalf("каталог недоступен: %v", err)
+	recorder := httptest.NewRecorder()
+	application.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/scenarios", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("статус = %d, ожидался 200", recorder.Code)
 	}
 
-	if len(catalog) < 2 {
-		t.Fatalf("в каталоге %d сценариев, ожидалось минимум 2", len(catalog))
+	var body struct {
+		Scenarios []struct {
+			ID string `json:"id"`
+		} `json:"scenarios"`
+	}
+
+	if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
+		t.Fatalf("не удалось разобрать ответ: %v", err)
+	}
+
+	if len(body.Scenarios) < 2 {
+		t.Fatalf("в каталоге %d сценариев, ожидалось минимум 2", len(body.Scenarios))
 	}
 }
 
