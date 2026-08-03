@@ -19,6 +19,8 @@ const (
 	CodeUnsupportedRole  = "UNSUPPORTED_ROLE"
 	CodeAttemptNotFound  = "ATTEMPT_NOT_FOUND"
 
+	CodePayloadTooLarge = "PAYLOAD_TOO_LARGE"
+
 	CodeAttemptAlreadyCompleted = "ATTEMPT_ALREADY_COMPLETED"
 	CodeStaleNode               = "STALE_NODE"
 	CodeIdempotencyKeyConflict  = "IDEMPOTENCY_KEY_CONFLICT"
@@ -61,6 +63,24 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, code, messag
 		Message:   message,
 		RequestID: RequestIDFrom(r.Context()),
 	}})
+}
+
+// writeDecodeError объясняет клиенту, почему тело запроса не прочитано.
+//
+// Превышение лимита размера отделено от синтаксической ошибки: иначе клиент,
+// приславший слишком большое тело, получал бы сообщение о некорректном JSON.
+func writeDecodeError(w http.ResponseWriter, r *http.Request, err error) {
+	var tooLarge *http.MaxBytesError
+
+	if errors.As(err, &tooLarge) {
+		writeError(w, r, http.StatusRequestEntityTooLarge, CodePayloadTooLarge,
+			"Тело запроса превышает допустимый размер.")
+
+		return
+	}
+
+	writeError(w, r, http.StatusBadRequest, CodeInvalidRequest,
+		"Тело запроса должно быть корректным JSON.")
 }
 
 // writeDomainError переводит доменную ошибку в публичный ответ.

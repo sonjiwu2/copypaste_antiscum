@@ -140,6 +140,22 @@ func TestStartAttemptEndpointRejectsBadRequests(t *testing.T) {
 	}
 }
 
+// Слишком большое тело — отдельная ошибка, а не «некорректный JSON»:
+// иначе клиент чинил бы не ту проблему.
+func TestStartAttemptEndpointRejectsOversizedBody(t *testing.T) {
+	oversized := `{"scenarioId":"` + strings.Repeat("x", 8192) + `"}`
+
+	recorder := httptest.NewRecorder()
+	newTestRouter(t).ServeHTTP(recorder, httptest.NewRequest(http.MethodPost,
+		"/api/v1/attempts", strings.NewReader(oversized)))
+
+	if recorder.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("статус = %d, ожидался 413, тело: %s", recorder.Code, recorder.Body.String())
+	}
+
+	assertErrorCode(t, recorder.Body.Bytes(), CodePayloadTooLarge)
+}
+
 // Ответ после перезагрузки страницы должен полностью восстанавливать экран.
 func TestGetAttemptEndpointRestoresState(t *testing.T) {
 	router := newTestRouter(t)

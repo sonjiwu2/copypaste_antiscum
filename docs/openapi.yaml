@@ -201,6 +201,8 @@ paths:
                   code: SCENARIO_NOT_FOUND
                   message: Сценарий не найден.
                   requestId: 7b2c1a9e4f
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -352,11 +354,25 @@ paths:
                   code: CHOICE_NOT_FOUND
                   message: Такой вариант выбора недоступен на текущем узле.
                   requestId: 7b2c1a9e4f
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
         "500":
           $ref: "#/components/responses/InternalError"
 
 components:
   responses:
+    PayloadTooLarge:
+      description: Тело запроса превышает допустимый размер
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: PAYLOAD_TOO_LARGE
+              message: Тело запроса превышает допустимый размер.
+              requestId: 7b2c1a9e4f
+
     InternalError:
       description: Внутренняя ошибка сервера
       content:
@@ -721,6 +737,7 @@ components:
               enum:
                 - NOT_FOUND
                 - INVALID_REQUEST
+                - PAYLOAD_TOO_LARGE
                 - SCENARIO_NOT_FOUND
                 - UNSUPPORTED_ROLE
                 - ATTEMPT_NOT_FOUND

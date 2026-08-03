@@ -239,6 +239,94 @@ func TestSubmitChoiceResponseHidesFutureBranches(t *testing.T) {
 	}
 }
 
+// Перезагрузка страницы в середине прохождения не должна терять прогресс:
+// клиент обязан получить весь диалог, все прошлые выборы с объяснениями
+// и текущее решение — но не будущие ветки.
+func TestResumeInTheMiddleOfJourney(t *testing.T) {
+	router := newTestRouter(t)
+	started := startAttempt(t, router, "buyer-fake-delivery")
+
+	first := submitChoiceOK(t, router, started.AttemptID, started.CurrentNodeID,
+		"move-to-messenger", "step-0")
+	second := submitChoiceOK(t, router, started.AttemptID, first.CurrentNodeID,
+		"check-in-app", "step-1")
+
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet,
+		"/api/v1/attempts/"+started.AttemptID, nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("статус = %d, ожидался 200", recorder.Code)
+	}
+
+	var resumed attemptResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resumed); err != nil {
+		t.Fatalf("не удалось разобрать ответ: %v", err)
+	}
+
+	if resumed.Status != "in_progress" {
+		t.Errorf("статус = %q, ожидался in_progress", resumed.Status)
+	}
+
+	if resumed.CurrentNodeID != second.CurrentNodeID {
+		t.Errorf("текущий узел = %q, ожидался %q", resumed.CurrentNodeID, second.CurrentNodeID)
+	}
+
+	if resumed.Score != second.Score {
+		t.Errorf("score = %d, ожидался %d", resumed.Score, second.Score)
+	}
+
+	// Весь диалог с начала: раскрытые узлы старта плюс оба перехода.
+	wantNodes := len(started.RevealedNodes) + len(first.RevealedNodes) + len(second.RevealedNodes)
+	if len(resumed.RevealedNodes) != wantNodes {
+		t.Errorf("раскрытых узлов = %d, ожидалось %d", len(resumed.RevealedNodes), wantNodes)
+	}
+
+	if resumed.RevealedNodes[0].ID != started.RevealedNodes[0].ID {
+		t.Errorf("диалог начинается с %q, ожидался %q",
+			resumed.RevealedNodes[0].ID, started.RevealedNodes[0].ID)
+	}
+
+	// Прошлые выборы вместе с уже показанными объяснениями.
+	if len(resumed.Decisions) != 2 {
+		t.Fatalf("решений = %d, ожидалось 2", len(resumed.Decisions))
+	}
+
+	for i, want := range []string{"move-to-messenger", "check-in-app"} {
+		if resumed.Decisions[i].ChoiceID != want {
+			t.Errorf("решение %d = %q, ожидалось %q", i, resumed.Decisions[i].ChoiceID, want)
+		}
+
+		if resumed.Decisions[i].Label == "" || resumed.Decisions[i].Consequence.Explanation == "" {
+			t.Errorf("решение %d потеряло подпись или объяснение", i)
+		}
+	}
+
+	// Текущее решение доступно для ответа.
+	currentNode := resumed.RevealedNodes[len(resumed.RevealedNodes)-1]
+	if currentNode.ID != resumed.CurrentNodeID || currentNode.Type != "decision" {
+		t.Fatalf("текущий узел = %+v", currentNode)
+	}
+
+	if len(currentNode.Choices) < 2 {
+		t.Errorf("вариантов выбора = %d, ожидалось минимум 2", len(currentNode.Choices))
+	}
+
+	// Финалы ещё не достигнуты и не должны быть видны.
+	for _, hiddenNode := range []string{"safe-ending", "unsafe-ending"} {
+		if strings.Contains(recorder.Body.String(), hiddenNode) {
+			t.Errorf("в ответе виден будущий узел %q", hiddenNode)
+		}
+	}
+
+	// После перезагрузки прохождение продолжается с того же места.
+	final := submitChoiceOK(t, router, started.AttemptID, resumed.CurrentNodeID,
+		"refuse-prepay", "step-2")
+	if final.Status != "completed" {
+		t.Errorf("статус = %q, ожидался completed", final.Status)
+	}
+}
+
 // Полный путь пользователя: список, старт, три выбора, финал, чтение результата.
 func TestFullJourneyThroughAPI(t *testing.T) {
 	testCases := []struct {

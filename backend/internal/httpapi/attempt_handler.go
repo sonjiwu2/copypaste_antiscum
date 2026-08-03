@@ -18,8 +18,7 @@ func (h *attemptHandler) start(w http.ResponseWriter, r *http.Request) {
 	var request startAttemptRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		writeError(w, r, http.StatusBadRequest, CodeInvalidRequest,
-			"Тело запроса должно быть корректным JSON.")
+		writeDecodeError(w, r, err)
 
 		return
 	}
@@ -61,8 +60,7 @@ func (h *attemptHandler) submitChoice(w http.ResponseWriter, r *http.Request) {
 	var request submitChoiceRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		writeError(w, r, http.StatusBadRequest, CodeInvalidRequest,
-			"Тело запроса должно быть корректным JSON.")
+		writeDecodeError(w, r, err)
 
 		return
 	}
