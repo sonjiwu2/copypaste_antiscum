@@ -1,0 +1,83 @@
+# Anti-Scam Trainer — local and demo stack.
+# Usage from repository root:
+#   docker compose up --build
+#
+# Current MVP: backend only (in-memory attempts, embedded scenarios).
+# PostgreSQL and frontend slots are documented in README for later wiring.
+
+name: antiscam
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        GO_VERSION: "1.25.0"
+        GO_IMAGE_VARIANT: "alpine3.21"
+        ALPINE_VERSION: "3.21.3"
+    image: antiscam-backend:local
+    container_name: antiscam-backend
+    init: true
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      HTTP_ADDR: ":8080"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+    user: "65532:65532"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 8s
+    networks:
+      - antiscam
+
+  # --- Future: PostgreSQL (Backend №2) ---------------------------------------
+  # Uncomment and wire DATABASE_* only when the app actually uses a DB.
+  # postgres:
+  #   image: postgres:16.6-alpine
+  #   container_name: antiscam-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: ${POSTGRES_DB:-antiscam}
+  #     POSTGRES_USER: ${POSTGRES_USER:-antiscam}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 10
+  #     start_period: 10s
+  #   networks:
+  #     - antiscam
+  #   # Do not publish 5432 publicly unless required for local debugging.
+
+  # --- Future: frontend (React/Vite static + nginx) ---------------------------
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "${FRONTEND_PORT:-3000}:80"
+  #   depends_on:
+  #     backend:
+  #       condition: service_healthy
+  #   networks:
+  #     - antiscam
+
+networks:
+  antiscam:
+    driver: bridge
+
+# volumes:
+#   postgres_data:

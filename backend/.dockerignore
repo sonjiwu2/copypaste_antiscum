@@ -1,0 +1,32 @@
+# Build context is backend/ — keep the image context lean.
+
+# VCS / IDE
+.git
+.gitignore
+.idea
+.vscode
+*.swp
+*~
+
+# Tests and coverage (not needed for production binary)
+**/*_test.go
+**/testdata/
+coverage.out
+coverage-*.out
+coverage-*.html
+*.test
+
+# Local binaries and temp
+bin/
+tmp/
+*.exe
+*.out
+
+# Docs inside backend (optional for build)
+README.md
+
+# Env / secrets
+.env
+.env.*
+*.secret
+*.key

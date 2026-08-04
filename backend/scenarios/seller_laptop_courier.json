@@ -1,0 +1,419 @@
+{
+  "id": "seller-laptop-courier",
+  "version": 2,
+  "slug": "seller-laptop-courier",
+  "role": "seller",
+  "title": "Покупатель присылает курьера",
+  "description": "Продажа ноутбука: покупатель отправляет курьера, присылает чек и торопит передать товар до поступления денег.",
+  "difficulty": "hard",
+  "estimatedMinutes": 7,
+  "startNodeId": "buyer-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "buyer-greeting",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Добрый день. Ноутбук ещё продаётся?",
+      "nextNodeId": "buyer-eager"
+    },
+    {
+      "id": "buyer-eager",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Всё устраивает, готов забрать сегодня. Торговаться не буду.",
+      "nextNodeId": "buyer-courier-offer"
+    },
+    {
+      "id": "buyer-courier-offer",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Я сейчас на работе в другом конце города и сам приехать не смогу. Отправлю Яндекс-курьера, а оплату переведу вам на карту перед передачей.",
+      "nextNodeId": "courier-offer-decision"
+    },
+    {
+      "id": "courier-offer-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель предлагает отправить курьера и перевести деньги на карту. Что вы ответите?",
+      "choices": [
+        {
+          "id": "accept-courier-with-condition",
+          "label": "Согласиться, но передать товар только после зачисления",
+          "nextNodeId": "buyer-asks-address",
+          "safetyScore": -10,
+          "criticality": "medium",
+          "riskTags": ["third_party_pickup", "off_platform_payment"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 0}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Сделка с третьим лицом продолжена",
+            "explanation": "Условие о зачислении правильное, но появление курьера создаст дополнительное давление на продавца.",
+            "realWorldRule": "Если товар забирает третье лицо, не отступайте от правила: сначала полная сумма на счёте, потом передача."
+          }
+        },
+        {
+          "id": "insist-personal-meeting",
+          "label": "Предложить встретиться лично на следующий день",
+          "nextNodeId": "buyer-refuses-meeting",
+          "safetyScore": -15,
+          "criticality": "low",
+          "riskTags": ["third_party_pickup"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Рискованная передача исключена",
+            "explanation": "Личная встреча снижает давление со стороны третьего лица, но не является единственным безопасным способом сделки.",
+            "realWorldRule": "При личной встрече всё равно проверяйте фактическое поступление денег."
+          }
+        },
+        {
+          "id": "offer-platform-payment",
+          "label": "Предложить безопасную оплату внутри площадки",
+          "nextNodeId": "buyer-rejects-platform",
+          "safetyScore": -15,
+          "criticality": "low",
+          "riskTags": ["off_platform_payment"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Предложен защищённый канал",
+            "explanation": "Оплата внутри площадки позволяет самостоятельно видеть статус сделки, но покупатель может продолжить давление.",
+            "realWorldRule": "Используйте штатные способы оплаты и самостоятельно проверяйте статус заказа."
+          }
+        }
+      ]
+    },
+    {
+      "id": "buyer-refuses-meeting",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Завтра не смогу. Но если вы не хотите работать с курьером, тогда откажусь от покупки.",
+      "nextNodeId": "safe-personal-meeting-ending"
+    },
+    {
+      "id": "buyer-rejects-platform",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Не хочу переплачивать за комиссию. Я уже вызвал курьера, а деньги могу перевести напрямую. Курьер будет примерно через двадцать минут.",
+      "nextNodeId": "buyer-fake-check"
+    },
+    {
+      "id": "buyer-asks-address",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Конечно, всё честно. Напишите адрес, курьер будет примерно через двадцать минут.",
+      "nextNodeId": "courier-arrived-system"
+    },
+    {
+      "id": "courier-arrived-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Через двадцать минут курьер прибывает по указанному адресу.",
+      "nextNodeId": "buyer-fake-check"
+    },
+    {
+      "id": "buyer-fake-check",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Я оплатил. Вот банковский чек.",
+      "nextNodeId": "fake-check-system"
+    },
+    {
+      "id": "fake-check-system",
+      "type": "message",
+      "sender": "system",
+      "text": "В чат приходит скриншот чека на 72 000 ₽. В вашем банковском приложении денег нет.",
+      "nextNodeId": "buyer-interbank-excuse"
+    },
+    {
+      "id": "buyer-interbank-excuse",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Это межбанковский перевод. Иногда он идёт до часа, но у меня уже написано «исполнено». Курьер ждёт у подъезда.",
+      "nextNodeId": "payment-proof-decision"
+    },
+    {
+      "id": "payment-proof-decision",
+      "type": "decision",
+      "decisionPrompt": "Чек получен, но денег на счёте нет. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "hand-over-on-check",
+          "label": "Передать ноутбук, потому что чек выглядит настоящим",
+          "nextNodeId": "unsafe-fake-check-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["fake_payment_proof", "third_party_pickup"],
+          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Чек принят за оплату",
+            "explanation": "Изображение чека легко подделать, а деньги на счёт продавца не поступили.",
+            "realWorldRule": "Единственное подтверждение оплаты — полная сумма в вашем банковском приложении."
+          }
+        },
+        {
+          "id": "ask-courier-order",
+          "label": "Попросить курьера показать данные заказа",
+          "nextNodeId": "courier-order-system",
+          "safetyScore": -45,
+          "criticality": "high",
+          "riskTags": ["fake_payment_proof", "third_party_pickup"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Проверяется не тот факт",
+            "explanation": "Данные заказа подтверждают поручение курьеру, но не банковский перевод покупателя.",
+            "realWorldRule": "Личность курьера и его заказ не подтверждают оплату товара."
+          }
+        },
+        {
+          "id": "wait-for-funds",
+          "label": "Не передавать ноутбук до фактического поступления денег",
+          "nextNodeId": "buyer-waiting-pressure",
+          "safetyScore": 5,
+          "criticality": "low",
+          "riskTags": ["fake_payment_proof"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Правильный критерий оплаты сохранён",
+            "explanation": "Пока полной суммы нет на вашем счёте, товар остаётся у вас независимо от чека.",
+            "realWorldRule": "Сначала деньги на вашем счёте, потом передача товара."
+          }
+        },
+        {
+          "id": "verify-in-bank-app",
+          "label": "Самостоятельно проверить банковское приложение",
+          "nextNodeId": "bank-check-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["fake_payment_proof"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Оплата проверена независимо",
+            "explanation": "Вы используете собственное официальное приложение, а не доказательства второй стороны.",
+            "realWorldRule": "Проверяйте баланс и историю операций самостоятельно, не по ссылке или номеру из чека."
+          }
+        }
+      ]
+    },
+    {
+      "id": "courier-order-system",
+      "type": "message",
+      "sender": "system",
+      "text": "В приложении курьера указаны адрес, имя заказчика и комментарий: «Забрать коробку с ноутбуком». Вы принимаете эти данные за подтверждение сделки и передаёте товар.",
+      "nextNodeId": "unsafe-courier-data-ending"
+    },
+    {
+      "id": "bank-check-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Вы самостоятельно открываете официальное приложение банка. В истории операций и на балансе поступления на 72 000 ₽ нет.",
+      "nextNodeId": "buyer-bank-delay-pressure"
+    },
+    {
+      "id": "buyer-bank-delay-pressure",
+      "type": "message",
+      "sender": "buyer",
+      "text": "У меня перевод отмечен как выполненный. Это задержка между банками. Если сейчас отпустить курьера, мне придётся второй раз платить за поездку.",
+      "nextNodeId": "urgency-decision"
+    },
+    {
+      "id": "buyer-waiting-pressure",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Вы серьёзно? Деньги уже списаны, чек официальный. У курьера платное ожидание, и всё это за мой счёт.",
+      "nextNodeId": "buyer-profile-pressure"
+    },
+    {
+      "id": "buyer-profile-pressure",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Тогда хотя бы передайте ноутбук курьеру, но попросите немного подождать. У вас есть мой профиль и номер телефона — я никуда не исчезну.",
+      "nextNodeId": "urgency-decision"
+    },
+    {
+      "id": "urgency-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель давит платным ожиданием курьера. Как вы поступите?",
+      "choices": [
+        {
+          "id": "hand-over-under-pressure",
+          "label": "Передать ноутбук под давлением покупателя",
+          "nextNodeId": "unsafe-pressure-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["fake_payment_proof", "urgency", "third_party_pickup"],
+          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Срочность заменила проверку",
+            "explanation": "Стоимость ожидания курьера не доказывает оплату и не создаёт обязанности передать ноутбук.",
+            "realWorldRule": "Чужая срочность не отменяет правило: нет денег на счёте — нет товара."
+          }
+        },
+        {
+          "id": "cancel-handover",
+          "label": "Отменить передачу и отпустить курьера",
+          "nextNodeId": "buyer-demands-compensation",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["fake_payment_proof", "urgency"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Товар остался у продавца",
+            "explanation": "Вы не передали ноутбук без подтверждённой оплаты и прекратили давление присутствием курьера.",
+            "realWorldRule": "Если перевод не поступил, курьера можно отпустить без передачи товара."
+          }
+        },
+        {
+          "id": "wait-with-courier",
+          "label": "Предложить дождаться поступления денег вместе с курьером",
+          "nextNodeId": "courier-cannot-wait",
+          "safetyScore": -5,
+          "criticality": "medium",
+          "riskTags": ["urgency", "third_party_pickup"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": 0}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Правило сохранено, давление продолжается",
+            "explanation": "Вы не отдаёте товар, но позволяете ситуации с курьером продолжать влиять на решение.",
+            "realWorldRule": "Если оплаты нет, безопаснее отменить передачу, а не продлевать ожидание."
+          }
+        }
+      ]
+    },
+    {
+      "id": "courier-cannot-wait",
+      "type": "message",
+      "sender": "system",
+      "text": "Курьер сообщает, что не может продолжать ждать и должен уехать. Вы отменяете передачу.",
+      "nextNodeId": "buyer-demands-compensation"
+    },
+    {
+      "id": "buyer-demands-compensation",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Вы зря усложняете. Я уже всё оплатил, а теперь ещё потерял деньги за курьера. Компенсируйте хотя бы его поездку.",
+      "nextNodeId": "final-protocol-decision"
+    },
+    {
+      "id": "final-protocol-decision",
+      "type": "decision",
+      "decisionPrompt": "Ноутбук остался у вас, но покупатель требует компенсацию. Как завершите ситуацию?",
+      "choices": [
+        {
+          "id": "finish-without-report",
+          "label": "Завершить разговор и ничего больше не делать",
+          "nextNodeId": "safe-quiet-ending",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["fake_payment_proof"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 0}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Товар сохранён",
+            "explanation": "Вы не потеряли ноутбук, но не сообщили площадке о поддельном чеке и подозрительном профиле.",
+            "realWorldRule": "После предотвращённого обмана полезно сохранить доказательства и отправить жалобу."
+          }
+        },
+        {
+          "id": "document-block-report",
+          "label": "Сохранить переписку, заблокировать покупателя и отправить жалобу",
+          "nextNodeId": "safe-full-ending",
+          "safetyScore": 5,
+          "criticality": "low",
+          "riskTags": ["fake_payment_proof", "third_party_pickup"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Доказательства сохранены",
+            "explanation": "Переписка, чек и данные профиля помогут площадке проверить попытку обмана.",
+            "realWorldRule": "Фиксируйте доказательства до блокировки и отправляйте жалобу через официальный интерфейс."
+          }
+        },
+        {
+          "id": "compensate-courier",
+          "label": "Компенсировать покупателю стоимость вызова курьера",
+          "nextNodeId": "unsafe-small-loss-ending",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": ["urgency", "off_platform_payment"],
+          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Мошенник получил компенсацию",
+            "explanation": "Расходы на курьера несёт его заказчик. Поддельный чек не создаёт обязательств у продавца.",
+            "realWorldRule": "Не переводите незнакомому покупателю компенсации по реквизитам из чата."
+          }
+        }
+      ]
+    },
+    {
+      "id": "safe-personal-meeting-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Рискованная передача отменена",
+        "explanation": "Вы сохранили ноутбук, отказавшись от передачи через курьера, но не проверили профиль и не отправили жалобу."
+      }
+    },
+    {
+      "id": "safe-quiet-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Ноутбук сохранён",
+        "explanation": "Вы не передали товар без оплаты, но не сообщили площадке о поддельном чеке."
+      }
+    },
+    {
+      "id": "safe-full-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Мошенничество предотвращено",
+        "explanation": "Вы проверили оплату, выдержали давление, сохранили товар и отправили доказательства площадке."
+      }
+    },
+    {
+      "id": "unsafe-fake-check-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Потеря ноутбука за 72 000 ₽",
+        "explanation": "Скриншот чека оказался поддельным. Курьер забрал товар, хотя деньги на счёт не поступили."
+      }
+    },
+    {
+      "id": "unsafe-courier-data-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Потеря ноутбука за 72 000 ₽",
+        "explanation": "Данные заказа курьера подтвердили только поручение забрать коробку, но не оплату товара."
+      }
+    },
+    {
+      "id": "unsafe-pressure-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Потеря ноутбука за 72 000 ₽",
+        "explanation": "Под давлением вы передали товар до фактического поступления денег."
+      }
+    },
+    {
+      "id": "unsafe-small-loss-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Потеря денег на компенсации",
+        "explanation": "Ноутбук остался у вас, но мошеннику удалось получить деньги под предлогом оплаты поездки курьера."
+      }
+    }
+  ]
+}

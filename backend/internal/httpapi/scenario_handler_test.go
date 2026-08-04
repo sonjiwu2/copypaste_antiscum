@@ -37,19 +37,34 @@ func TestListScenarios(t *testing.T) {
 			name:       "весь каталог",
 			target:     "/api/v1/scenarios",
 			wantStatus: http.StatusOK,
-			wantIDs:    []string{"buyer-fake-delivery", "seller-payment-already-sent"},
+			wantIDs: []string{
+				"buyer-fake-delivery",
+				"buyer-iphone-deposit",
+				"buyer-ps5-delivery",
+				"seller-gpu-return-swap",
+				"seller-laptop-courier",
+				"seller-payment-already-sent",
+			},
 		},
 		{
 			name:       "фильтр по роли покупателя",
 			target:     "/api/v1/scenarios?role=buyer",
 			wantStatus: http.StatusOK,
-			wantIDs:    []string{"buyer-fake-delivery"},
+			wantIDs: []string{
+				"buyer-fake-delivery",
+				"buyer-iphone-deposit",
+				"buyer-ps5-delivery",
+			},
 		},
 		{
 			name:       "фильтр по роли продавца",
 			target:     "/api/v1/scenarios?role=seller",
 			wantStatus: http.StatusOK,
-			wantIDs:    []string{"seller-payment-already-sent"},
+			wantIDs: []string{
+				"seller-gpu-return-swap",
+				"seller-laptop-courier",
+				"seller-payment-already-sent",
+			},
 		},
 		{
 			name:       "неподдерживаемая роль",
@@ -99,8 +114,8 @@ func TestListScenariosReturnsUsableMetadata(t *testing.T) {
 		t.Fatalf("не удалось разобрать ответ: %v", err)
 	}
 
-	if len(body.Scenarios) != 1 {
-		t.Fatalf("сценариев = %d, ожидался 1", len(body.Scenarios))
+	if len(body.Scenarios) == 0 {
+		t.Fatal("ожидался хотя бы один сценарий покупателя")
 	}
 
 	found := body.Scenarios[0]

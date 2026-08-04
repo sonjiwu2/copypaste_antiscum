@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Check formatting (gofmt)
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "The following files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Unit tests
+        run: go test ./...
+
+      - name: Race tests
+        run: go test -race ./...
+
+      - name: Coverage summary
+        run: |
+          go test -coverprofile=coverage.out ./...
+          go tool cover -func=coverage.out
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.1.6
+          working-directory: backend
+          args: --config=${{ github.workspace }}/.golangci.yaml --timeout=5m
+
+  docker:
+    name: Docker Compose smoke
+    runs-on: ubuntu-latest
+    needs: [backend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate compose file
+        run: docker compose config
+
+      - name: Build stack
+        run: docker compose build
+
+      - name: Start stack
+        run: docker compose up -d
+
+      - name: Wait for backend healthy
+        run: |
+          set -euo pipefail
+          timeout_s=90
+          elapsed=0
+          while [ "$elapsed" -lt "$timeout_s" ]; do
+            status="$(docker inspect --format='{{.State.Health.Status}}' antiscam-backend 2>/dev/null || echo starting)"
+            if [ "$status" = "healthy" ]; then
+              echo "backend is healthy"
+              exit 0
+            fi
+            if [ "$status" = "unhealthy" ]; then
+              echo "backend became unhealthy"
+              docker compose ps
+              docker compose logs --no-color
+              exit 1
+            fi
+            sleep 2
+            elapsed=$((elapsed + 2))
+          done
+          echo "timed out waiting for healthy backend (${timeout_s}s)"
+          docker compose ps
+          docker compose logs --no-color
+          exit 1
+
+      - name: Smoke /healthz
+        run: curl --fail --silent --show-error http://127.0.0.1:8080/healthz
+
+      - name: Smoke GET /api/v1/scenarios
+        run: |
+          set -euo pipefail
+          body="$(curl --fail --silent --show-error http://127.0.0.1:8080/api/v1/scenarios)"
+          echo "$body" | grep -q 'scenarios'
+          echo "scenarios response OK"
+
+      - name: Teardown
+        if: always()
+        run: docker compose down --volumes --remove-orphans
