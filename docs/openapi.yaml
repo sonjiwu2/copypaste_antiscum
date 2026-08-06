@@ -1,0 +1,1146 @@
+openapi: 3.0.3
+
+info:
+  title: Anti-Scam Trainer API
+  version: 0.1.0
+  description: |
+    Публичный API интерактивного антискам-тренажёра.
+
+    Реализованная часть: проверка живости и готовности, каталог учебных
+    сценариев, запуск попытки, восстановление её состояния, отправка выбора
+    и прогресс пользователя.
+
+    ### Анонимный профиль
+
+    Учётных записей нет. При первом обращении к `/api/v1/**` сервер выдаёт
+    cookie `ast_profile` с анонимным идентификатором профиля:
+
+    - `HttpOnly`, `SameSite=Lax`, `Path=/`, длительный `Max-Age`;
+    - `Secure` включается в публичном развёртывании по HTTPS;
+    - при отсутствии или неверном формате cookie сервер выдаёт новый случайный
+      идентификатор; валидная cookie является bearer-секретом доступа к истории;
+    - к профилю привязываются попытки, поэтому браузер обязан отправлять
+      cookie обратно (`fetch(..., { credentials: "include" })` при разных
+      origin фронтенда и API).
+
+    Попытка принадлежит выдавшему её профилю. Обращение к чужой попытке
+    возвращает `403 ATTEMPT_FORBIDDEN`, даже если идентификатор известен.
+    Потеря cookie означает потерю доступа к истории: восстановления нет.
+
+    Скрытие будущего хода сценария — часть контракта:
+
+    - каталог отдаёт только метаданные, без узлов и вариантов выбора;
+    - попытка показывает лишь уже раскрытые узлы;
+    - у варианта выбора публикуются только идентификатор и подпись;
+    - следующий узел, изменение результата, критичность, метки риска и
+      эффекты навыков не публикуются никогда;
+    - объяснение последствия появляется только после того, как выбор сделан.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+# Аутентификации нет намеренно: тренажёр не хранит персональные данные.
+# Анонимный профиль выдаётся сервером автоматически, поэтому клиенту не нужно
+# ничего передавать — cookie достаточно вернуть обратно.
+security: []
+
+servers:
+  - url: http://localhost:8080
+    description: Локальный запуск
+
+tags:
+  - name: health
+    description: Проверка работоспособности сервиса
+  - name: scenarios
+    description: Каталог учебных сценариев
+  - name: attempts
+    description: Прохождение сценария
+  - name: progress
+    description: Прогресс анонимного профиля
+
+paths:
+  /healthz:
+    get:
+      tags: [health]
+      summary: Проверка живости
+      description: |
+        Подтверждает, что процесс запущен и отвечает.
+        Внешние системы намеренно не проверяются.
+      operationId: getHealth
+      responses:
+        "200":
+          description: Сервис работает
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: ok
+
+  /readyz:
+    get:
+      tags: [health]
+      summary: Проверка готовности
+      description: |
+        Подтверждает, что приложение способно обслуживать запросы: база данных
+        отвечает, а каталог сценариев готов.
+
+        В отличие от `/healthz` проверка затрагивает внешние зависимости,
+        поэтому именно её использует healthcheck контейнера. Причина
+        недоступности в ответ не попадает: устройство сервиса наружу не
+        публикуется.
+
+        Профиль этот endpoint не создаёт.
+      operationId: getReadiness
+      responses:
+        "200":
+          description: Приложение готово обслуживать запросы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+              example:
+                status: ready
+        "503":
+          description: Приложение не готово, например недоступна база данных
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+              example:
+                status: unavailable
+
+  /api/v1/scenarios:
+    get:
+      tags: [scenarios]
+      summary: Список доступных сценариев
+      description: |
+        Возвращает активные сценарии, отсортированные по идентификатору.
+        Порядок стабилен: одинаковый запрос даёт одинаковый ответ.
+      operationId: listScenarios
+      parameters:
+        - name: role
+          in: query
+          required: false
+          description: Фильтр по роли. Без параметра возвращаются сценарии всех ролей.
+          schema:
+            $ref: "#/components/schemas/ScenarioRole"
+      responses:
+        "200":
+          description: Каталог сценариев
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenarioListResponse"
+              example:
+                scenarios:
+                  - id: buyer-fake-delivery
+                    version: 1
+                    slug: buyer-fake-delivery
+                    role: buyer
+                    title: Ссылка на доставку
+                    description: "Покупка товара с доставкой: продавец предлагает оплату по ссылке."
+                    difficulty: medium
+                    estimatedMinutes: 4
+        "400":
+          description: Указана неподдерживаемая роль
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: UNSUPPORTED_ROLE
+                  message: Указана неподдерживаемая роль.
+                  requestId: 7b2c1a9e4f
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/scenarios/{scenarioId}:
+    get:
+      tags: [scenarios]
+      summary: Описание одного сценария
+      description: |
+        Возвращает метаданные сценария.
+
+        Отключённый сценарий отвечает так же, как несуществующий: клиенту не
+        сообщается о наличии скрытого содержимого.
+      operationId: getScenario
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          description: Идентификатор сценария
+          schema:
+            type: string
+          example: buyer-fake-delivery
+      responses:
+        "200":
+          description: Метаданные сценария
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scenario"
+              example:
+                id: seller-payment-already-sent
+                version: 1
+                slug: seller-payment-already-sent
+                role: seller
+                title: Оплата уже отправлена
+                description: "Продажа товара: покупатель уверяет, что деньги уже перевёл."
+                difficulty: hard
+                estimatedMinutes: 5
+        "404":
+          description: Сценарий не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: SCENARIO_NOT_FOUND
+                  message: Сценарий не найден.
+                  requestId: 7b2c1a9e4f
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/attempts:
+    post:
+      tags: [attempts]
+      summary: Начать прохождение сценария
+      description: |
+        Создаёт попытку и раскрывает начало сценария.
+
+        Раскрытие идёт от стартового узла и останавливается на первом узле
+        решения или на финале. Подряд идущие сообщения возвращаются одной
+        пачкой, поэтому фронтенду не нужен запрос на каждую реплику диалога.
+
+        Версия сценария фиксируется за попыткой и читается из неизменяемого
+        архива: последующая правка содержимого, deploy или restart не изменят
+        уже начатое прохождение.
+      operationId: startAttempt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartAttemptRequest"
+            example:
+              scenarioId: buyer-fake-delivery
+      responses:
+        "201":
+          description: Попытка создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attempt"
+        "400":
+          description: Тело запроса некорректно или не содержит scenarioId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: INVALID_REQUEST
+                  message: Поле scenarioId обязательно.
+                  requestId: 7b2c1a9e4f
+        "404":
+          description: Сценарий не найден или недоступен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: SCENARIO_NOT_FOUND
+                  message: Сценарий не найден.
+                  requestId: 7b2c1a9e4f
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/attempts/{attemptId}:
+    get:
+      tags: [attempts]
+      summary: Текущее состояние попытки
+      description: |
+        Возвращает попытку целиком: раскрытые узлы в порядке появления, уже
+        сделанные выборы с показанными объяснениями и текущий узел.
+
+        Этого достаточно, чтобы полностью восстановить экран после перезагрузки
+        страницы — отдельного endpoint для продолжения не требуется.
+
+        Попытка доступна только выдавшему её анонимному профилю: запрос без
+        cookie `ast_profile` или с чужой cookie получит `403`.
+      operationId: getAttempt
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          description: Идентификатор попытки, полученный при её создании
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Состояние попытки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attempt"
+        "403":
+          $ref: "#/components/responses/AttemptForbidden"
+        "404":
+          description: Попытка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: ATTEMPT_NOT_FOUND
+                  message: Попытка не найдена.
+                  requestId: 7b2c1a9e4f
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/attempts/{attemptId}/choices:
+    post:
+      tags: [attempts]
+      summary: Отправить выбор
+      description: |
+        Применяет выбор пользователя и продвигает прохождение до следующего
+        решения или до финала.
+
+        Сервер проверяет запрос по своим данным: попытка не завершена, узел
+        совпадает с текущим, узел действительно является точкой решения,
+        а вариант принадлежит этому узлу зафиксированной версии сценария.
+
+        Влияние выбора на результат и навыки берётся только из сценария —
+        клиент не может прислать ни очки, ни эффекты.
+
+        ### Повторная отправка
+
+        `idempotencyKey` защищает от двойного применения при обрыве связи:
+
+        - тот же ключ с теми же `nodeId` и `choiceId` возвращает **тот же**
+          ответ, эффекты повторно не применяются;
+        - тот же ключ с другими данными — `409 IDEMPOTENCY_KEY_CONFLICT`;
+        - ключ действует в пределах одной попытки.
+
+        Клиент должен генерировать ключ сам и повторять запрос с тем же
+        значением, а не с новым.
+      operationId: submitChoice
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitChoiceRequest"
+            example:
+              nodeId: channel-decision
+              choiceId: stay-on-platform
+              idempotencyKey: 0f8c2a1b-7d4e-4a19-9c3f-2b6e5d1a8c47
+      responses:
+        "200":
+          description: Выбор применён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transition"
+        "400":
+          description: Тело запроса некорректно или не заполнены обязательные поля
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: INVALID_REQUEST
+                  message: Поле idempotencyKey обязательно.
+                  requestId: 7b2c1a9e4f
+        "403":
+          $ref: "#/components/responses/AttemptForbidden"
+        "404":
+          description: Попытка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: ATTEMPT_NOT_FOUND
+                  message: Попытка не найдена.
+                  requestId: 7b2c1a9e4f
+        "409":
+          description: |
+            Состояние попытки не позволяет применить выбор:
+
+            - `ATTEMPT_ALREADY_COMPLETED` — прохождение завершено;
+            - `STALE_NODE` — прислан не тот узел, на котором стоит попытка;
+            - `IDEMPOTENCY_KEY_CONFLICT` — ключ повтора уже использован с другими данными;
+            - `CONCURRENT_TRANSITION` — попытку изменил другой запрос.
+
+            В каждом случае нужно перечитать состояние попытки.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: STALE_NODE
+                  message: Присланный узел не совпадает с текущим. Перечитайте состояние попытки.
+                  requestId: 7b2c1a9e4f
+        "422":
+          description: |
+            Выбор не применим к текущему узлу:
+
+            - `NODE_NOT_DECISION` — на текущем узле выбор не принимается;
+            - `CHOICE_NOT_FOUND` — вариант не принадлежит текущему узлу.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: CHOICE_NOT_FOUND
+                  message: Такой вариант выбора недоступен на текущем узле.
+                  requestId: 7b2c1a9e4f
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/progress:
+    get:
+      tags: [progress]
+      summary: Прогресс пользователя
+      description: |
+        Возвращает статистику текущего анонимного профиля.
+
+        Считается по уже сохранённым завершённым прохождениям: результат
+        попытки не пересчитывается, поэтому экран прогресса и экран результата
+        не могут разойтись.
+
+        ### Правила
+
+        - в статистику входят только завершённые прохождения;
+        - незавершённые показываются отдельно в `activeAttempts`;
+        - повторные прохождения не затирают предыдущие;
+        - `bestScore` — максимум среди завершённых, `latestScore` — результат
+          последнего по времени завершения;
+        - `previousScore` и `improvement` появляются со второго прохождения
+          сценария: сравнивать первый результат не с чем;
+        - `averageScore` округляется по правилу «половина вверх»;
+        - `skills` отсортированы от самого слабого навыка;
+        - `weakRiskTags` — схемы, на которых пользователь ошибался, от самой
+          опасной; `weightedSeverity` учитывает вес уже сделанных ошибок;
+        - рекомендации используют только публичные метаданные каталога и не
+          раскрывают устройство непройденных сценариев;
+        - новый профиль получает `200` с нулевой сводкой и пустыми списками;
+        - повтор запроса с тем же `idempotencyKey` не удваивает статистику.
+      operationId: getProgress
+      responses:
+        "200":
+          description: Прогресс профиля
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Progress"
+              example:
+                summary:
+                  completedAttempts: 2
+                  completedScenarios: 1
+                  averageScore: 60
+                  bestScore: 100
+                  latestScore: 100
+                activeAttempts: []
+                scenarioProgress:
+                  - scenarioId: buyer-fake-delivery
+                    role: buyer
+                    title: Ссылка на доставку
+                    attempts: 2
+                    lastScore: 100
+                    bestScore: 100
+                    previousScore: 20
+                    improvement: 80
+                    lastCompletedAt: "2026-08-05T09:00:00Z"
+                skills:
+                  - code: payment_safety
+                    value: 0
+                    positive: 1
+                    negative: 1
+                    decisions: 2
+                weakRiskTags:
+                  - code: phishing_link
+                    mistakes: 1
+                    weightedSeverity: 3
+                    lastOccurredAt: "2026-08-05T08:30:00Z"
+                recentAttempts:
+                  - attemptId: att_2
+                    scenarioId: buyer-fake-delivery
+                    role: buyer
+                    title: Ссылка на доставку
+                    score: 100
+                    outcome: safe
+                    startedAt: "2026-08-05T08:55:00Z"
+                    completedAt: "2026-08-05T09:00:00Z"
+                    decisions: 3
+                recommendedScenarios:
+                  - scenarioId: seller-payment-already-sent
+                    role: seller
+                    title: Оплата уже отправлена
+                    difficulty: hard
+                    estimatedMinutes: 5
+                    reason: not_completed
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  responses:
+    AttemptForbidden:
+      description: |
+        Попытка принадлежит другому анонимному профилю.
+
+        Обычная причина — потерянная или незаданная cookie `ast_profile`:
+        браузер обратился к попытке от имени нового профиля.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: ATTEMPT_FORBIDDEN
+              message: Попытка принадлежит другому пользователю.
+              requestId: 7b2c1a9e4f
+
+    PayloadTooLarge:
+      description: Тело запроса превышает допустимый размер
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: PAYLOAD_TOO_LARGE
+              message: Тело запроса превышает допустимый размер.
+              requestId: 7b2c1a9e4f
+
+    InternalError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: Внутренняя ошибка сервера.
+              requestId: 7b2c1a9e4f
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+
+    ReadinessResponse:
+      type: object
+      description: |
+        Состояние готовности. Подробности отказа намеренно не раскрываются —
+        они уходят в лог сервиса.
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ready, unavailable]
+
+    ScenarioRole:
+      type: string
+      description: Роль, в которой пользователь проходит сценарий.
+      enum: [buyer, seller]
+
+    ScenarioDifficulty:
+      type: string
+      description: Субъективная сложность сценария.
+      enum: [easy, medium, hard]
+
+    Scenario:
+      type: object
+      description: |
+        Метаданные сценария. Содержимое графа сюда не входит по соображениям
+        безопасности: иначе клиент увидел бы правильные ответы заранее.
+      required:
+        [id, version, slug, role, title, description, difficulty, estimatedMinutes]
+      properties:
+        id:
+          type: string
+          description: Устойчивый идентификатор сценария.
+          example: buyer-fake-delivery
+        version:
+          type: integer
+          format: int32
+          minimum: 1
+          description: |
+            Версия содержимого. Начатая попытка закрепляется за версией,
+            поэтому правка сценария не меняет уже идущее прохождение.
+          example: 1
+        slug:
+          type: string
+          description: Человекочитаемый идентификатор для ссылок.
+          example: buyer-fake-delivery
+        role:
+          $ref: "#/components/schemas/ScenarioRole"
+        title:
+          type: string
+          example: Ссылка на доставку
+        description:
+          type: string
+          example: "Покупка товара с доставкой: продавец предлагает оплату по ссылке."
+        difficulty:
+          $ref: "#/components/schemas/ScenarioDifficulty"
+        estimatedMinutes:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Ожидаемая длительность прохождения в минутах.
+          example: 4
+
+    ScenarioListResponse:
+      type: object
+      required: [scenarios]
+      properties:
+        scenarios:
+          type: array
+          items:
+            $ref: "#/components/schemas/Scenario"
+
+    StartAttemptRequest:
+      type: object
+      required: [scenarioId]
+      properties:
+        scenarioId:
+          type: string
+          description: Идентификатор сценария из каталога.
+          example: buyer-fake-delivery
+
+    AttemptStatus:
+      type: string
+      description: |
+        Состояние прохождения. Попытка становится `completed` только после
+        того, как сервер довёл её до финального узла.
+      enum: [in_progress, completed]
+
+    NodeType:
+      type: string
+      description: |
+        Тип раскрытого узла: реплика диалога, точка принятия решения или финал.
+      enum: [message, decision, terminal]
+
+    OutcomeType:
+      type: string
+      description: Характер финала сценария.
+      enum: [safe, unsafe]
+
+    Severity:
+      type: string
+      description: Насколько опасным оказался сделанный выбор.
+      enum: [safe, warning, dangerous]
+
+    AttemptChoice:
+      type: object
+      description: |
+        Доступное действие. Публикуются только идентификатор и подпись:
+        следующий узел и влияние выбора остаются на сервере.
+      required: [id, label]
+      properties:
+        id:
+          type: string
+          example: stay-on-platform
+        label:
+          type: string
+          example: Остаться в чате площадки
+
+    AttemptOutcome:
+      type: object
+      description: Итог сценария. Появляется только у финального узла.
+      required: [type, title, explanation]
+      properties:
+        type:
+          $ref: "#/components/schemas/OutcomeType"
+        title:
+          type: string
+        explanation:
+          type: string
+
+    AttemptNode:
+      type: object
+      description: |
+        Раскрытый узел сценария. Набор заполненных полей зависит от типа:
+        `message` содержит отправителя и текст, `decision` — вопрос и варианты,
+        `terminal` — итог.
+      required: [id, type]
+      properties:
+        id:
+          type: string
+          example: channel-decision
+        type:
+          $ref: "#/components/schemas/NodeType"
+        sender:
+          type: string
+          description: Кто прислал сообщение. Только для узлов типа `message`.
+          example: seller
+        text:
+          type: string
+          description: Текст реплики. Только для узлов типа `message`.
+        prompt:
+          type: string
+          description: Вопрос пользователю. Только для узлов типа `decision`.
+        choices:
+          type: array
+          description: Доступные действия. Только для узлов типа `decision`.
+          items:
+            $ref: "#/components/schemas/AttemptChoice"
+        outcome:
+          $ref: "#/components/schemas/AttemptOutcome"
+
+    AttemptConsequence:
+      type: object
+      description: |
+        Учебное объяснение последствий выбора. Появляется только после того,
+        как выбор сделан.
+      required: [severity, title, explanation]
+      properties:
+        severity:
+          $ref: "#/components/schemas/Severity"
+        title:
+          type: string
+        explanation:
+          type: string
+        realWorldRule:
+          type: string
+          description: Короткое правило, применимое в реальной сделке.
+
+    AttemptDecision:
+      type: object
+      description: Ранее сделанный выбор вместе с показанным объяснением.
+      required: [nodeId, choiceId, label, consequence]
+      properties:
+        nodeId:
+          type: string
+        choiceId:
+          type: string
+        label:
+          type: string
+        consequence:
+          $ref: "#/components/schemas/AttemptConsequence"
+
+    AttemptScenarioRef:
+      type: object
+      description: Сценарий попытки в зафиксированной версии.
+      required: [id, version, slug, role, title]
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+          format: int32
+          minimum: 1
+        slug:
+          type: string
+        role:
+          $ref: "#/components/schemas/ScenarioRole"
+        title:
+          type: string
+
+    Attempt:
+      type: object
+      description: |
+        Публичное состояние попытки. Содержит только раскрытую часть сценария —
+        по нему нельзя узнать, куда ведут доступные варианты.
+      required:
+        [attemptId, scenario, status, score, currentNodeId, revealedNodes, decisions, startedAt, updatedAt]
+      properties:
+        attemptId:
+          type: string
+          description: |
+            Идентификатор попытки. Доступ к ней имеет только выдавший её
+            анонимный профиль, но идентификатор всё равно не стоит публиковать.
+        scenario:
+          $ref: "#/components/schemas/AttemptScenarioRef"
+        status:
+          $ref: "#/components/schemas/AttemptStatus"
+        score:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: |
+            Результат прохождения. Начинается со 100 и уменьшается за опасные
+            решения. Считается только на сервере по данным сценария.
+          example: 100
+        outcome:
+          $ref: "#/components/schemas/OutcomeType"
+        currentNodeId:
+          type: string
+          description: |
+            Узел, на котором остановлено прохождение. Именно его сервер ждёт
+            в запросе следующего выбора.
+        revealedNodes:
+          type: array
+          description: Раскрытые узлы в порядке появления.
+          items:
+            $ref: "#/components/schemas/AttemptNode"
+        decisions:
+          type: array
+          description: Уже сделанные выборы в порядке принятия.
+          items:
+            $ref: "#/components/schemas/AttemptDecision"
+        startedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          description: Проставляется один раз, при достижении финала.
+
+    SubmitChoiceRequest:
+      type: object
+      description: |
+        Запрос содержит только то, что сервер не может вычислить сам.
+        Следующего узла, изменения результата и эффектов здесь нет намеренно.
+      required: [nodeId, choiceId, idempotencyKey]
+      properties:
+        nodeId:
+          type: string
+          description: |
+            Узел, который видел пользователь. Служит для сверки с текущим узлом
+            попытки: расхождение даёт `409 STALE_NODE`.
+          example: channel-decision
+        choiceId:
+          type: string
+          description: Выбранный вариант из числа показанных на этом узле.
+          example: stay-on-platform
+        idempotencyKey:
+          type: string
+          description: |
+            Уникальное значение, которое генерирует клиент. При повторе того же
+            запроса используйте тот же ключ, чтобы эффекты не применились дважды.
+          example: 0f8c2a1b-7d4e-4a19-9c3f-2b6e5d1a8c47
+
+    AcceptedChoice:
+      type: object
+      description: Выбор, который сервер принял и применил.
+      required: [nodeId, choiceId, label]
+      properties:
+        nodeId:
+          type: string
+        choiceId:
+          type: string
+        label:
+          type: string
+
+    Transition:
+      type: object
+      description: |
+        Результат одного шага прохождения: что было принято, чему это учит и
+        что показать дальше. Содержит только новые узлы — уже показанные
+        клиент получил раньше.
+      required:
+        [attemptId, status, score, acceptedChoice, consequence, revealedNodes, currentNodeId]
+      properties:
+        attemptId:
+          type: string
+        status:
+          $ref: "#/components/schemas/AttemptStatus"
+        score:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: Результат попытки после применения выбора.
+        outcome:
+          $ref: "#/components/schemas/OutcomeType"
+        acceptedChoice:
+          $ref: "#/components/schemas/AcceptedChoice"
+        consequence:
+          $ref: "#/components/schemas/AttemptConsequence"
+        revealedNodes:
+          type: array
+          description: Узлы, раскрытые этим шагом, в порядке появления.
+          items:
+            $ref: "#/components/schemas/AttemptNode"
+        currentNodeId:
+          type: string
+          description: Узел, на котором прохождение остановилось.
+        completedAt:
+          type: string
+          format: date-time
+          description: Заполняется, когда шаг довёл попытку до финала.
+
+    ProgressSummary:
+      type: object
+      description: Сводка по завершённым прохождениям.
+      required:
+        [completedAttempts, completedScenarios, averageScore, bestScore, latestScore]
+      properties:
+        completedAttempts:
+          type: integer
+          format: int32
+          minimum: 0
+        completedScenarios:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Число сценариев, пройденных хотя бы раз.
+        averageScore:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+        bestScore:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+        latestScore:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+
+    ProgressActiveAttempt:
+      type: object
+      description: Незавершённое прохождение. В статистику не входит.
+      required: [attemptId, scenarioId, updatedAt]
+      properties:
+        attemptId:
+          type: string
+        scenarioId:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProgressScenario:
+      type: object
+      description: Прогресс по одному сценарию.
+      required: [scenarioId, attempts, lastScore, bestScore]
+      properties:
+        scenarioId:
+          type: string
+        role:
+          $ref: "#/components/schemas/ScenarioRole"
+        title:
+          type: string
+        attempts:
+          type: integer
+          format: int32
+          description: Количество завершённых прохождений этого сценария.
+        lastScore:
+          type: integer
+          format: int32
+        bestScore:
+          type: integer
+          format: int32
+        previousScore:
+          type: integer
+          format: int32
+          description: Результат предыдущего завершённого прохождения.
+        improvement:
+          type: integer
+          format: int32
+          description: |
+            Разница с предыдущим результатом. Отсутствует, если сценарий
+            пройден только один раз.
+        lastCompletedAt:
+          type: string
+          format: date-time
+        activeAttemptId:
+          type: string
+          description: Незавершённое прохождение этого сценария, если есть.
+
+    ProgressSkill:
+      type: object
+      description: |
+        Накопленное состояние навыка безопасности. Значения агрегированы по
+        уже сделанным выборам и не раскрывают веса непройденных веток.
+      required: [code, value, positive, negative, decisions]
+      properties:
+        code:
+          type: string
+          example: payment_safety
+        value:
+          type: integer
+          format: int32
+          description: Сумма изменений навыка.
+        positive:
+          type: integer
+          format: int32
+        negative:
+          type: integer
+          format: int32
+        decisions:
+          type: integer
+          format: int32
+
+    ProgressWeakRiskTag:
+      type: object
+      description: Мошенническая схема, на которой пользователь ошибался.
+      required: [code, mistakes, weightedSeverity, lastOccurredAt]
+      properties:
+        code:
+          type: string
+          example: phishing_link
+        mistakes:
+          type: integer
+          format: int32
+        weightedSeverity:
+          type: integer
+          format: int32
+          description: Суммарный вес уже допущенных ошибок.
+        lastOccurredAt:
+          type: string
+          format: date-time
+
+    ProgressHistoryEntry:
+      type: object
+      description: Завершённое прохождение в истории.
+      required: [attemptId, scenarioId, score, startedAt, completedAt, decisions]
+      properties:
+        attemptId:
+          type: string
+        scenarioId:
+          type: string
+        role:
+          $ref: "#/components/schemas/ScenarioRole"
+        title:
+          type: string
+        score:
+          type: integer
+          format: int32
+        outcome:
+          $ref: "#/components/schemas/OutcomeType"
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        decisions:
+          type: integer
+          format: int32
+
+    ProgressRecommendation:
+      type: object
+      description: |
+        Предложение следующего сценария. Содержит только публичные метаданные
+        каталога: подсказка не должна раскрывать правильные действия.
+      required: [scenarioId, role, title, difficulty, estimatedMinutes, reason]
+      properties:
+        scenarioId:
+          type: string
+        role:
+          $ref: "#/components/schemas/ScenarioRole"
+        title:
+          type: string
+        difficulty:
+          $ref: "#/components/schemas/ScenarioDifficulty"
+        estimatedMinutes:
+          type: integer
+          format: int32
+        reason:
+          type: string
+          description: |
+            `not_completed` — сценарий ещё не пройден до конца;
+            `improve_score` — пройден, но результат можно улучшить.
+          enum: [not_completed, improve_score]
+
+    Progress:
+      type: object
+      description: |
+        Прогресс анонимного профиля. Пустой профиль получает нулевую сводку
+        и пустые массивы.
+      required:
+        [summary, activeAttempts, scenarioProgress, skills, weakRiskTags, recentAttempts, recommendedScenarios]
+      properties:
+        summary:
+          $ref: "#/components/schemas/ProgressSummary"
+        activeAttempts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgressActiveAttempt"
+        scenarioProgress:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgressScenario"
+        skills:
+          type: array
+          description: Навыки, от самого слабого.
+          items:
+            $ref: "#/components/schemas/ProgressSkill"
+        weakRiskTags:
+          type: array
+          description: Слабые места, от самого опасного.
+          items:
+            $ref: "#/components/schemas/ProgressWeakRiskTag"
+        recentAttempts:
+          type: array
+          description: Последние завершённые прохождения, свежие первыми.
+          items:
+            $ref: "#/components/schemas/ProgressHistoryEntry"
+        recommendedScenarios:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgressRecommendation"
+
+    ErrorResponse:
+      type: object
+      description: Единый формат ошибки для всех endpoint.
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: |
+                Стабильный код ошибки. Клиент опирается на код, а не на текст
+                сообщения: текст может меняться.
+              enum:
+                - NOT_FOUND
+                - INVALID_REQUEST
+                - PAYLOAD_TOO_LARGE
+                - SCENARIO_NOT_FOUND
+                - UNSUPPORTED_ROLE
+                - ATTEMPT_NOT_FOUND
+                - ATTEMPT_FORBIDDEN
+                - ATTEMPT_ALREADY_COMPLETED
+                - STALE_NODE
+                - IDEMPOTENCY_KEY_CONFLICT
+                - CONCURRENT_TRANSITION
+                - NODE_NOT_DECISION
+                - CHOICE_NOT_FOUND
+                - INTERNAL_ERROR
+            message:
+              type: string
+              description: Понятное человеку описание без внутренних подробностей.
+            requestId:
+              type: string
+              description: |
+                Идентификатор запроса, совпадает с заголовком `X-Request-ID`.
+                Используется для поиска записи в логах.

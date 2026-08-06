@@ -1,0 +1,164 @@
+{
+  "id": "seller-payment-already-sent",
+  "version": 1,
+  "slug": "seller-payment-already-sent",
+  "role": "seller",
+  "title": "Оплата уже отправлена",
+  "description": "Продажа товара: покупатель уверяет, что деньги уже перевёл.",
+  "difficulty": "hard",
+  "estimatedMinutes": 5,
+  "startNodeId": "buyer-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "buyer-greeting",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Добрый день, беру. Давайте рассчитаемся напрямую, так быстрее.",
+      "nextNodeId": "payment-decision"
+    },
+    {
+      "id": "payment-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель предлагает оплату мимо площадки. Что вы ответите?",
+      "choices": [
+        {
+          "id": "keep-platform-payment",
+          "label": "Предложить оплату через площадку",
+          "nextNodeId": "code-message",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["off_platform_payment"],
+          "skillEffects": [{ "skill": "payment_safety", "delta": 1 }],
+          "consequence": {
+            "severity": "safe",
+            "title": "Расчёт остаётся прозрачным",
+            "explanation": "Площадка фиксирует оплату и подтверждает её обеим сторонам.",
+            "realWorldRule": "Спешка покупателя не повод менять способ расчёта."
+          }
+        },
+        {
+          "id": "accept-direct-transfer",
+          "label": "Согласиться на прямой перевод",
+          "nextNodeId": "code-message",
+          "safetyScore": -15,
+          "criticality": "medium",
+          "riskTags": ["off_platform_payment"],
+          "skillEffects": [{ "skill": "payment_safety", "delta": -1 }],
+          "consequence": {
+            "severity": "warning",
+            "title": "Подтверждения оплаты не будет",
+            "explanation": "Без записи площадки доказать факт оплаты нечем.",
+            "realWorldRule": "Скриншот перевода не является подтверждением зачисления."
+          }
+        }
+      ]
+    },
+    {
+      "id": "code-message",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Перевод отправил. Мне пришёл код, продиктуйте свой для зачисления.",
+      "nextNodeId": "code-decision"
+    },
+    {
+      "id": "code-decision",
+      "type": "decision",
+      "decisionPrompt": "У вас просят код из СМС. Как поступите?",
+      "choices": [
+        {
+          "id": "refuse-code",
+          "label": "Отказаться называть код",
+          "nextNodeId": "link-message",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["sms_code"],
+          "skillEffects": [{ "skill": "credential_safety", "delta": 1 }],
+          "consequence": {
+            "severity": "safe",
+            "title": "Доступ к счёту сохранён",
+            "explanation": "Код подтверждает операцию по вашему счёту, а не поступление денег.",
+            "realWorldRule": "Код из СМС не нужен никому, кроме вас."
+          }
+        },
+        {
+          "id": "send-code",
+          "label": "Продиктовать код",
+          "nextNodeId": "link-message",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["sms_code"],
+          "skillEffects": [{ "skill": "credential_safety", "delta": -1 }],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Чужая операция подтверждена",
+            "explanation": "Кодом подписывают списание, и деньги уходят со счёта.",
+            "realWorldRule": "Для получения оплаты подтверждение кодом не требуется."
+          }
+        }
+      ]
+    },
+    {
+      "id": "link-message",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Тогда получите деньги сами: войдите в кабинет банка по этой ссылке.",
+      "nextNodeId": "link-decision"
+    },
+    {
+      "id": "link-decision",
+      "type": "decision",
+      "decisionPrompt": "Пришла ссылка на страницу входа в банк. Ваши действия?",
+      "choices": [
+        {
+          "id": "ignore-link",
+          "label": "Не открывать ссылку и проверить счёт в приложении банка",
+          "nextNodeId": "safe-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["phishing_link"],
+          "skillEffects": [{ "skill": "link_hygiene", "delta": 1 }],
+          "consequence": {
+            "severity": "safe",
+            "title": "Поступление проверено у источника",
+            "explanation": "Приход денег виден в самом банке и не требует внешних страниц.",
+            "realWorldRule": "Входите в банк только через официальное приложение."
+          }
+        },
+        {
+          "id": "open-payout-link",
+          "label": "Открыть ссылку и войти в кабинет",
+          "nextNodeId": "unsafe-ending",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": ["phishing_link", "credential_theft"],
+          "skillEffects": [{ "skill": "link_hygiene", "delta": -1 }],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Логин и пароль у мошенника",
+            "explanation": "Поддельная страница входа сохраняет введённые данные.",
+            "realWorldRule": "Ссылка на вход в банк от покупателя — всегда обман."
+          }
+        }
+      ]
+    },
+    {
+      "id": "safe-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Счёт и товар при вас",
+        "explanation": "Вы не передали код и не вошли по чужой ссылке."
+      }
+    },
+    {
+      "id": "unsafe-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Доступ к счёту потерян",
+        "explanation": "Данные для входа оказались у постороннего."
+      }
+    }
+  ]
+}

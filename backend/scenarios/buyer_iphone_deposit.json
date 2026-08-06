@@ -1,0 +1,567 @@
+{
+  "id": "buyer-iphone-deposit",
+  "version": 1,
+  "slug": "buyer-iphone-deposit",
+  "role": "buyer",
+  "title": "Задаток владельцу старого аккаунта",
+  "description": "Покупка iPhone 16 Pro: продавец прикрывается старым профилем, присылает записанное видео и просит задаток на карту другого человека.",
+  "difficulty": "hard",
+  "estimatedMinutes": 7,
+  "startNodeId": "seller-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "seller-greeting",
+      "type": "message",
+      "sender": "seller",
+      "text": "Добрый день! Да, телефон ещё продаётся.",
+      "nextNodeId": "seller-low-price"
+    },
+    {
+      "id": "seller-low-price",
+      "type": "message",
+      "sender": "seller",
+      "text": "Срочно нужны деньги перед переездом, поэтому цена ниже рынка. Телефон практически новый: полный комплект, аккумулятор 98%, в ремонте не был. Посмотрите профиль — я на Авито с 2018 года, отзывы хорошие.",
+      "nextNodeId": "seller-deposit-offer"
+    },
+    {
+      "id": "seller-deposit-offer",
+      "type": "message",
+      "sender": "seller",
+      "text": "Сегодня вечером посмотреть можно, но мне уже пишут ещё два человека. Могу поставить бронь до вечера за возвратный задаток 3000 ₽. При покупке вычтем его из стоимости.",
+      "nextNodeId": "deposit-decision"
+    },
+    {
+      "id": "deposit-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец просит задаток до осмотра. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "agree-deposit",
+          "label": "Согласиться на задаток, чтобы не упустить телефон",
+          "nextNodeId": "third-party-card-system",
+          "safetyScore": -30,
+          "criticality": "high",
+          "riskTags": ["advance_payment", "urgency"],
+          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Предоплата до проверки",
+            "explanation": "Задаток не подтверждает существование товара и переводит риск на покупателя.",
+            "realWorldRule": "Не переводите задаток незнакомому продавцу до проверки товара и безопасного оформления сделки."
+          }
+        },
+        {
+          "id": "request-live-video",
+          "label": "Попросить видеозвонок и показать телефон",
+          "nextNodeId": "seller-recorded-video",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["advance_payment"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Запрошена проверка в реальном времени",
+            "explanation": "Видеозвонок со случайным действием сложнее подменить заранее подготовленным материалом.",
+            "realWorldRule": "Для удалённой проверки просите выполнить непредсказуемое действие в прямом эфире."
+          }
+        },
+        {
+          "id": "refuse-deposit",
+          "label": "Отказаться от задатка и договориться только о встрече",
+          "nextNodeId": "seller-no-reservation",
+          "safetyScore": -15,
+          "criticality": "low",
+          "riskTags": ["advance_payment"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Предоплата отклонена",
+            "explanation": "Деньги сохранены, но подозрительное объявление пока не проверено и не отправлено на модерацию.",
+            "realWorldRule": "До личного осмотра можно отказаться от любой предоплаты."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-recorded-video",
+      "type": "message",
+      "sender": "seller",
+      "text": "Я сейчас на работе, а телефон остался дома. Могу прислать видео, которое снял сегодня утром.",
+      "nextNodeId": "recorded-video-system"
+    },
+    {
+      "id": "recorded-video-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Продавец присылает видеозапись работающего телефона. Нельзя подтвердить, когда, кем и для какого объявления она была сделана.",
+      "nextNodeId": "video-decision"
+    },
+    {
+      "id": "video-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец заменил видеозвонок заранее записанным роликом. Как вы поступите?",
+      "choices": [
+        {
+          "id": "trust-recorded-video",
+          "label": "Считать видео достаточным и перейти к задатку",
+          "nextNodeId": "third-party-card-system",
+          "safetyScore": -20,
+          "criticality": "medium",
+          "riskTags": ["replayed_video", "advance_payment"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Запись принята за живую проверку",
+            "explanation": "Ролик мог быть снят раньше, скопирован из другого объявления или получен от настоящего владельца.",
+            "realWorldRule": "Записанное видео не подтверждает, что товар сейчас находится у собеседника."
+          }
+        },
+        {
+          "id": "request-random-action",
+          "label": "Попросить выполнить случайное действие в видеозвонке",
+          "nextNodeId": "seller-refuses-live-check",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["replayed_video"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Проверка стала непредсказуемой",
+            "explanation": "Просьба показать текущее время и открыть конкретный раздел помогает отличить прямой эфир от старой записи.",
+            "realWorldRule": "Просите показать в кадре заранее не названную деталь товара."
+          }
+        },
+        {
+          "id": "refuse-prepayment-after-video",
+          "label": "Отказаться от предоплаты до личной проверки",
+          "nextNodeId": "seller-trust-pressure",
+          "safetyScore": -10,
+          "criticality": "low",
+          "riskTags": ["advance_payment"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Деньги сохранены",
+            "explanation": "Вы не приняли записанное видео за основание для перевода, но ещё не проверили профиль.",
+            "realWorldRule": "Не платите только потому, что товар убедительно выглядит на видео."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-refuses-live-check",
+      "type": "message",
+      "sender": "seller",
+      "text": "Не понимаю, зачем всё так усложнять. У меня 27 положительных отзывов. Другие покупатели готовы перевести деньги без допроса.",
+      "nextNodeId": "profile-decision"
+    },
+    {
+      "id": "seller-no-reservation",
+      "type": "message",
+      "sender": "seller",
+      "text": "Тогда ничего обещать не могу. Кто первый внесёт бронь, тому и продам.",
+      "nextNodeId": "reservation-decision"
+    },
+    {
+      "id": "reservation-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец отказывается держать товар без перевода. Что вы предложите?",
+      "choices": [
+        {
+          "id": "leave-without-check",
+          "label": "Завершить разговор и искать другой телефон",
+          "nextNodeId": "safe-early-ending",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["urgency"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Сделка прекращена",
+            "explanation": "Вы не потеряли деньги, но профиль не был проверен и жалоба не отправлена.",
+            "realWorldRule": "От подозрительной сделки можно отказаться без попытки переубедить продавца."
+          }
+        },
+        {
+          "id": "offer-platform-reservation",
+          "label": "Предложить резервирование внутри площадки",
+          "nextNodeId": "seller-trust-pressure",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["advance_payment", "off_platform_payment"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Предложен штатный механизм",
+            "explanation": "Вы не соглашаетесь заменять защищённый процесс прямым переводом.",
+            "realWorldRule": "Резервирование и оплата должны отображаться внутри площадки."
+          }
+        },
+        {
+          "id": "yield-to-deposit",
+          "label": "Всё-таки согласиться на задаток",
+          "nextNodeId": "third-party-card-system",
+          "safetyScore": -20,
+          "criticality": "medium",
+          "riskTags": ["advance_payment", "urgency"],
+          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Дефицит повлиял на решение",
+            "explanation": "Страх упустить выгодный товар заставил отказаться от безопасного условия.",
+            "realWorldRule": "Очередь покупателей не делает предоплату безопасной."
+          }
+        }
+      ]
+    },
+    {
+      "id": "third-party-card-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Продавец присылает реквизиты. Получатель перевода — Марина К., хотя в профиле продавец указан как Александр.",
+      "nextNodeId": "seller-wife-card"
+    },
+    {
+      "id": "seller-wife-card",
+      "type": "message",
+      "sender": "seller",
+      "text": "Это карта жены. Мою банк временно заблокировал из-за перевыпуска.",
+      "nextNodeId": "card-owner-decision"
+    },
+    {
+      "id": "card-owner-decision",
+      "type": "decision",
+      "decisionPrompt": "Имя получателя не совпадает с профилем. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "transfer-first-deposit",
+          "label": "Перевести 3000 ₽ на указанную карту",
+          "nextNodeId": "first-deposit-system",
+          "safetyScore": -30,
+          "criticality": "high",
+          "riskTags": ["advance_payment", "third_party_payment"],
+          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Деньги ушли третьему лицу",
+            "explanation": "Связь получателя с продавцом подтверждается только словами собеседника.",
+            "realWorldRule": "Не переводите предоплату на реквизиты человека, не участвующего в сделке."
+          }
+        },
+        {
+          "id": "ask-identity-proof",
+          "label": "Попросить подтвердить связь владельца карты с продавцом",
+          "nextNodeId": "seller-sends-documents",
+          "safetyScore": -10,
+          "criticality": "medium",
+          "riskTags": ["third_party_payment", "stolen_documents"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": 0}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Запрошено слабое доказательство",
+            "explanation": "Фотографии документов можно получить у других людей и использовать в новой переписке.",
+            "realWorldRule": "Документ в чате не доказывает, что собеседник является его владельцем."
+          }
+        },
+        {
+          "id": "refuse-third-party-payment",
+          "label": "Отказаться от перевода третьему лицу",
+          "nextNodeId": "seller-sends-documents",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["third_party_payment"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Перевод остановлен",
+            "explanation": "Вы не приняли бытовое объяснение за подтверждение личности получателя.",
+            "realWorldRule": "Несовпадение имён — повод не платить и проверить всю сделку."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-sends-documents",
+      "type": "message",
+      "sender": "seller",
+      "text": "Вот фотография моего паспорта и свидетельства о браке. Теперь можете не переживать: карта действительно принадлежит моей жене.",
+      "nextNodeId": "seller-trust-pressure"
+    },
+    {
+      "id": "seller-trust-pressure",
+      "type": "message",
+      "sender": "seller",
+      "text": "У меня старый профиль и хорошие отзывы. Какой смысл мне обманывать ради 3000 ₽? Если сомневаетесь, просто не задерживайте других покупателей.",
+      "nextNodeId": "profile-decision"
+    },
+    {
+      "id": "profile-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец использует возраст профиля, отзывы и документы как доказательство. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "trust-profile-and-pay",
+          "label": "Поверить старому профилю и перевести задаток",
+          "nextNodeId": "first-deposit-system",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": ["account_takeover", "advance_payment", "stolen_documents"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Репутация аккаунта принята за личность",
+            "explanation": "Старый профиль может быть взломан, а присланные документы — принадлежать постороннему человеку.",
+            "realWorldRule": "Возраст аккаунта и фотографии документов не заменяют проверку текущего владельца."
+          }
+        },
+        {
+          "id": "inspect-profile-history",
+          "label": "Самостоятельно проверить отзывы и историю профиля",
+          "nextNodeId": "profile-history-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["account_takeover"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Профиль проверен в контексте",
+            "explanation": "Важно не только количество отзывов, но и их возраст, категории товаров и соответствие нынешней активности.",
+            "realWorldRule": "Ищите резкую смену категории, цены, стиля текста и длительный перерыв в активности."
+          }
+        },
+        {
+          "id": "refuse-without-profile-check",
+          "label": "Отказаться от задатка и завершить разговор",
+          "nextNodeId": "safe-refusal-ending",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["advance_payment"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Деньги сохранены",
+            "explanation": "Вы вышли из сделки, но не проверили признаки захвата аккаунта и не отправили жалобу.",
+            "realWorldRule": "Безопасный отказ можно дополнить проверкой профиля и жалобой."
+          }
+        }
+      ]
+    },
+    {
+      "id": "profile-history-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Большинство отзывов оставлено несколько лет назад за недорогую мебель и детские вещи. Стиль нового объявления отличается, имя профиля не совпадает с получателем перевода.",
+      "nextNodeId": "seller-hostile-reply"
+    },
+    {
+      "id": "seller-hostile-reply",
+      "type": "message",
+      "sender": "seller",
+      "text": "Аккаунт мой. Не хотите покупать — так и скажите. Я не обязан проходить проверки ради каждого покупателя.",
+      "nextNodeId": "report-decision"
+    },
+    {
+      "id": "report-decision",
+      "type": "decision",
+      "decisionPrompt": "Вы обнаружили признаки возможного захвата аккаунта. Как завершите общение?",
+      "choices": [
+        {
+          "id": "block-and-report",
+          "label": "Сохранить переписку, заблокировать профиль и отправить жалобу",
+          "nextNodeId": "safe-full-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["account_takeover", "advance_payment"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Подозрительный аккаунт передан на проверку",
+            "explanation": "Сохранённые несоответствия помогают площадке обнаружить захваченный профиль.",
+            "realWorldRule": "Сначала сохраните доказательства и отправьте жалобу, затем блокируйте собеседника."
+          }
+        },
+        {
+          "id": "just-leave",
+          "label": "Просто завершить разговор",
+          "nextNodeId": "safe-quiet-ending",
+          "safetyScore": -10,
+          "criticality": "low",
+          "riskTags": ["account_takeover"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 0}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Деньги сохранены",
+            "explanation": "Вы защитили себя, но профиль может продолжить обманывать других покупателей.",
+            "realWorldRule": "Подозрительный профиль стоит отправить на проверку площадке."
+          }
+        },
+        {
+          "id": "warn-seller-first",
+          "label": "Сначала написать продавцу, что схема раскрыта",
+          "nextNodeId": "safe-warning-ending",
+          "safetyScore": -20,
+          "criticality": "medium",
+          "riskTags": ["account_takeover"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 0}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Мошенник предупреждён заранее",
+            "explanation": "Собеседник может удалить объявление и часть следов до отправки жалобы.",
+            "realWorldRule": "Не предупреждайте мошенника до фиксации доказательств и обращения в поддержку."
+          }
+        }
+      ]
+    },
+    {
+      "id": "first-deposit-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Вы переводите 3000 ₽ на карту Марины К.",
+      "nextNodeId": "seller-more-deposit"
+    },
+    {
+      "id": "seller-more-deposit",
+      "type": "message",
+      "sender": "seller",
+      "text": "Деньги пришли. Но второй покупатель готов сразу оплатить всю сумму. Чтобы я окончательно отказал ему, нужно увеличить бронь ещё на 7000 ₽.",
+      "nextNodeId": "second-deposit-decision"
+    },
+    {
+      "id": "second-deposit-decision",
+      "type": "decision",
+      "decisionPrompt": "После первого перевода продавец требует увеличить задаток. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "send-more-money",
+          "label": "Перевести ещё 7000 ₽, чтобы не потерять первый задаток",
+          "nextNodeId": "unsafe-double-deposit-ending",
+          "safetyScore": -30,
+          "criticality": "high",
+          "riskTags": ["advance_payment", "sunk_cost", "urgency"],
+          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Первая потеря привела ко второй",
+            "explanation": "Желание сохранить уже переведённые деньги не делает новый перевод безопасным.",
+            "realWorldRule": "Оценивайте каждый новый платёж отдельно, не пытаясь отыграть предыдущую потерю."
+          }
+        },
+        {
+          "id": "stop-and-contact-bank",
+          "label": "Отказаться и обратиться в банк",
+          "nextNodeId": "unsafe-first-deposit-ending",
+          "safetyScore": -10,
+          "criticality": "medium",
+          "riskTags": ["advance_payment", "sunk_cost"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Дополнительный ущерб остановлен",
+            "explanation": "Первый задаток уже потерян, но дальнейшие переводы прекращены.",
+            "realWorldRule": "При подозрении сразу прекращайте переводы и связывайтесь с банком самостоятельно."
+          }
+        },
+        {
+          "id": "demand-refund",
+          "label": "Потребовать вернуть первый задаток",
+          "nextNodeId": "seller-refund-link",
+          "safetyScore": -10,
+          "criticality": "medium",
+          "riskTags": ["fake_refund"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 0}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Мошенник получает второй шанс",
+            "explanation": "Просьба о возврате позволяет навязать новую фишинговую страницу.",
+            "realWorldRule": "Спорный перевод оспаривайте через банк, а не через форму продавца."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-refund-link",
+      "type": "message",
+      "sender": "seller",
+      "text": "Хорошо, но банк просит подтвердить возврат. Вот форма, где нужно указать карту получателя.",
+      "nextNodeId": "refund-link-decision"
+    },
+    {
+      "id": "refund-link-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец прислал форму возврата. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "open-refund-form",
+          "label": "Открыть форму и указать реквизиты карты",
+          "nextNodeId": "unsafe-refund-phishing-ending",
+          "safetyScore": -25,
+          "criticality": "high",
+          "riskTags": ["phishing_link", "fake_refund", "credential_theft"],
+          "skillEffects": [{"skill": "credential_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Данные карты переданы фишинговой странице",
+            "explanation": "Для возврата прямого перевода продавцу не нужны срок действия карты и код безопасности.",
+            "realWorldRule": "Не вводите платёжные реквизиты на странице возврата, присланной собеседником."
+          }
+        },
+        {
+          "id": "contact-bank-for-refund",
+          "label": "Не открывать ссылку и обратиться в банк",
+          "nextNodeId": "unsafe-first-deposit-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["fake_refund"],
+          "skillEffects": [{"skill": "credential_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Данные карты сохранены",
+            "explanation": "Вы не допустили кражу реквизитов, хотя первый задаток уже был отправлен.",
+            "realWorldRule": "По вопросам возврата связывайтесь с банком через его официальное приложение."
+          }
+        }
+      ]
+    },
+    {
+      "id": "safe-early-ending",
+      "type": "terminal",
+      "outcome": {"type": "safe", "title": "Предоплата отклонена", "explanation": "Вы сохранили деньги, но не проверили профиль и не отправили жалобу."}
+    },
+    {
+      "id": "safe-refusal-ending",
+      "type": "terminal",
+      "outcome": {"type": "safe", "title": "Деньги сохранены", "explanation": "Вы отказались от задатка, но не проверили признаки возможного захвата аккаунта."}
+    },
+    {
+      "id": "safe-full-ending",
+      "type": "terminal",
+      "outcome": {"type": "safe", "title": "Мошенничество предотвращено", "explanation": "Вы проверили профиль, распознали несоответствия, сохранили переписку и отправили жалобу."}
+    },
+    {
+      "id": "safe-quiet-ending",
+      "type": "terminal",
+      "outcome": {"type": "safe", "title": "Деньги сохранены", "explanation": "Вы отказались от сделки, но не сообщили площадке о подозрительном профиле."}
+    },
+    {
+      "id": "safe-warning-ending",
+      "type": "terminal",
+      "outcome": {"type": "safe", "title": "Деньги сохранены, доказательств стало меньше", "explanation": "Предупреждённый собеседник успел удалить объявление до полноценной фиксации материалов."}
+    },
+    {
+      "id": "unsafe-double-deposit-ending",
+      "type": "terminal",
+      "outcome": {"type": "unsafe", "title": "Потеря 10 000 ₽", "explanation": "После второго перевода продавец перестал отвечать, а объявление исчезло."}
+    },
+    {
+      "id": "unsafe-first-deposit-ending",
+      "type": "terminal",
+      "outcome": {"type": "unsafe", "title": "Потеря 3000 ₽", "explanation": "Вы остановили дальнейший ущерб, но первый задаток уже был переведён мошеннику."}
+    },
+    {
+      "id": "unsafe-refund-phishing-ending",
+      "type": "terminal",
+      "outcome": {"type": "unsafe", "title": "Задаток потерян, реквизиты скомпрометированы", "explanation": "Поддельная форма возврата получила данные карты и создала риск новых списаний."}
+    }
+  ]
+}

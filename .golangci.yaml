@@ -1,0 +1,48 @@
+version: "2"
+
+run:
+  timeout: 3m
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - copyloopvar
+    - errorlint
+    - goconst
+    - gocritic
+    - misspell
+    - nilerr
+    - nolintlint
+    - revive
+    - unconvert
+    - unparam
+    - wastedassign
+    - whitespace
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    revive:
+      rules:
+        - name: exported
+        - name: early-return
+        - name: unused-parameter
+
+  exclusions:
+    presets:
+      - comments
+      - std-error-handling
+    rules:
+      # В тестах допустимы длинные табличные литералы и дублирование строк.
+      - path: _test\.go
+        linters:
+          - goconst
+          - dupl
+
+formatters:
+  enable:
+    - gofmt

@@ -1,0 +1,475 @@
+{
+  "id": "buyer-ps5-delivery",
+  "version": 2,
+  "slug": "buyer-ps5-delivery",
+  "role": "buyer",
+  "title": "Продавец сам оформляет доставку",
+  "description": "Покупка PlayStation 5: продавец объясняет отсутствие доставки техническим сбоем и предлагает оформить заказ вручную.",
+  "difficulty": "medium",
+  "estimatedMinutes": 7,
+  "startNodeId": "seller-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "seller-greeting",
+      "type": "message",
+      "sender": "seller",
+      "text": "Здравствуйте! Да, приставка ещё продаётся.",
+      "nextNodeId": "seller-kit"
+    },
+    {
+      "id": "seller-kit",
+      "type": "message",
+      "sender": "seller",
+      "text": "Полный комплект: два геймпада, коробка и чек.",
+      "nextNodeId": "seller-reason"
+    },
+    {
+      "id": "seller-reason",
+      "type": "message",
+      "sender": "seller",
+      "text": "Недавно собрал себе новый компьютер, а приставкой пользоваться перестал. Теперь просто стоит без дела.",
+      "nextNodeId": "seller-glitch"
+    },
+    {
+      "id": "seller-glitch",
+      "type": "message",
+      "sender": "seller",
+      "text": "Да, доставкой можно. Только сегодня уже обращались покупатели с такой же проблемой: на сайте кнопка доставки у объявления почему-то пропала. Видимо, Авито опять что-то обновляет.",
+      "nextNodeId": "seller-manual-offer"
+    },
+    {
+      "id": "seller-manual-offer",
+      "type": "message",
+      "sender": "seller",
+      "text": "Я могу самостоятельно оформить отправление со своей стороны. Напишите ваш город, и я подберу ближайшие пункты выдачи.",
+      "nextNodeId": "manual-delivery-decision"
+    },
+    {
+      "id": "manual-delivery-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец предлагает оформить доставку вручную. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "leave-deal-early",
+          "label": "Отказаться от сделки",
+          "nextNodeId": "early-exit-message",
+          "safetyScore": -20,
+          "criticality": "low",
+          "riskTags": ["manual_delivery", "off_platform"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Рискованная сделка остановлена",
+            "explanation": "Отказ сохраняет деньги, но не помогает площадке проверить подозрительное объявление.",
+            "realWorldRule": "При подозрении можно сразу уйти, но полезно также заблокировать профиль и отправить жалобу."
+          }
+        },
+        {
+          "id": "wait-for-platform",
+          "label": "Предложить подождать, пока кнопка доставки появится",
+          "nextNodeId": "seller-urgency",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["manual_delivery"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Сделка остаётся внутри площадки",
+            "explanation": "Вы не согласились заменять штатное оформление неизвестной процедурой.",
+            "realWorldRule": "Если функция площадки недоступна, безопаснее дождаться её восстановления."
+          }
+        },
+        {
+          "id": "share-city",
+          "label": "Написать город и продолжить оформление",
+          "nextNodeId": "seller-pvz-options",
+          "safetyScore": -20,
+          "criticality": "medium",
+          "riskTags": ["manual_delivery", "off_platform"],
+          "skillEffects": [{"skill": "channel_safety", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Оформление вышло за пределы площадки",
+            "explanation": "Сам по себе город не является секретом, но согласие на ручную доставку ведёт к неподтверждённому заказу.",
+            "realWorldRule": "Заказ должен создаваться и отображаться внутри приложения площадки."
+          }
+        }
+      ]
+    },
+    {
+      "id": "early-exit-message",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Без оформления заказа внутри Авито я не готов продолжать сделку. Поищу другой вариант.",
+      "nextNodeId": "seller-accepts-early-exit"
+    },
+    {
+      "id": "seller-accepts-early-exit",
+      "type": "message",
+      "sender": "seller",
+      "text": "Хорошо, как скажете.",
+      "nextNodeId": "safe-early-ending"
+    },
+    {
+      "id": "seller-urgency",
+      "type": "message",
+      "sender": "seller",
+      "text": "Боюсь, ждать не получится. Завтра утром уезжаю, а приставку хотел продать сегодня. Мне уже пишет другой покупатель, который готов оформить доставку вручную.",
+      "nextNodeId": "seller-pressure"
+    },
+    {
+      "id": "seller-pressure",
+      "type": "message",
+      "sender": "seller",
+      "text": "Если хотите забрать приставку, нужно решить сейчас. Я со своей стороны всё оформлю, вам останется только подтвердить заказ.",
+      "nextNodeId": "pressure-decision"
+    },
+    {
+      "id": "pressure-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец торопит и ссылается на другого покупателя. Что вы ответите?",
+      "choices": [
+        {
+          "id": "insist-platform-only",
+          "label": "Настоять на оформлении только внутри приложения",
+          "nextNodeId": "seller-support-form",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["urgency", "manual_delivery"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Давление не изменило правила",
+            "explanation": "Срочность и наличие других желающих не делают внешнее оформление безопасным.",
+            "realWorldRule": "Не меняйте безопасный способ сделки из-за дедлайна, поездки продавца или очереди покупателей."
+          }
+        },
+        {
+          "id": "yield-to-manual",
+          "label": "Согласиться на ручное оформление",
+          "nextNodeId": "seller-pvz-options",
+          "safetyScore": -20,
+          "criticality": "medium",
+          "riskTags": ["urgency", "manual_delivery", "off_platform"],
+          "skillEffects": [{"skill": "channel_safety", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Давление сработало",
+            "explanation": "Вы отказались от первоначального безопасного условия из-за искусственной срочности.",
+            "realWorldRule": "Другой покупатель и скорый отъезд — не причина оформлять сделку вне площадки."
+          }
+        },
+        {
+          "id": "leave-after-pressure",
+          "label": "Отказаться от сделки из-за давления",
+          "nextNodeId": "pressure-exit-message",
+          "safetyScore": -10,
+          "criticality": "low",
+          "riskTags": ["urgency"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Давление распознано",
+            "explanation": "Вы сохранили деньги, но не довели защитный протокол до жалобы на профиль.",
+            "realWorldRule": "Если собеседник не принимает безопасные условия, сделку можно завершить."
+          }
+        }
+      ]
+    },
+    {
+      "id": "pressure-exit-message",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Я не готов принимать решение под давлением. Без заказа внутри приложения продолжать сделку не буду.",
+      "nextNodeId": "seller-pressure-exit"
+    },
+    {
+      "id": "seller-pressure-exit",
+      "type": "message",
+      "sender": "seller",
+      "text": "Хорошо. Тогда продам другому покупателю.",
+      "nextNodeId": "safe-mid-ending"
+    },
+    {
+      "id": "seller-support-form",
+      "type": "message",
+      "sender": "seller",
+      "text": "Понимаю. Я написал в поддержку, и мне прислали форму для оформления доставки. Это официальная партнёрская страница, через неё всё должно заработать. Напишите город — я выберу ближайший пункт выдачи.",
+      "nextNodeId": "seller-pvz-options"
+    },
+    {
+      "id": "seller-pvz-options",
+      "type": "message",
+      "sender": "seller",
+      "text": "Для Нижнего Новгорода нашёл два пункта: на улице Белинского и на площади Горького. Какой вам удобнее?",
+      "nextNodeId": "seller-external-link"
+    },
+    {
+      "id": "seller-external-link",
+      "type": "message",
+      "sender": "seller",
+      "text": "Хорошо, выбрал пункт на улице Белинского. Вот страница заказа: [ссылка на учебную имитацию]. Оплачиваете — и мне сразу приходит номер отправления.",
+      "nextNodeId": "external-link-system"
+    },
+    {
+      "id": "external-link-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Продавец отправил внешнюю ссылку. В приложении Авито заказ отсутствует.",
+      "nextNodeId": "external-link-decision"
+    },
+    {
+      "id": "external-link-decision",
+      "type": "decision",
+      "decisionPrompt": "Вам прислали внешнюю страницу оплаты, но заказа в приложении нет. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "open-and-pay",
+          "label": "Открыть ссылку и оплатить заказ",
+          "nextNodeId": "fake-payment-system",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["phishing_link", "off_platform_payment"],
+          "skillEffects": [{"skill": "link_hygiene", "delta": -1}, {"skill": "payment_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Оплата выполнена вне площадки",
+            "explanation": "Внешняя страница не связана с заказом в приложении и может списать деньги напрямую мошеннику.",
+            "realWorldRule": "Платите только в официальном приложении, где виден созданный заказ."
+          }
+        },
+        {
+          "id": "refuse-external-link",
+          "label": "Отказаться от внешней ссылки",
+          "nextNodeId": "seller-link-defense",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["phishing_link"],
+          "skillEffects": [{"skill": "link_hygiene", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Фишинговая ссылка не открыта",
+            "explanation": "Отсутствие заказа внутри приложения означает, что внешняя страница не подтверждает безопасную сделку.",
+            "realWorldRule": "Нет заказа в приложении — нет оплаты."
+          }
+        },
+        {
+          "id": "check-order-in-app",
+          "label": "Сначала проверить наличие заказа в приложении",
+          "nextNodeId": "order-missing-system",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["phishing_link"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Источник проверен самостоятельно",
+            "explanation": "Проверять заказ нужно в приложении, а не по данным и скриншотам собеседника.",
+            "realWorldRule": "Открывайте площадку самостоятельно и сверяйте заказ в личном кабинете."
+          }
+        }
+      ]
+    },
+    {
+      "id": "order-missing-system",
+      "type": "message",
+      "sender": "system",
+      "text": "В разделе заказов ничего нет. Доставка и резервирование товара не оформлены.",
+      "nextNodeId": "seller-order-appears-later"
+    },
+    {
+      "id": "seller-order-appears-later",
+      "type": "message",
+      "sender": "seller",
+      "text": "Так и должно быть. Заказ появится только после оплаты на странице. Это новый порядок оформления через партнёрскую доставку.",
+      "nextNodeId": "post-check-decision"
+    },
+    {
+      "id": "post-check-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец объясняет отсутствие заказа новым порядком. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "believe-and-pay",
+          "label": "Поверить объяснению и оплатить по ссылке",
+          "nextNodeId": "fake-payment-system",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": ["phishing_link", "off_platform_payment"],
+          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Результат проверки проигнорирован",
+            "explanation": "Заказ не найден в приложении, но оплата всё равно отправляется на неподтверждённую страницу.",
+            "realWorldRule": "Объяснение собеседника не отменяет результат независимой проверки."
+          }
+        },
+        {
+          "id": "refuse-after-check",
+          "label": "Отказаться от оплаты вне приложения",
+          "nextNodeId": "seller-link-defense",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["phishing_link"],
+          "skillEffects": [{"skill": "link_hygiene", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Проверка учтена",
+            "explanation": "Вы не позволили продавцу заменить отсутствие заказа убедительным объяснением.",
+            "realWorldRule": "Не оплачивайте товар, пока заказ не появился в официальном приложении."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-link-defense",
+      "type": "message",
+      "sender": "seller",
+      "text": "Ссылка официальная, её прислала поддержка. Через приложение сейчас оформить всё равно не получится. Если не хотите — продам другому человеку.",
+      "nextNodeId": "safe-protocol-decision"
+    },
+    {
+      "id": "safe-protocol-decision",
+      "type": "decision",
+      "decisionPrompt": "Вы решили не оплачивать товар. Как завершите общение?",
+      "choices": [
+        {
+          "id": "block-and-report",
+          "label": "Заблокировать продавца и отправить жалобу",
+          "nextNodeId": "safe-full-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["phishing_link", "off_platform_payment"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Защитный протокол завершён",
+            "explanation": "Жалоба передаёт площадке ссылку и профиль для проверки и может защитить других пользователей.",
+            "realWorldRule": "После попытки фишинга сохраните переписку, заблокируйте профиль и отправьте жалобу."
+          }
+        },
+        {
+          "id": "just-leave-quietly",
+          "label": "Просто завершить разговор",
+          "nextNodeId": "safe-quiet-ending",
+          "safetyScore": -10,
+          "criticality": "low",
+          "riskTags": ["phishing_link"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 0}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Деньги сохранены",
+            "explanation": "Вы вышли из сделки, но не сообщили площадке о подозрительном профиле.",
+            "realWorldRule": "Безопасный отказ полезно дополнить блокировкой и жалобой."
+          }
+        }
+      ]
+    },
+    {
+      "id": "fake-payment-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Вы открыли внешнюю страницу и ввели данные карты. После нажатия «Оплатить» появилось сообщение: «Операция не завершена. Для возврата средств обратитесь в поддержку».",
+      "nextNodeId": "seller-refund-offer"
+    },
+    {
+      "id": "seller-refund-offer",
+      "type": "message",
+      "sender": "seller",
+      "text": "Видимо, операция зависла. Ничего страшного — нажмите кнопку «Получить возврат», и деньги сразу вернутся на карту.",
+      "nextNodeId": "refund-decision"
+    },
+    {
+      "id": "refund-decision",
+      "type": "decision",
+      "decisionPrompt": "На внешней странице предлагают оформить возврат. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "refund-on-fake-page",
+          "label": "Оформить возврат через присланную страницу",
+          "nextNodeId": "unsafe-double-loss-ending",
+          "safetyScore": -25,
+          "criticality": "high",
+          "riskTags": ["phishing_link", "fake_refund"],
+          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Повторная операция на фальшивой странице",
+            "explanation": "Кнопка возврата может запустить ещё одно списание, а не возврат денег.",
+            "realWorldRule": "Возврат оформляется только через официальное приложение банка или площадки."
+          }
+        },
+        {
+          "id": "contact-bank-and-platform",
+          "label": "Закрыть страницу и обратиться в банк и поддержку Авито",
+          "nextNodeId": "unsafe-first-loss-ending",
+          "safetyScore": -10,
+          "criticality": "medium",
+          "riskTags": ["phishing_link", "fake_refund"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Дальнейший ущерб ограничен",
+            "explanation": "Обращение в официальные службы правильно, но первый платёж уже отправлен мошеннику.",
+            "realWorldRule": "После ввода данных на подозрительном сайте немедленно блокируйте карту и сообщайте банку об операции."
+          }
+        }
+      ]
+    },
+    {
+      "id": "safe-early-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Сделка прекращена вовремя",
+        "explanation": "Вы сохранили деньги, но не проверили и не отправили жалобу на потенциально мошеннический профиль."
+      }
+    },
+    {
+      "id": "safe-mid-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Давление не сработало",
+        "explanation": "Вы отказались менять безопасные условия сделки, но не отправили жалобу на профиль."
+      }
+    },
+    {
+      "id": "safe-full-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Мошенничество предотвращено",
+        "explanation": "Вы настояли на оформлении внутри площадки, не оплатили товар по внешней ссылке и сообщили о подозрительном профиле."
+      }
+    },
+    {
+      "id": "safe-quiet-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Деньги сохранены",
+        "explanation": "Вы отказались от внешней оплаты, но не сообщили площадке о подозрительной ссылке."
+      }
+    },
+    {
+      "id": "unsafe-double-loss-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Деньги потеряны",
+        "explanation": "Страница оплаты была поддельной, а попытка возврата могла привести к повторному списанию."
+      }
+    },
+    {
+      "id": "unsafe-first-loss-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Потеря 38 000 ₽",
+        "explanation": "Вы остановили дальнейшее взаимодействие, но первый платёж уже ушёл на поддельную страницу."
+      }
+    }
+  ]
+}

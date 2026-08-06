@@ -1,0 +1,164 @@
+{
+  "id": "buyer-fake-delivery",
+  "version": 1,
+  "slug": "buyer-fake-delivery",
+  "role": "buyer",
+  "title": "Ссылка на доставку",
+  "description": "Покупка товара с доставкой: продавец предлагает оплату по ссылке.",
+  "difficulty": "medium",
+  "estimatedMinutes": 4,
+  "startNodeId": "greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "greeting",
+      "type": "message",
+      "sender": "seller",
+      "text": "Здравствуйте! Товар свободен, готов отправить сегодня.",
+      "nextNodeId": "channel-decision"
+    },
+    {
+      "id": "channel-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец просит продолжить в мессенджере. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "stay-on-platform",
+          "label": "Остаться в чате площадки",
+          "nextNodeId": "delivery-message",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["off_platform"],
+          "skillEffects": [{ "skill": "channel_safety", "delta": 1 }],
+          "consequence": {
+            "severity": "safe",
+            "title": "Переписка сохранена",
+            "explanation": "История общения остаётся внутри площадки и доступна поддержке.",
+            "realWorldRule": "Ведите сделку в том сервисе, где нашли объявление."
+          }
+        },
+        {
+          "id": "move-to-messenger",
+          "label": "Перейти в мессенджер",
+          "nextNodeId": "delivery-message",
+          "safetyScore": -20,
+          "criticality": "high",
+          "riskTags": ["off_platform"],
+          "skillEffects": [{ "skill": "channel_safety", "delta": -1 }],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Защита площадки потеряна",
+            "explanation": "Вне сервиса переписка не подтвердит договорённости при споре.",
+            "realWorldRule": "Просьба срочно уйти в мессенджер — типичный первый шаг обмана."
+          }
+        }
+      ]
+    },
+    {
+      "id": "delivery-message",
+      "type": "message",
+      "sender": "seller",
+      "text": "Оформил доставку. Подтвердите получение по ссылке из сообщения.",
+      "nextNodeId": "link-decision"
+    },
+    {
+      "id": "link-decision",
+      "type": "decision",
+      "decisionPrompt": "Пришла ссылка на страницу оплаты. Ваши действия?",
+      "choices": [
+        {
+          "id": "check-in-app",
+          "label": "Проверить заказ в приложении площадки",
+          "nextNodeId": "prepay-message",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["phishing_link"],
+          "skillEffects": [{ "skill": "link_hygiene", "delta": 1 }],
+          "consequence": {
+            "severity": "safe",
+            "title": "Ссылка не понадобилась",
+            "explanation": "Настоящая доставка видна в самом приложении, без внешних страниц.",
+            "realWorldRule": "Проверяйте статус заказа в приложении, а не по присланной ссылке."
+          }
+        },
+        {
+          "id": "open-payment-link",
+          "label": "Открыть ссылку и ввести данные карты",
+          "nextNodeId": "prepay-message",
+          "safetyScore": -25,
+          "criticality": "high",
+          "riskTags": ["phishing_link", "card_data"],
+          "skillEffects": [{ "skill": "link_hygiene", "delta": -1 }],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Данные карты на чужой странице",
+            "explanation": "Копия страницы оплаты передаёт реквизиты мошеннику.",
+            "realWorldRule": "Для получения денег номер карты и CVC не нужны никогда."
+          }
+        }
+      ]
+    },
+    {
+      "id": "prepay-message",
+      "type": "message",
+      "sender": "seller",
+      "text": "Чтобы я точно отправил, переведите предоплату напрямую.",
+      "nextNodeId": "prepay-decision"
+    },
+    {
+      "id": "prepay-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец просит предоплату мимо площадки. Что вы решите?",
+      "choices": [
+        {
+          "id": "refuse-prepay",
+          "label": "Отказаться и платить через площадку",
+          "nextNodeId": "safe-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["off_platform_payment"],
+          "skillEffects": [{ "skill": "payment_safety", "delta": 1 }],
+          "consequence": {
+            "severity": "safe",
+            "title": "Оплата под защитой",
+            "explanation": "Деньги проходят через сервис и возвращаются при проблеме.",
+            "realWorldRule": "Платите только встроенными способами оплаты."
+          }
+        },
+        {
+          "id": "send-prepay",
+          "label": "Перевести предоплату на карту",
+          "nextNodeId": "unsafe-ending",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": ["off_platform_payment"],
+          "skillEffects": [{ "skill": "payment_safety", "delta": -1 }],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Перевод не вернуть",
+            "explanation": "Прямой перевод человеку не покрывается защитой сделки.",
+            "realWorldRule": "Предоплата на карту незнакомцу — деньги без гарантий."
+          }
+        }
+      ]
+    },
+    {
+      "id": "safe-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Сделка прошла безопасно",
+        "explanation": "Вы остались в защищённом канале и не передали лишних данных."
+      }
+    },
+    {
+      "id": "unsafe-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Деньги потеряны",
+        "explanation": "Оплата ушла вне площадки, вернуть её через поддержку нельзя."
+      }
+    }
+  ]
+}

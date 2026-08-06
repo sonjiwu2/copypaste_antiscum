@@ -1,0 +1,461 @@
+{
+  "id": "seller-gpu-return-swap",
+  "version": 1,
+  "slug": "seller-gpu-return-swap",
+  "role": "seller",
+  "title": "Подмена видеокарты при возврате",
+  "description": "Продажа RTX 4070 с доставкой: покупатель заявляет о неисправности и возвращает внешне похожую видеокарту.",
+  "difficulty": "hard",
+  "estimatedMinutes": 8,
+  "startNodeId": "buyer-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "buyer-greeting",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Здравствуйте. Видеокарта ещё продаётся? Она после ремонта или майнинга?",
+      "nextNodeId": "buyer-ready-to-order"
+    },
+    {
+      "id": "buyer-ready-to-order",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Если всё работает, готов оформить доставку. Сильно проверять в пункте не буду, главное, чтобы изображение выводила.",
+      "nextNodeId": "order-created-system"
+    },
+    {
+      "id": "order-created-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Покупатель оформил заказ через доставку площадки. Нужно подготовить видеокарту к отправке.",
+      "nextNodeId": "shipping-proof-decision"
+    },
+    {
+      "id": "shipping-proof-decision",
+      "type": "decision",
+      "decisionPrompt": "Как подготовить дорогую видеокарту к отправке?",
+      "choices": [
+        {
+          "id": "ship-without-recording",
+          "label": "Сразу упаковать и отправить",
+          "nextNodeId": "shipping-completed-system",
+          "safetyScore": -25,
+          "criticality": "high",
+          "riskTags": ["return_swap", "missing_evidence"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Исходное состояние не зафиксировано",
+            "explanation": "Без серийного номера и проверки работы будет трудно доказать, какой экземпляр был отправлен.",
+            "realWorldRule": "Перед отправкой дорогой техники фиксируйте серийный номер, состояние, работу и упаковку."
+          }
+        },
+        {
+          "id": "photograph-exterior-only",
+          "label": "Сфотографировать только внешний вид",
+          "nextNodeId": "shipping-completed-system",
+          "safetyScore": -15,
+          "criticality": "medium",
+          "riskTags": ["return_swap", "incomplete_evidence"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": 0}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Доказательства неполные",
+            "explanation": "Внешне одинаковые устройства нельзя надёжно различить без серийного номера.",
+            "realWorldRule": "Фотографируйте уникальные идентификаторы и пломбы, а не только корпус."
+          }
+        },
+        {
+          "id": "record-test-serial-packing",
+          "label": "Записать работу, серийный номер и упаковку",
+          "nextNodeId": "full-proof-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["return_swap"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Исходный товар идентифицирован",
+            "explanation": "Непрерывная запись связывает работоспособность, серийный номер и конкретную упаковку.",
+            "realWorldRule": "Сохраняйте оригинальную запись проверки и упаковки без монтажа."
+          }
+        }
+      ]
+    },
+    {
+      "id": "full-proof-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Вы записываете дату, внешний вид, пломбы, серийный номер, запуск и тест видеокарты, а затем непрерывно снимаете упаковку.",
+      "nextNodeId": "shipping-completed-system"
+    },
+    {
+      "id": "shipping-completed-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Видеокарта отправлена и через несколько дней получена покупателем.",
+      "nextNodeId": "buyer-claims-defect"
+    },
+    {
+      "id": "buyer-claims-defect",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Видеокарта не работает. На экране артефакты, компьютер зависает. Хочу оформить возврат.",
+      "nextNodeId": "return-response-decision"
+    },
+    {
+      "id": "return-response-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель заявил о неисправности. Что вы ответите?",
+      "choices": [
+        {
+          "id": "accept-return-immediately",
+          "label": "Сразу согласиться на возврат",
+          "nextNodeId": "buyer-packs-return",
+          "safetyScore": -15,
+          "criticality": "medium",
+          "riskTags": ["return_swap", "missing_verification"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Возврат принят без идентификации",
+            "explanation": "Покупатель не показал неисправность и серийный номер возвращаемого экземпляра.",
+            "realWorldRule": "До возврата запросите подтверждение дефекта и идентификатор товара."
+          }
+        },
+        {
+          "id": "request-defect-and-serial",
+          "label": "Попросить видео неисправности и серийный номер",
+          "nextNodeId": "buyer-refuses-proof",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["return_swap"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Запрошена идентификация возврата",
+            "explanation": "Серийный номер позволяет сравнить полученный экземпляр с отправленным.",
+            "realWorldRule": "При споре запрашивайте видео дефекта и фотографию серийного номера."
+          }
+        },
+        {
+          "id": "deny-return-immediately",
+          "label": "Сразу отказать, потому что товар работал",
+          "nextNodeId": "buyer-threatens-review",
+          "safetyScore": -20,
+          "criticality": "medium",
+          "riskTags": ["return_dispute", "missing_verification"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Спор начат без сбора фактов",
+            "explanation": "Категоричный отказ не отменяет процедуру возврата и усложняет спокойную фиксацию доказательств.",
+            "realWorldRule": "Сначала соберите идентификаторы и доказательства, затем формулируйте позицию."
+          }
+        }
+      ]
+    },
+    {
+      "id": "buyer-packs-return",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Спасибо. Я уже всё упаковал и сегодня отправлю обратно.",
+      "nextNodeId": "pre-return-decision"
+    },
+    {
+      "id": "buyer-refuses-proof",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Я уже всё отключил и упаковал. Не хочу ещё раз рисковать компьютером. Коробка заклеена, а сегодня последний день возврата.",
+      "nextNodeId": "pre-return-decision"
+    },
+    {
+      "id": "buyer-threatens-review",
+      "type": "message",
+      "sender": "buyer",
+      "text": "У меня есть право вернуть неисправный товар. Если продолжите отказывать, напишу в поддержку и оставлю отрицательный отзыв. Возврат уже оформлен.",
+      "nextNodeId": "pre-return-decision"
+    },
+    {
+      "id": "pre-return-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель отправляет товар обратно, не показывая серийный номер. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "wait-and-check-home",
+          "label": "Дождаться возврата и проверить видеокарту дома",
+          "nextNodeId": "home-unboxing-system",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["return_swap", "missing_evidence"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Цепочка получения не фиксируется",
+            "explanation": "После ухода из пункта выдачи будет трудно доказать, что подменённый товар находился именно в возвратной коробке.",
+            "realWorldRule": "Получение и вскрытие спорного возврата снимайте непрерывно."
+          }
+        },
+        {
+          "id": "notify-support-before-return",
+          "label": "Заранее сообщить поддержке о риске подмены",
+          "nextNodeId": "support-registers-risk",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["return_swap"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Риск зафиксирован заранее",
+            "explanation": "Обращение создаёт временную отметку до получения возврата и фиксирует отказ покупателя показать номер.",
+            "realWorldRule": "Открывайте обращение до получения спорного возврата, а не после обнаружения подмены."
+          }
+        },
+        {
+          "id": "demand-cancel-return",
+          "label": "Потребовать отменить возврат",
+          "nextNodeId": "buyer-return-already-approved",
+          "safetyScore": -25,
+          "criticality": "medium",
+          "riskTags": ["return_dispute"],
+          "skillEffects": [{"skill": "verification_discipline", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Требование не останавливает процесс",
+            "explanation": "Решение площадки и логистика возврата не изменяются от требования в чате.",
+            "realWorldRule": "Следуйте процедуре площадки и сосредоточьтесь на доказательствах."
+          }
+        }
+      ]
+    },
+    {
+      "id": "home-unboxing-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Вы забираете коробку и вскрываете её дома. Внутри неисправная видеокарта с другим серийным номером, но момент получения не зафиксирован.",
+      "nextNodeId": "insufficient-proof-decision"
+    },
+    {
+      "id": "support-registers-risk",
+      "type": "message",
+      "sender": "system",
+      "text": "Поддержка регистрирует обращение и рекомендует непрерывно снять получение, состояние упаковки, вскрытие и серийный номер.",
+      "nextNodeId": "return-arrived-system"
+    },
+    {
+      "id": "buyer-return-already-approved",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Возврат уже одобрен площадкой. Если не заберёте посылку вовремя, это будет вашей проблемой.",
+      "nextNodeId": "return-arrived-system"
+    },
+    {
+      "id": "return-arrived-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Возврат прибыл в пункт выдачи.",
+      "nextNodeId": "return-unboxing-decision"
+    },
+    {
+      "id": "return-unboxing-decision",
+      "type": "decision",
+      "decisionPrompt": "Как получить и проверить возврат?",
+      "choices": [
+        {
+          "id": "open-return-at-home",
+          "label": "Забрать коробку и открыть её дома",
+          "nextNodeId": "home-unboxing-system",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["return_swap", "missing_evidence"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Момент получения не зафиксирован",
+            "explanation": "После вскрытия дома нельзя показать непрерывную связь между посылкой и найденным товаром.",
+            "realWorldRule": "Начинайте запись до получения коробки и не прерывайте её до сверки номера."
+          }
+        },
+        {
+          "id": "record-continuous-unboxing",
+          "label": "Непрерывно снять получение, вскрытие и серийный номер",
+          "nextNodeId": "serial-mismatch-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["return_swap"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Цепочка получения сохранена",
+            "explanation": "Одна запись связывает маркировку посылки, упаковку, вскрытие и другой серийный номер.",
+            "realWorldRule": "Не прерывайте запись и сохраните исходный файл без монтажа."
+          }
+        },
+        {
+          "id": "ask-employee-confirmation",
+          "label": "Попросить сотрудника устно подтвердить содержимое",
+          "nextNodeId": "employee-confirmation-system",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["return_swap", "weak_evidence"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Подтверждён только тип предмета",
+            "explanation": "Сотрудник может подтвердить наличие видеокарты, но не её идентичность и работоспособность.",
+            "realWorldRule": "Устный комментарий не заменяет серийный номер и непрерывную фиксацию."
+          }
+        }
+      ]
+    },
+    {
+      "id": "employee-confirmation-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Сотрудник подтверждает, что в коробке лежит видеокарта без внешних повреждений. Дома вы обнаруживаете другой серийный номер и неисправность.",
+      "nextNodeId": "insufficient-proof-decision"
+    },
+    {
+      "id": "serial-mismatch-system",
+      "type": "message",
+      "sender": "system",
+      "text": "На непрерывной записи видно: серийный номер возвращённой видеокарты не совпадает с номером отправленного товара.",
+      "nextNodeId": "evidence-action-decision"
+    },
+    {
+      "id": "insufficient-proof-decision",
+      "type": "decision",
+      "decisionPrompt": "Подмена обнаружена, но момент получения зафиксирован недостаточно. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "refund-and-abandon-dispute",
+          "label": "Вернуть деньги и отказаться от спора",
+          "nextNodeId": "unsafe-lost-gpu-ending",
+          "safetyScore": -20,
+          "criticality": "high",
+          "riskTags": ["return_swap"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Подмена осталась без оспаривания",
+            "explanation": "Покупатель получает деньги, а у продавца остаётся чужая неисправная видеокарта.",
+            "realWorldRule": "Даже с неполными доказательствами сохраните материалы и обратитесь в официальную поддержку."
+          }
+        },
+        {
+          "id": "contact-support-with-materials",
+          "label": "Обратиться в поддержку с имеющимися материалами",
+          "nextNodeId": "unsafe-weak-evidence-ending",
+          "safetyScore": 0,
+          "criticality": "medium",
+          "riskTags": ["return_swap", "missing_evidence"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": 1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Спор открыт, доказательств недостаточно",
+            "explanation": "Обращение правильно, но отсутствует непрерывная связь между возвратной посылкой и найденным товаром.",
+            "realWorldRule": "Передавайте даже неполные доказательства, не выдавая предположения за установленные факты."
+          }
+        },
+        {
+          "id": "threaten-buyer",
+          "label": "Потребовать доплату и пригрозить публикацией данных",
+          "nextNodeId": "unsafe-threat-ending",
+          "safetyScore": -20,
+          "criticality": "high",
+          "riskTags": ["return_dispute", "privacy_threat"],
+          "skillEffects": [{"skill": "channel_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Разбирательство осложнено угрозами",
+            "explanation": "Конфликтные сообщения не доказывают подмену и могут нарушать правила площадки.",
+            "realWorldRule": "Не публикуйте чужие данные и ведите спор только через официальные каналы."
+          }
+        }
+      ]
+    },
+    {
+      "id": "evidence-action-decision",
+      "type": "decision",
+      "decisionPrompt": "Несовпадение номера доказано. Как использовать материалы?",
+      "choices": [
+        {
+          "id": "accuse-buyer-first",
+          "label": "Сначала обвинить покупателя и пригрозить публикацией",
+          "nextNodeId": "safe-accusation-ending",
+          "safetyScore": -20,
+          "criticality": "medium",
+          "riskTags": ["return_dispute", "privacy_threat"],
+          "skillEffects": [{"skill": "channel_safety", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Доказательства раскрыты преждевременно",
+            "explanation": "Покупатель может изменить объяснение, а угроза публикацией данных создаёт новый риск.",
+            "realWorldRule": "Сначала передайте оригиналы поддержке, не предупреждая другую сторону о деталях доказательств."
+          }
+        },
+        {
+          "id": "preserve-originals-and-report",
+          "label": "Сохранить оригиналы и обратиться в поддержку",
+          "nextNodeId": "safe-full-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["return_swap"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Полная доказательная цепочка сохранена",
+            "explanation": "Исходные записи показывают состояние до отправки и другой экземпляр внутри возвратной посылки.",
+            "realWorldRule": "Передавайте оригинальные файлы, номера заказов и хронологию через официальную поддержку."
+          }
+        },
+        {
+          "id": "edit-video-before-report",
+          "label": "Обрезать видео и оставить только другой серийный номер",
+          "nextNodeId": "safe-edited-video-ending",
+          "safetyScore": -25,
+          "criticality": "medium",
+          "riskTags": ["return_swap", "edited_evidence"],
+          "skillEffects": [{"skill": "evidence_preservation", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Контекст доказательства потерян",
+            "explanation": "После обрезки не видно, что запись началась до получения и не прерывалась при вскрытии.",
+            "realWorldRule": "Не заменяйте оригинал смонтированным фрагментом."
+          }
+        }
+      ]
+    },
+    {
+      "id": "safe-full-ending",
+      "type": "terminal",
+      "outcome": {"type": "safe", "title": "Попытка подмены зафиксирована", "explanation": "Вы сохранили полную цепочку доказательств и передали оригиналы площадке."}
+    },
+    {
+      "id": "safe-accusation-ending",
+      "type": "terminal",
+      "outcome": {"type": "safe", "title": "Доказательства сохранены неидеально", "explanation": "Подмена зафиксирована, но преждевременные обвинения и угрозы осложнили официальный спор."}
+    },
+    {
+      "id": "safe-edited-video-ending",
+      "type": "terminal",
+      "outcome": {"type": "safe", "title": "Подмена обнаружена", "explanation": "Вы сохранили товарные номера, но монтаж ослабил доказательство непрерывности получения."}
+    },
+    {
+      "id": "unsafe-lost-gpu-ending",
+      "type": "terminal",
+      "outcome": {"type": "unsafe", "title": "Потеря видеокарты стоимостью 48 000 ₽", "explanation": "Покупатель получил возврат денег, а у вас осталась чужая неисправная видеокарта."}
+    },
+    {
+      "id": "unsafe-weak-evidence-ending",
+      "type": "terminal",
+      "outcome": {"type": "unsafe", "title": "Подмена обнаружена слишком поздно", "explanation": "Спор открыт, но отсутствие непрерывной записи сильно ослабило доказательства."}
+    },
+    {
+      "id": "unsafe-threat-ending",
+      "type": "terminal",
+      "outcome": {"type": "unsafe", "title": "Товар потерян, спор осложнён", "explanation": "Подмена не доказана надлежащим образом, а угрозы создали дополнительный риск для продавца."}
+    }
+  ]
+}
