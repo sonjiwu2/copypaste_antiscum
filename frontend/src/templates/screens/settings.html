@@ -1,0 +1,283 @@
+<sc-if value="{{ isSettings }}">
+  <div
+    data-screen-label="Settings"
+    style="
+      max-width: 840px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeUp 220ms ease-out both;
+    "
+  >
+    <div style="display: flex; align-items: center; gap: 14px">
+      <span
+        style="
+          display: grid;
+          place-items: center;
+          width: 56px;
+          height: 56px;
+          background: #0a1728;
+          border: 2px solid #16324c;
+        "
+        >{{ gearBig }}</span
+      >
+      <div>
+        <h1
+          style="
+            margin: 0;
+            font-family: 'Pixelify Sans', monospace;
+            font-weight: 700;
+            font-size: 40px;
+            line-height: 1;
+            letter-spacing: 0.03em;
+            color: #eaf4ff;
+          "
+        >
+          SETTINGS
+        </h1>
+        <p style="margin: 8px 0 0; font-size: 19px; color: #8fa3bd">
+          Everything here is stored in this browser only.
+        </p>
+      </div>
+    </div>
+
+    <section style="padding: 16px; background: #0a1728; border: 2px solid #16324c">
+      <h2
+        style="
+          margin: 0 0 12px;
+          font-family: 'Pixelify Sans', monospace;
+          font-size: 22px;
+          letter-spacing: 0.08em;
+          color: #2fe0a0;
+        "
+      >
+        SOUND
+      </h2>
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 12px;
+          background: #0c1826;
+          border: 2px solid #1b3550;
+          flex-wrap: wrap;
+        "
+      >
+        <span style="font-size: 19px; color: #dce9f7">Interface sounds</span>
+        <button
+          type="button"
+          onClick="{{ toggleSound }}"
+          aria-pressed="{{ soundOn }}"
+          style="display:flex;align-items:center;gap:10px;padding:8px 14px;min-height:44px;background:{{ soundSwBg }};border:2px solid {{ soundBd }};color:{{ soundFg }};font-family:'Pixelify Sans',monospace;font-size:19px;letter-spacing:.06em;cursor:pointer"
+        >
+          {{ soundIcon2 }}{{ soundLabel }}
+        </button>
+      </div>
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-top: 10px;
+          padding: 12px;
+          background: #0c1826;
+          border: 2px solid #1b3550;
+          flex-wrap: wrap;
+        "
+      >
+        <label for="vol" style="font-size: 19px; color: #dce9f7">Effects volume</label>
+        <input
+          id="vol"
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          value="{{ volPct }}"
+          onChange="{{ onVol }}"
+          style="flex: 1; min-width: 180px; height: 20px; cursor: pointer"
+        />
+        <span
+          style="
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 19px;
+            color: #2fe0a0;
+            min-width: 56px;
+            text-align: right;
+          "
+          >{{ volPct }}%</span
+        >
+        <button
+          type="button"
+          onClick="{{ previewSound }}"
+          style="
+            padding: 9px 16px;
+            min-height: 44px;
+            background: #0c1826;
+            border: 2px solid #2a5175;
+            color: #bbd2ea;
+            font-family: 'VT323', monospace;
+            font-size: 19px;
+            cursor: pointer;
+          "
+          style-hover="border-color:#2FE0A0;color:#2FE0A0"
+        >
+          PLAY TEST SOUND
+        </button>
+      </div>
+    </section>
+
+    <section style="padding: 16px; background: #0a1728; border: 2px solid #16324c">
+      <h2
+        style="
+          margin: 0 0 12px;
+          font-family: 'Pixelify Sans', monospace;
+          font-size: 22px;
+          letter-spacing: 0.08em;
+          color: #4fd8e8;
+        "
+      >
+        MOTION &amp; INTERFACE
+      </h2>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <sc-for list="{{ settingRows }}" as="r" hint-placeholder-count="3">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 16px;
+              padding: 12px;
+              background: #0c1826;
+              border: 2px solid #1b3550;
+              flex-wrap: wrap;
+            "
+          >
+            <span style="flex: 1; min-width: 180px"
+              ><span style="display: block; font-size: 19px; color: #dce9f7">{{ r.label }}</span
+              ><span style="display: block; font-size: 17px; color: #7a93ae"
+                >{{ r.hint }}</span
+              ></span
+            >
+            <span style="display: flex; gap: 8px; flex-wrap: wrap">
+              <sc-for list="{{ r.opts }}" as="o" hint-placeholder-count="2">
+                <button
+                  type="button"
+                  onClick="{{ o.on }}"
+                  aria-pressed="{{ o.active }}"
+                  style="padding:8px 14px;min-height:44px;background:{{ o.bg }};border:2px solid {{ o.bd }};color:{{ o.fg }};font-family:'VT323',monospace;font-size:19px;letter-spacing:.06em;cursor:pointer"
+                >
+                  {{ o.label }}
+                </button>
+              </sc-for>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="padding: 16px; background: #0a1728; border: 2px solid #16324c">
+      <h2
+        style="
+          margin: 0 0 4px;
+          font-family: 'Pixelify Sans', monospace;
+          font-size: 22px;
+          letter-spacing: 0.08em;
+          color: #9fb6d0;
+        "
+      >
+        DEVELOPER PREVIEW
+      </h2>
+      <p style="margin: 0 0 12px; font-size: 17px; color: #7a93ae">
+        Force a state on the mission hub to check how it looks.
+      </p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <sc-for list="{{ demoStates }}" as="d" hint-placeholder-count="4">
+          <button
+            type="button"
+            onClick="{{ d.on }}"
+            aria-pressed="{{ d.active }}"
+            style="padding:9px 14px;min-height:44px;background:{{ d.bg }};border:2px solid {{ d.bd }};color:{{ d.fg }};font-family:'VT323',monospace;font-size:19px;letter-spacing:.06em;cursor:pointer"
+          >
+            {{ d.label }}
+          </button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="padding: 16px; background: #1a0908; border: 2px solid #6b2029">
+      <h2
+        style="
+          margin: 0 0 4px;
+          font-family: 'Pixelify Sans', monospace;
+          font-size: 22px;
+          letter-spacing: 0.08em;
+          color: #f0857b;
+        "
+      >
+        DEMO DATA
+      </h2>
+      <p
+        style="
+          margin: 0 0 12px;
+          font-family: Inter, system-ui, sans-serif;
+          font-size: 13.5px;
+          line-height: 1.6;
+          color: #e0a9a5;
+        "
+      >
+        Resetting clears XP, badges, streak and any saved attempt from this browser. No account or
+        server data is touched.
+      </p>
+      <button
+        type="button"
+        onClick="{{ openReset }}"
+        style="
+          padding: 12px 22px;
+          min-height: 48px;
+          background: #f0524b;
+          border: 2px solid #ff9088;
+          color: #2a0605;
+          font-family: 'Pixelify Sans', monospace;
+          font-weight: 700;
+          font-size: 20px;
+          letter-spacing: 0.05em;
+          cursor: pointer;
+          box-shadow: 3px 3px 0 #8c1a18;
+        "
+        style-active="transform:translate(2px,2px);box-shadow:1px 1px 0 #8C1A18"
+      >
+        RESET DEMO DATA
+      </button>
+    </section>
+
+    <section style="padding: 16px; background: #0a1728; border: 2px solid #16324c">
+      <h2
+        style="
+          margin: 0 0 8px;
+          font-family: 'Pixelify Sans', monospace;
+          font-size: 22px;
+          letter-spacing: 0.08em;
+          color: #9fb6d0;
+        "
+      >
+        CREDITS
+      </h2>
+      <p
+        style="
+          margin: 0;
+          font-family: Inter, system-ui, sans-serif;
+          font-size: 13.5px;
+          line-height: 1.65;
+          color: #93a9c4;
+        "
+      >
+        Pixel sprites and icons in this prototype are drawn as original inline pixel grids. Display
+        type: Pixelify Sans; interface type: VT323 (Google Fonts, OFL) — placeholders for Monocraft
+        and Miracode. Interface sounds are generated in the browser, so no third-party audio is
+        bundled. All scenarios, names and conversations are fictional.
+      </p>
+    </section>
+  </div>
+</sc-if>

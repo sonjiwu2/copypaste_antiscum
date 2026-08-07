@@ -1,0 +1,74 @@
+<sc-if value="{{ modal }}">
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-label="{{ modalTitle }}"
+    onClick="{{ backdropClick }}"
+    style="
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(3, 8, 14, 0.78);
+    "
+  >
+    <div
+      style="width:100%;max-width:{{ modalW }};max-height:86vh;overflow:auto;background:#0A1728;border:2px solid {{ modalBd }};box-shadow:6px 6px 0 rgba(0,0,0,.6);animation:pop 160ms ease-out both"
+    >
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 14px 16px;
+          border-bottom: 2px solid #16324c;
+        "
+      >
+        {{ modalIcon }}
+        <h2
+          style="
+            flex: 1;
+            margin: 0;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 24px;
+            color: #eaf4ff;
+          "
+        >
+          {{ modalTitle }}
+        </h2>
+        <button
+          type="button"
+          onClick="{{ closeModal }}"
+          aria-label="Close"
+          style="
+            width: 36px;
+            height: 36px;
+            background: #0c1826;
+            border: 2px solid #22415f;
+            color: #8fa3bd;
+            font-size: 19px;
+            cursor: pointer;
+          "
+          style-hover="border-color:#F0524B;color:#F0524B"
+        >
+          ✕
+        </button>
+      </div>
+      <div style="padding: 16px">{{ modalBody }}</div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; padding: 0 16px 16px">
+        <sc-for list="{{ modalActions }}" as="a" hint-placeholder-count="2">
+          <button
+            type="button"
+            onClick="{{ a.on }}"
+            style="padding:11px 20px;min-height:46px;background:{{ a.bg }};border:2px solid {{ a.bd }};color:{{ a.fg }};font-family:'Pixelify Sans',monospace;font-weight:700;font-size:19px;letter-spacing:.05em;cursor:pointer;box-shadow:3px 3px 0 {{ a.sh }}"
+            style-active="transform:translate(2px,2px);box-shadow:1px 1px 0 #071019"
+          >
+            {{ a.label }}
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</sc-if>

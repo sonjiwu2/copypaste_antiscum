@@ -1,0 +1,25 @@
+@font-face {
+  font-family: 'Monocraft';
+  src: url('/fonts/Monocraft.otf') format('opentype'),
+       url('/fonts/Monocraft.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  font-family: 'Monocraft', monospace;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}

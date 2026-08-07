@@ -1,0 +1,139 @@
+<sc-if value="{{ isScenarios }}">
+  <div data-screen-label="Scenarios" style="animation: fadeUp 220ms ease-out both">
+    <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 6px">
+      <span
+        style="
+          display: grid;
+          place-items: center;
+          width: 56px;
+          height: 56px;
+          background: #1e0c10;
+          border: 2px solid #6b2029;
+        "
+        >{{ targetIcon }}</span
+      >
+      <div>
+        <h1
+          style="
+            margin: 0;
+            font-family: 'Pixelify Sans', monospace;
+            font-weight: 700;
+            font-size: 40px;
+            line-height: 1;
+            letter-spacing: 0.03em;
+            color: #eaf4ff;
+          "
+        >
+          SCENARIOS
+        </h1>
+        <p style="margin: 8px 0 0; font-size: 19px; color: #8fa3bd">
+          Full conversations you can play end to end. Every reply changes what happens next.
+        </p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:{{ duoGrid }};gap:16px;margin-top:18px">
+      <sc-for list="{{ scenarios }}" as="s" hint-placeholder-count="2">
+        <article
+          style="display:flex;flex-direction:column;background:#0A1728;border:2px solid {{ s.bd }};padding:18px;transition:transform 140ms"
+          style-hover="transform:translateY(-3px)"
+        >
+          <div style="display: flex; gap: 14px">
+            <span
+              style="flex:none;display:grid;place-items:center;width:64px;height:64px;background:#08151F;border:2px solid {{ s.bd }}"
+              >{{ s.icon }}</span
+            >
+            <span style="flex: 1; min-width: 0">
+              <span
+                style="
+                  display: block;
+                  font-family: 'Pixelify Sans', monospace;
+                  font-size: 26px;
+                  color: #eaf4ff;
+                "
+                >{{ s.t }}</span
+              >
+              <span
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 9px;
+                  margin-top: 5px;
+                  font-size: 17px;
+                  letter-spacing: 0.08em;
+                "
+                ><span style="color:{{ s.roleFg }}">YOU ARE THE {{ s.role }}</span
+                ><span style="color: #3e5470">|</span
+                ><span style="color:{{ s.difFg }}">{{ s.dif }}</span
+                ><span style="color: #3e5470">|</span
+                ><span style="color: #f5c84a">+{{ s.xp }} XP</span></span
+              >
+            </span>
+          </div>
+          <p
+            style="
+              margin: 14px 0 0;
+              font-family: Inter, system-ui, sans-serif;
+              font-size: 14px;
+              line-height: 1.6;
+              color: #a8bfd6;
+            "
+          >
+            {{ s.d }}
+          </p>
+          <div
+            style="margin-top: 14px; padding: 12px; background: #08131f; border: 2px solid #16324c"
+          >
+            <span style="display: block; font-size: 16px; letter-spacing: 0.1em; color: #5e7794"
+              >OPENING MESSAGE</span
+            >
+            <span style="display: flex; gap: 10px; margin-top: 8px">
+              <span
+                style="flex:none;display:grid;place-items:center;width:36px;height:36px;background:{{ s.avBg }};border:2px solid {{ s.avBd }}"
+                >{{ s.avatar }}</span
+              >
+              <span
+                style="
+                  flex: 1;
+                  padding: 9px 12px;
+                  background: #101e2e;
+                  border: 2px solid #1b3550;
+                  font-size: 18px;
+                  line-height: 1.4;
+                  color: #dce9f7;
+                "
+                >{{ s.first }}</span
+              >
+            </span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 7px; margin-top: 14px">
+            <sc-for list="{{ s.obj }}" as="o" hint-placeholder-count="3">
+              <span
+                style="
+                  display: flex;
+                  gap: 9px;
+                  align-items: flex-start;
+                  font-size: 18px;
+                  line-height: 1.3;
+                  color: #9fb6d0;
+                "
+                >{{ o.icon }}{{ o.t }}</span
+              >
+            </sc-for>
+          </div>
+          <button
+            type="button"
+            onClick="{{ s.start }}"
+            style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;padding:13px;min-height:50px;background:{{ s.btnBg }};border:2px solid {{ s.btnBd }};color:{{ s.btnFg }};font-family:'Pixelify Sans',monospace;font-weight:700;font-size:21px;letter-spacing:.06em;cursor:pointer;box-shadow:3px 3px 0 {{ s.btnSh }}"
+            style-active="transform:translate(2px,2px);box-shadow:1px 1px 0 #071019"
+          >
+            {{ s.cta }} <span aria-hidden="true">›</span>
+          </button>
+        </article>
+      </sc-for>
+    </div>
+    <p style="margin: 16px 0 0; font-size: 18px; color: #5e7794">
+      Other missions in the hub open a preview of their briefing and run on one of these two sample
+      conversations in this prototype.
+    </p>
+  </div>
+</sc-if>

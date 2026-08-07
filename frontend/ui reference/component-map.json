@@ -1,0 +1,440 @@
+{
+  "source": "ChatGPT Image 4 авг. 2026 г., 19_35_36 (1).png",
+  "source_size": [1586, 992],
+  "components": [
+    {
+      "name": "01_app-header.png",
+      "component": "AppHeader",
+      "bbox": [0, 0, 1586, 81],
+      "size": [1586, 81],
+      "normalized": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1.0,
+        "height": 0.081653
+      },
+      "notes": "Логотип, навигация, XP, профиль.",
+      "path": "references/components/01_app-header.png"
+    },
+    {
+      "name": "02_brand-block.png",
+      "component": "BrandMark",
+      "bbox": [28, 5, 314, 76],
+      "size": [286, 71],
+      "normalized": {
+        "x": 0.017654,
+        "y": 0.00504,
+        "width": 0.180328,
+        "height": 0.071573
+      },
+      "notes": "Щит и название продукта.",
+      "path": "references/components/02_brand-block.png"
+    },
+    {
+      "name": "03_primary-navigation.png",
+      "component": "PrimaryNavigation",
+      "bbox": [370, 7, 1048, 81],
+      "size": [678, 74],
+      "normalized": {
+        "x": 0.233291,
+        "y": 0.007056,
+        "width": 0.427491,
+        "height": 0.074597
+      },
+      "notes": "Missions, Progress, Rules, Settings.",
+      "path": "references/components/03_primary-navigation.png"
+    },
+    {
+      "name": "04_profile-status.png",
+      "component": "ProfileStatus",
+      "bbox": [1181, 5, 1576, 76],
+      "size": [395, 71],
+      "normalized": {
+        "x": 0.744641,
+        "y": 0.00504,
+        "width": 0.249054,
+        "height": 0.071573
+      },
+      "notes": "Энергия/XP, аватар, имя и уровень.",
+      "path": "references/components/04_profile-status.png"
+    },
+    {
+      "name": "05_hero-banner.png",
+      "component": "HeroBanner",
+      "bbox": [20, 101, 1064, 398],
+      "size": [1044, 297],
+      "normalized": {
+        "x": 0.01261,
+        "y": 0.101815,
+        "width": 0.65826,
+        "height": 0.299395
+      },
+      "notes": "Главный баннер целиком.",
+      "path": "references/components/05_hero-banner.png"
+    },
+    {
+      "name": "06_hero-copy.png",
+      "component": "HeroCopy",
+      "bbox": [40, 119, 390, 378],
+      "size": [350, 259],
+      "normalized": {
+        "x": 0.025221,
+        "y": 0.11996,
+        "width": 0.220681,
+        "height": 0.261089
+      },
+      "notes": "Заголовок, описание и CTA.",
+      "path": "references/components/06_hero-copy.png"
+    },
+    {
+      "name": "07_hero-artwork.png",
+      "component": "HeroArtwork",
+      "bbox": [430, 104, 1058, 394],
+      "size": [628, 290],
+      "normalized": {
+        "x": 0.271122,
+        "y": 0.104839,
+        "width": 0.395965,
+        "height": 0.292339
+      },
+      "notes": "Город, персонаж, щит и собака.",
+      "path": "references/components/07_hero-artwork.png"
+    },
+    {
+      "name": "08_buyer-role-card.png",
+      "component": "BuyerRoleCard",
+      "bbox": [20, 412, 523, 700],
+      "size": [503, 288],
+      "normalized": {
+        "x": 0.01261,
+        "y": 0.415323,
+        "width": 0.31715,
+        "height": 0.290323
+      },
+      "notes": "Карточка роли покупателя.",
+      "path": "references/components/08_buyer-role-card.png"
+    },
+    {
+      "name": "09_seller-role-card.png",
+      "component": "SellerRoleCard",
+      "bbox": [532, 412, 1064, 700],
+      "size": [532, 288],
+      "normalized": {
+        "x": 0.335435,
+        "y": 0.415323,
+        "width": 0.335435,
+        "height": 0.290323
+      },
+      "notes": "Карточка роли продавца.",
+      "path": "references/components/09_seller-role-card.png"
+    },
+    {
+      "name": "10_featured-missions-panel.png",
+      "component": "FeaturedMissionsPanel",
+      "bbox": [1083, 100, 1527, 452],
+      "size": [444, 352],
+      "normalized": {
+        "x": 0.68285,
+        "y": 0.100806,
+        "width": 0.27995,
+        "height": 0.354839
+      },
+      "notes": "Панель рекомендуемых миссий.",
+      "path": "references/components/10_featured-missions-panel.png"
+    },
+    {
+      "name": "11_featured-mission-messages.png",
+      "component": "FeaturedMissionRow",
+      "bbox": [1093, 151, 1504, 220],
+      "size": [411, 69],
+      "normalized": {
+        "x": 0.689155,
+        "y": 0.152218,
+        "width": 0.259142,
+        "height": 0.069556
+      },
+      "notes": "Suspicious Messages.",
+      "path": "references/components/11_featured-mission-messages.png"
+    },
+    {
+      "name": "12_featured-mission-payments.png",
+      "component": "FeaturedMissionRow",
+      "bbox": [1093, 224, 1504, 293],
+      "size": [411, 69],
+      "normalized": {
+        "x": 0.689155,
+        "y": 0.225806,
+        "width": 0.259142,
+        "height": 0.069556
+      },
+      "notes": "Safe Payments.",
+      "path": "references/components/12_featured-mission-payments.png"
+    },
+    {
+      "name": "13_featured-mission-listings.png",
+      "component": "FeaturedMissionRow",
+      "bbox": [1093, 298, 1504, 367],
+      "size": [411, 69],
+      "normalized": {
+        "x": 0.689155,
+        "y": 0.300403,
+        "width": 0.259142,
+        "height": 0.069556
+      },
+      "notes": "Fake Listings.",
+      "path": "references/components/13_featured-mission-listings.png"
+    },
+    {
+      "name": "14_featured-mission-account.png",
+      "component": "FeaturedMissionRow",
+      "bbox": [1093, 372, 1504, 441],
+      "size": [411, 69],
+      "normalized": {
+        "x": 0.689155,
+        "y": 0.375,
+        "width": 0.259142,
+        "height": 0.069556
+      },
+      "notes": "Account Security.",
+      "path": "references/components/14_featured-mission-account.png"
+    },
+    {
+      "name": "15_progress-panel.png",
+      "component": "ProgressPanel",
+      "bbox": [1083, 462, 1527, 668],
+      "size": [444, 206],
+      "normalized": {
+        "x": 0.68285,
+        "y": 0.465726,
+        "width": 0.27995,
+        "height": 0.207661
+      },
+      "notes": "Level, XP bar и статистика.",
+      "path": "references/components/15_progress-panel.png"
+    },
+    {
+      "name": "16_progress-level-bar.png",
+      "component": "LevelProgress",
+      "bbox": [1097, 496, 1507, 556],
+      "size": [410, 60],
+      "normalized": {
+        "x": 0.691677,
+        "y": 0.5,
+        "width": 0.258512,
+        "height": 0.060484
+      },
+      "notes": "Текущий уровень и XP progress bar.",
+      "path": "references/components/16_progress-level-bar.png"
+    },
+    {
+      "name": "17_leaderboard-panel.png",
+      "component": "LeaderboardPanel",
+      "bbox": [1083, 677, 1527, 883],
+      "size": [444, 206],
+      "normalized": {
+        "x": 0.68285,
+        "y": 0.68246,
+        "width": 0.27995,
+        "height": 0.207661
+      },
+      "notes": "Таблица лидеров.",
+      "path": "references/components/17_leaderboard-panel.png"
+    },
+    {
+      "name": "18_tip-of-the-day-card.png",
+      "component": "TipOfTheDayCard",
+      "bbox": [20, 713, 379, 883],
+      "size": [359, 170],
+      "normalized": {
+        "x": 0.01261,
+        "y": 0.71875,
+        "width": 0.226356,
+        "height": 0.171371
+      },
+      "notes": "Совет дня.",
+      "path": "references/components/18_tip-of-the-day-card.png"
+    },
+    {
+      "name": "19_daily-challenge-card.png",
+      "component": "DailyChallengeCard",
+      "bbox": [387, 713, 596, 883],
+      "size": [209, 170],
+      "normalized": {
+        "x": 0.24401,
+        "y": 0.71875,
+        "width": 0.131778,
+        "height": 0.171371
+      },
+      "notes": "Ежедневное испытание.",
+      "path": "references/components/19_daily-challenge-card.png"
+    },
+    {
+      "name": "20_weekly-quiz-card.png",
+      "component": "WeeklyQuizCard",
+      "bbox": [605, 713, 845, 883],
+      "size": [240, 170],
+      "normalized": {
+        "x": 0.381463,
+        "y": 0.71875,
+        "width": 0.151324,
+        "height": 0.171371
+      },
+      "notes": "Еженедельная викторина.",
+      "path": "references/components/20_weekly-quiz-card.png"
+    },
+    {
+      "name": "21_rewards-card.png",
+      "component": "RewardsCard",
+      "bbox": [853, 713, 1064, 883],
+      "size": [211, 170],
+      "normalized": {
+        "x": 0.537831,
+        "y": 0.71875,
+        "width": 0.133039,
+        "height": 0.171371
+      },
+      "notes": "Награды.",
+      "path": "references/components/21_rewards-card.png"
+    },
+    {
+      "name": "22_app-footer.png",
+      "component": "AppFooter",
+      "bbox": [0, 902, 1586, 992],
+      "size": [1586, 90],
+      "normalized": {
+        "x": 0.0,
+        "y": 0.909274,
+        "width": 1.0,
+        "height": 0.090726
+      },
+      "notes": "Нижняя информационная панель.",
+      "path": "references/components/22_app-footer.png"
+    }
+  ],
+  "small_assets": [
+    {
+      "name": "brand-shield.png",
+      "component": "BrandShield",
+      "bbox": [36, 9, 101, 72],
+      "size": [65, 63],
+      "path": "assets/icons-and-tiles/brand-shield.png"
+    },
+    {
+      "name": "profile-avatar.png",
+      "component": "ProfileAvatar",
+      "bbox": [1320, 11, 1380, 72],
+      "size": [60, 61],
+      "path": "assets/icons-and-tiles/profile-avatar.png"
+    },
+    {
+      "name": "buyer-role-icon.png",
+      "component": "BuyerRoleIcon",
+      "bbox": [456, 426, 502, 474],
+      "size": [46, 48],
+      "path": "assets/icons-and-tiles/buyer-role-icon.png"
+    },
+    {
+      "name": "seller-role-icon.png",
+      "component": "SellerRoleIcon",
+      "bbox": [978, 424, 1027, 475],
+      "size": [49, 51],
+      "path": "assets/icons-and-tiles/seller-role-icon.png"
+    },
+    {
+      "name": "featured-message-tile.png",
+      "component": "MessageMissionTile",
+      "bbox": [1095, 153, 1161, 218],
+      "size": [66, 65],
+      "path": "assets/icons-and-tiles/featured-message-tile.png"
+    },
+    {
+      "name": "featured-payment-tile.png",
+      "component": "PaymentMissionTile",
+      "bbox": [1095, 226, 1161, 292],
+      "size": [66, 66],
+      "path": "assets/icons-and-tiles/featured-payment-tile.png"
+    },
+    {
+      "name": "featured-listing-tile.png",
+      "component": "ListingMissionTile",
+      "bbox": [1095, 300, 1161, 366],
+      "size": [66, 66],
+      "path": "assets/icons-and-tiles/featured-listing-tile.png"
+    },
+    {
+      "name": "featured-security-tile.png",
+      "component": "SecurityMissionTile",
+      "bbox": [1095, 374, 1161, 440],
+      "size": [66, 66],
+      "path": "assets/icons-and-tiles/featured-security-tile.png"
+    },
+    {
+      "name": "tip-lock-art.png",
+      "component": "TipLockArtwork",
+      "bbox": [46, 758, 157, 858],
+      "size": [111, 100],
+      "path": "assets/icons-and-tiles/tip-lock-art.png"
+    },
+    {
+      "name": "daily-trophy-art.png",
+      "component": "DailyTrophyArtwork",
+      "bbox": [395, 729, 473, 810],
+      "size": [78, 81],
+      "path": "assets/icons-and-tiles/daily-trophy-art.png"
+    },
+    {
+      "name": "weekly-calendar-art.png",
+      "component": "WeeklyCalendarArtwork",
+      "bbox": [621, 729, 704, 811],
+      "size": [83, 82],
+      "path": "assets/icons-and-tiles/weekly-calendar-art.png"
+    },
+    {
+      "name": "rewards-gift-art.png",
+      "component": "RewardsGiftArtwork",
+      "bbox": [860, 729, 940, 809],
+      "size": [80, 80],
+      "path": "assets/icons-and-tiles/rewards-gift-art.png"
+    },
+    {
+      "name": "leaderboard-avatar-1.png",
+      "component": "LeaderboardAvatar",
+      "bbox": [1140, 720, 1171, 753],
+      "size": [31, 33],
+      "path": "assets/icons-and-tiles/leaderboard-avatar-1.png"
+    },
+    {
+      "name": "leaderboard-avatar-2.png",
+      "component": "LeaderboardAvatar",
+      "bbox": [1140, 761, 1171, 793],
+      "size": [31, 32],
+      "path": "assets/icons-and-tiles/leaderboard-avatar-2.png"
+    },
+    {
+      "name": "leaderboard-avatar-3.png",
+      "component": "LeaderboardAvatar",
+      "bbox": [1140, 801, 1171, 834],
+      "size": [31, 33],
+      "path": "assets/icons-and-tiles/leaderboard-avatar-3.png"
+    },
+    {
+      "name": "footer-shield.png",
+      "component": "FooterShield",
+      "bbox": [31, 913, 67, 953],
+      "size": [36, 40],
+      "path": "assets/icons-and-tiles/footer-shield.png"
+    }
+  ],
+  "transparent_characters": [
+    {
+      "name": "buyer-character-transparent.png",
+      "path": "assets/characters/buyer-character-transparent.png",
+      "recommended_component": "BuyerCharacter"
+    },
+    {
+      "name": "seller-character-transparent.png",
+      "path": "assets/characters/seller-character-transparent.png",
+      "recommended_component": "SellerCharacter"
+    }
+  ]
+}

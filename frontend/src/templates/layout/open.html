@@ -1,0 +1,172 @@
+<div
+  data-motion="{{ motionAttr }}"
+  style="--acc:#2FE0A0;min-height:100vh;background:#070E18;color:#D6E5F5;font-family:'VT323',ui-monospace,monospace;font-size:18px;display:flex;flex-direction:column;filter:{{ uiFilter }}"
+>
+  <header
+    style="
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      background: #050b14;
+      border-bottom: 2px solid #14283e;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding: 10px 22px;
+      flex-wrap: wrap;
+    "
+  >
+    <button
+      type="button"
+      onClick="{{ goHome }}"
+      aria-label="Anti-Scam Trainer home"
+      style="
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        color: inherit;
+      "
+    >
+      <span
+        style="
+          width: 44px;
+          height: 44px;
+          display: grid;
+          place-items: center;
+          background: #08202a;
+          border: 2px solid #1e6b58;
+        "
+        >{{ logoIcon }}</span
+      >
+      <span
+        style="
+          text-align: left;
+          font-family: 'Pixelify Sans', monospace;
+          font-weight: 700;
+          line-height: 1;
+          letter-spacing: 0.06em;
+        "
+      >
+        <span style="display: block; font-size: 23px; color: #eaf4ff">ANTI-SCAM</span>
+        <span style="display: block; font-size: 23px; color: #8fa3bd">TRAINER</span>
+      </span>
+    </button>
+    <nav
+      aria-label="Main"
+      style="display:{{ navDisplay }};align-items:stretch;gap:6px;margin-left:8px"
+    >
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+        <button
+          type="button"
+          onClick="{{ n.go }}"
+          aria-current="{{ n.cur }}"
+          style="display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;padding:8px 14px 0;cursor:pointer;font-family:'VT323',monospace;font-size:20px;letter-spacing:.1em;color:{{ n.color }}"
+          style-hover="color:#EAF4FF"
+        >
+          <span style="display: flex; align-items: center; gap: 9px"
+            >{{ n.icon }}<span>{{ n.label }}</span></span
+          >
+          <span
+            style="width:100%;height:3px;background:{{ n.bar }};transition:background 140ms"
+          ></span>
+        </button>
+      </sc-for>
+    </nav>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 14px">
+      <div style="display: flex; align-items: center; gap: 7px" title="Daily streak">
+        {{ fireIcon }}<span style="font-size: 20px; color: #f5a03a"
+          ><b style="font-family: 'Pixelify Sans', monospace">{{ streak }}</b>
+          <span style="color: #8fa3bd; font-size: 17px; letter-spacing: 0.08em"
+            >DAY STREAK</span
+          ></span
+        >
+      </div>
+      <div style="display: flex; align-items: center; gap: 7px" title="Total XP">
+        {{ shieldSm }}<span
+          style="font-family: 'Pixelify Sans', monospace; font-size: 19px; color: #2fe0a0"
+          >{{ xp }} XP</span
+        >
+      </div>
+      <button
+        type="button"
+        onClick="{{ toggleSound }}"
+        aria-pressed="{{ soundOn }}"
+        aria-label="Toggle sound"
+        style="display:flex;align-items:center;gap:8px;padding:7px 12px;min-height:38px;background:#08202A;border:2px solid {{ soundBd }};color:{{ soundFg }};font-family:'VT323',monospace;font-size:19px;letter-spacing:.08em;cursor:pointer;box-shadow:2px 2px 0 #04121A"
+        style-hover="background:#0C2C38"
+        style-active="transform:translate(1px,1px);box-shadow:1px 1px 0 #04121A"
+      >
+        {{ soundIcon }}<span>{{ soundLabel }}</span>
+      </button>
+      <div style="position: relative" ref="{{ profRef }}">
+        <button
+          type="button"
+          onClick="{{ toggleProfile }}"
+          aria-haspopup="menu"
+          aria-expanded="{{ profileOpen }}"
+          aria-label="Profile menu"
+          style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 6px 3px 3px;
+            background: #0c1826;
+            border: 2px solid #22415f;
+            cursor: pointer;
+            color: #8fa3bd;
+            font-size: 18px;
+          "
+          style-hover="border-color:#2FE0A0"
+        >
+          <span
+            style="
+              width: 38px;
+              height: 38px;
+              display: grid;
+              place-items: center;
+              background: #132b3d;
+            "
+            >{{ avatarIcon }}</span
+          ><span aria-hidden="true">▾</span>
+        </button>
+        <sc-if value="{{ profileOpen }}">
+          <div
+            role="menu"
+            style="
+              position: absolute;
+              right: 0;
+              top: 52px;
+              min-width: 210px;
+              background: #0c1826;
+              border: 2px solid #22415f;
+              box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+              padding: 6px;
+              animation: pop 140ms ease-out both;
+              z-index: 70;
+            "
+          >
+            <sc-for list="{{ profileItems }}" as="p" hint-placeholder-count="4">
+              <button
+                type="button"
+                role="menuitem"
+                onClick="{{ p.go }}"
+                style="display:flex;width:100%;align-items:center;gap:10px;padding:9px 10px;min-height:40px;background:none;border:none;color:{{ p.color }};font-family:'VT323',monospace;font-size:19px;letter-spacing:.06em;text-align:left;cursor:pointer"
+                style-hover="background:#132B3D"
+              >
+                {{ p.icon }}<span>{{ p.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </header>
+
+  <main
+    style="flex:1;width:100%;max-width:1640px;margin:0 auto;padding:20px 22px 28px;zoom:{{ uiZoom }}"
+  ></main>
+</div>

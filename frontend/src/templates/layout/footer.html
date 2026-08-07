@@ -1,0 +1,51 @@
+<footer
+  style="position:{{ stick }};bottom:0;z-index:40;background:#050B14;border-top:2px solid #14283E;display:flex;align-items:center;gap:26px;padding:8px 22px;flex-wrap:wrap"
+>
+  <span style="display: flex; align-items: center; gap: 10px"
+    >{{ heartIcon }}<span
+      style="font-family: 'Pixelify Sans', monospace; font-size: 19px; color: #eaf4ff"
+      >100 HP</span
+    ></span
+  >
+  <span style="display: flex; align-items: center; gap: 10px"
+    >{{ shieldSm4 }}<span style="font-size: 19px; letter-spacing: 0.1em; color: #8fa3bd"
+      >SHARP INSTINCTS</span
+    >
+    <span style="display: flex; gap: 3px"
+      ><sc-for list="{{ instinct }}" as="s" hint-placeholder-count="10"
+        ><span style="width:16px;height:12px;background:{{ s.c }}"></span></sc-for
+    ></span>
+  </span>
+  <span style="display: flex; align-items: center; gap: 10px; margin-left: auto">
+    <span style="font-size: 18px; letter-spacing: 0.1em; color: #5e7794">BADGES</span>
+    <sc-for list="{{ badgeStrip }}" as="b" hint-placeholder-count="4">
+      <button
+        type="button"
+        onClick="{{ b.open }}"
+        aria-label="{{ b.name }}"
+        style="display:grid;place-items:center;width:34px;height:34px;background:#0C1826;border:2px solid {{ b.bd }};cursor:pointer;transition:transform 120ms"
+        style-hover="transform:translateY(-2px)"
+      >
+        {{ b.icon }}
+      </button>
+    </sc-for>
+    <button
+      type="button"
+      onClick="{{ goProgress }}"
+      style="
+        padding: 4px 9px;
+        min-height: 34px;
+        background: #0c1826;
+        border: 2px solid #1b3550;
+        color: #7a93ae;
+        font-family: 'VT323', monospace;
+        font-size: 18px;
+        cursor: pointer;
+      "
+      style-hover="border-color:#2FE0A0;color:#2FE0A0"
+    >
+      +{{ moreBadges }}
+    </button>
+  </span>
+  <span style="font-size: 18px; color: #3e5470">v1.0.0</span>
+</footer>

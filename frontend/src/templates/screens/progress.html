@@ -1,0 +1,418 @@
+<sc-if value="{{ isProgress }}">
+  <div
+    data-screen-label="Progress"
+    style="display: flex; flex-direction: column; gap: 18px; animation: fadeUp 220ms ease-out both"
+  >
+    <div style="display: flex; align-items: center; gap: 14px">
+      <span
+        style="
+          display: grid;
+          place-items: center;
+          width: 56px;
+          height: 56px;
+          background: #0a1728;
+          border: 2px solid #1e4670;
+        "
+        >{{ barsBig }}</span
+      >
+      <div>
+        <h1
+          style="
+            margin: 0;
+            font-family: 'Pixelify Sans', monospace;
+            font-weight: 700;
+            font-size: 40px;
+            line-height: 1;
+            letter-spacing: 0.03em;
+            color: #eaf4ff;
+          "
+        >
+          YOUR PROGRESS
+        </h1>
+        <p style="margin: 8px 0 0; font-size: 19px; color: #8fa3bd">
+          Everything you have trained so far, and what to practise next.
+        </p>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:{{ statGrid }};gap:14px">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 16px;
+          background: #0a1728;
+          border: 2px solid #1e6b58;
+        "
+      >
+        <span
+          style="
+            flex: none;
+            width: 74px;
+            height: 74px;
+            display: grid;
+            place-items: center;
+            background: #08202a;
+            border: 2px solid #1e6b58;
+            text-align: center;
+          "
+          ><span
+            ><span style="display: block; font-size: 16px; letter-spacing: 0.1em; color: #7a93ae"
+              >LVL</span
+            ><span
+              style="
+                display: block;
+                font-family: 'Pixelify Sans', monospace;
+                font-weight: 700;
+                font-size: 28px;
+                line-height: 1;
+                color: #2fe0a0;
+              "
+              >{{ lvlPad }}</span
+            ></span
+          ></span
+        >
+        <span style="flex: 1; min-width: 0">
+          <span
+            style="
+              display: block;
+              font-family: 'Pixelify Sans', monospace;
+              font-size: 22px;
+              color: #eaf4ff;
+            "
+            >{{ xpInLvl }} / 1000 XP</span
+          >
+          <span
+            style="
+              display: block;
+              margin-top: 7px;
+              height: 16px;
+              background: #08151f;
+              border: 2px solid #1b3550;
+              overflow: hidden;
+            "
+            ><span
+              style="display:block;height:100%;background:#2FE0A0;width:{{ xpPct }};transition:width 700ms cubic-bezier(.16,1,.3,1)"
+            ></span
+          ></span>
+          <span style="display: block; margin-top: 6px; font-size: 17px; color: #7a93ae"
+            >{{ xpToNext }} XP to the next level</span
+          >
+        </span>
+      </div>
+      <sc-for list="{{ progStats }}" as="p" hint-placeholder-count="4">
+        <div
+          style="padding: 16px; background: #0a1728; border: 2px solid #16324c; text-align: center"
+        >
+          <span style="display: flex; justify-content: center; margin-bottom: 7px"
+            >{{ p.icon }}</span
+          >
+          <span
+            style="display:block;font-family:'Pixelify Sans',monospace;font-weight:700;font-size:32px;line-height:1;color:{{ p.fg }}"
+            >{{ p.v }}</span
+          >
+          <span
+            style="
+              display: block;
+              margin-top: 6px;
+              font-size: 17px;
+              letter-spacing: 0.08em;
+              color: #7a93ae;
+            "
+            >{{ p.label }}</span
+          >
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:{{ duoGrid }};gap:16px">
+      <section style="padding: 16px; background: #0a1728; border: 2px solid #16324c">
+        <h2
+          style="
+            margin: 0 0 4px;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 22px;
+            letter-spacing: 0.08em;
+            color: #2fe0a0;
+          "
+        >
+          SKILLS
+        </h2>
+        <p style="margin: 0 0 14px; font-size: 17px; color: #7a93ae">
+          Six habits the missions train. Each level is roughly ten correct calls.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 13px">
+          <sc-for list="{{ skillBars }}" as="k" hint-placeholder-count="6">
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px">
+                <span style="flex: none">{{ k.icon }}</span>
+                <span style="flex: 1; min-width: 0; font-size: 18px; color: #dce9f7"
+                  >{{ k.name }}</span
+                >
+                <span style="font-family:'Pixelify Sans',monospace;font-size:18px;color:{{ k.fg }}"
+                  >Lv. {{ k.lvl }} · {{ k.pct }}%</span
+                >
+              </div>
+              <div
+                style="
+                  margin-top: 6px;
+                  height: 14px;
+                  background: #08151f;
+                  border: 2px solid #1b3550;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  style="height:100%;background:{{ k.fg }};width:{{ k.w }};transition:width 700ms cubic-bezier(.16,1,.3,1)"
+                ></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+      <section style="padding: 16px; background: #0a1728; border: 2px solid #16324c">
+        <h2
+          style="
+            margin: 0 0 4px;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 22px;
+            letter-spacing: 0.08em;
+            color: #4fd8e8;
+          "
+        >
+          MISSIONS BY SCAM TYPE
+        </h2>
+        <p style="margin: 0 0 14px; font-size: 17px; color: #7a93ae">{{ chartSummary }}</p>
+        <div style="display: flex; flex-direction: column; gap: 11px">
+          <sc-for list="{{ chart }}" as="c" hint-placeholder-count="6">
+            <div style="display: flex; align-items: center; gap: 11px">
+              <span style="flex: none; width: 132px; font-size: 17px; color: #9fb6d0"
+                >{{ c.label }}</span
+              >
+              <span
+                style="
+                  flex: 1;
+                  height: 20px;
+                  background: #08151f;
+                  border: 2px solid #1b3550;
+                  display: flex;
+                "
+                ><span
+                  style="height:100%;background:{{ c.fg }};width:{{ c.w }};transition:width 700ms cubic-bezier(.16,1,.3,1)"
+                ></span
+              ></span>
+              <span
+                style="
+                  flex: none;
+                  width: 52px;
+                  text-align: right;
+                  font-family: 'Pixelify Sans', monospace;
+                  font-size: 18px;
+                  color: #dce9f7;
+                "
+                >{{ c.v }}</span
+              >
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px">
+          <div style="padding: 12px; background: #07231a; border: 2px solid #1e6b58">
+            <span style="display: block; font-size: 16px; letter-spacing: 0.1em; color: #7a93ae"
+              >AS BUYER</span
+            ><span
+              style="
+                display: block;
+                font-family: 'Pixelify Sans', monospace;
+                font-size: 24px;
+                color: #2fe0a0;
+              "
+              >{{ buyerCount }} missions</span
+            >
+          </div>
+          <div style="padding: 12px; background: #230f0c; border: 2px solid #6b2a20">
+            <span style="display: block; font-size: 16px; letter-spacing: 0.1em; color: #7a93ae"
+              >AS SELLER</span
+            ><span
+              style="
+                display: block;
+                font-family: 'Pixelify Sans', monospace;
+                font-size: 24px;
+                color: #f0857b;
+              "
+              >{{ sellerCount }} missions</span
+            >
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section style="padding: 16px; background: #0a1728; border: 2px solid #16324c">
+      <h2
+        style="
+          margin: 0 0 4px;
+          font-family: 'Pixelify Sans', monospace;
+          font-size: 22px;
+          letter-spacing: 0.08em;
+          color: #f5c84a;
+        "
+      >
+        BADGE CABINET
+      </h2>
+      <p style="margin: 0 0 14px; font-size: 17px; color: #7a93ae">{{ badgeSummary }}</p>
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+          gap: 12px;
+        "
+      >
+        <sc-for list="{{ badgeCards }}" as="b" hint-placeholder-count="8">
+          <button
+            type="button"
+            onClick="{{ b.open }}"
+            style="display:flex;flex-direction:column;align-items:center;gap:9px;padding:15px 12px;background:{{ b.bg }};border:2px solid {{ b.bd }};cursor:pointer;transition:transform 140ms;opacity:{{ b.op }}"
+            style-hover="transform:translateY(-3px)"
+          >
+            {{ b.icon }}
+            <span
+              style="font-family:'Pixelify Sans',monospace;font-size:19px;color:{{ b.fg }};text-align:center"
+              >{{ b.name }}</span
+            >
+            <span style="font-size: 16px; letter-spacing: 0.08em; color: #7a93ae"
+              >{{ b.status }}</span
+            >
+            <span style="width: 100%; height: 10px; background: #08151f; border: 2px solid #1b3550"
+              ><span
+                style="display:block;height:100%;background:{{ b.barFg }};width:{{ b.w }}"
+              ></span
+            ></span>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+
+    <div style="display:grid;grid-template-columns:{{ duoGrid }};gap:16px">
+      <section style="padding: 16px; background: #0a1728; border: 2px solid #16324c">
+        <h2
+          style="
+            margin: 0 0 12px;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 22px;
+            letter-spacing: 0.08em;
+            color: #9fb6d0;
+          "
+        >
+          RECENT ACTIVITY
+        </h2>
+        <sc-if value="{{ hasActivity }}">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <sc-for list="{{ activity }}" as="a" hint-placeholder-count="3">
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 11px;
+                  padding: 10px;
+                  background: #0c1826;
+                  border: 2px solid #1b3550;
+                "
+              >
+                <span
+                  style="flex:none;display:grid;place-items:center;width:38px;height:38px;background:#08151F;border:2px solid {{ a.bd }}"
+                  >{{ a.icon }}</span
+                >
+                <span style="flex: 1; min-width: 0"
+                  ><span style="display: block; font-size: 18px; color: #dce9f7">{{ a.t }}</span
+                  ><span style="display: block; font-size: 16px; color: #7a93ae"
+                    >{{ a.sub }}</span
+                  ></span
+                >
+                <span
+                  style="font-family: 'Pixelify Sans', monospace; font-size: 18px; color: #f5c84a"
+                  >{{ a.xp }}</span
+                >
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noActivity }}">
+          <p
+            style="
+              margin: 0;
+              padding: 26px 12px;
+              text-align: center;
+              font-size: 19px;
+              line-height: 1.4;
+              color: #5e7794;
+            "
+          >
+            Nothing here yet. Finish a mission and your decisions will show up in this list.
+          </p>
+        </sc-if>
+      </section>
+      <section style="padding: 16px; background: #0a1728; border: 2px solid #1e4670">
+        <h2
+          style="
+            margin: 0 0 12px;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 22px;
+            letter-spacing: 0.08em;
+            color: #8fc9ff;
+          "
+        >
+          RECOMMENDED NEXT
+        </h2>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <sc-for list="{{ nextMissions }}" as="m" hint-placeholder-count="3">
+            <button
+              type="button"
+              onClick="{{ m.open }}"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-align: left;
+                padding: 11px;
+                background: #0c1826;
+                border: 2px solid #1b3550;
+                cursor: pointer;
+                transition:
+                  transform 140ms,
+                  border-color 140ms;
+              "
+              style-hover="transform:translateX(3px);border-color:#2FE0A0"
+            >
+              <span
+                style="
+                  flex: none;
+                  display: grid;
+                  place-items: center;
+                  width: 44px;
+                  height: 44px;
+                  background: #08151f;
+                  border: 2px solid #1b3550;
+                "
+                >{{ m.icon }}</span
+              >
+              <span style="flex: 1; min-width: 0"
+                ><span
+                  style="
+                    display: block;
+                    font-family: 'Pixelify Sans', monospace;
+                    font-size: 20px;
+                    color: #eaf4ff;
+                  "
+                  >{{ m.t }}</span
+                ><span style="display: block; font-size: 17px; color: #8fa3bd"
+                  >{{ m.d }}</span
+                ></span
+              >
+              <span aria-hidden="true" style="color: #4fd8e8; font-size: 22px">›</span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+  </div>
+</sc-if>

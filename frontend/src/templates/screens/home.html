@@ -1,0 +1,600 @@
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <div
+    data-screen-label="Home"
+    style="display:grid;grid-template-columns:{{ homeGrid }};gap:18px;align-items:start;animation:fadeUp 220ms ease-out both"
+  >
+    <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+      <section
+        style="
+          position: relative;
+          overflow: hidden;
+          background: #0a1728;
+          border: 2px solid #16324c;
+          padding: 34px 30px 30px;
+          text-align: center;
+        "
+      >
+        <div
+          aria-hidden="true"
+          style="position: absolute; inset: auto 0 0 0; height: 120px; opacity: 0.5"
+        >
+          {{ cityArt }}
+        </div>
+        <span aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none">
+          <sc-for list="{{ sparks }}" as="k" hint-placeholder-count="6"
+            ><span
+              style="position:absolute;left:{{ k.l }};top:{{ k.t }};color:{{ k.c }};font-size:{{ k.fs }};line-height:1;animation:twinkle {{ k.dur }} steps(2,end) {{ k.delay }} infinite"
+              >+</span
+            ></sc-for
+          >
+        </span>
+        <div
+          aria-hidden="true"
+          style="
+            position: absolute;
+            left: 46px;
+            top: 66px;
+            animation: bob 3.4s steps(2, end) infinite;
+          "
+        >
+          {{ heroShield }}
+        </div>
+        <div
+          aria-hidden="true"
+          style="
+            position: absolute;
+            right: 58px;
+            top: 70px;
+            animation: bob 2.8s steps(2, end) 0.4s infinite;
+          "
+        >
+          <span
+            style="
+              position: relative;
+              display: grid;
+              place-items: center;
+              width: 76px;
+              height: 68px;
+              background: #160b0d;
+              border: 2px solid #6b2029;
+            "
+            >{{ heroSkull }}<span
+              style="
+                position: absolute;
+                left: 12px;
+                bottom: -8px;
+                width: 10px;
+                height: 10px;
+                background: #160b0d;
+                border-left: 2px solid #6b2029;
+                border-bottom: 2px solid #6b2029;
+                transform: rotate(-45deg);
+              "
+            ></span
+          ></span>
+        </div>
+        <h1
+          style="position:relative;margin:0;font-family:'Pixelify Sans',monospace;font-weight:700;font-size:{{ heroFs }};line-height:.98;letter-spacing:.02em;color:#EAF4FF;text-shadow:0 3px 0 #061019"
+        >
+          LEVEL UP.<br /><span style="color: #2fe0a0">STAY SAFE.</span>
+        </h1>
+        <p
+          style="
+            position: relative;
+            margin: 18px auto 0;
+            max-width: 640px;
+            font-size: 21px;
+            line-height: 1.5;
+            color: #9fb6d0;
+          "
+        >
+          Complete missions, spot scams, and shop smarter.<br />Your instincts are your best
+          defense.
+        </p>
+        <div
+          style="
+            position: relative;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 32px;
+            margin-top: 20px;
+            font-size: 19px;
+            color: #9fb6d0;
+          "
+        >
+          <span style="display: flex; align-items: center; gap: 9px"
+            >{{ starIcon }}Real-world scenarios</span
+          >
+          <span style="display: flex; align-items: center; gap: 9px"
+            >{{ shieldSm2 }}Protect your money</span
+          >
+          <span style="display: flex; align-items: center; gap: 9px"
+            >{{ skullSm }}Earn XP &amp; badges</span
+          >
+        </div>
+        <div
+          style="
+            position: relative;
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 26px;
+            flex-wrap: wrap;
+          "
+        >
+          <button
+            type="button"
+            onClick="{{ startTopMission }}"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              padding: 13px 26px;
+              min-height: 48px;
+              background: #2fe0a0;
+              border: 2px solid #7cffd0;
+              color: #052c20;
+              font-family: 'Pixelify Sans', monospace;
+              font-weight: 700;
+              font-size: 21px;
+              letter-spacing: 0.06em;
+              cursor: pointer;
+              box-shadow: 3px 3px 0 #0b5b42;
+            "
+            style-hover="background:#4BF0B4"
+            style-active="transform:translate(2px,2px);box-shadow:1px 1px 0 #0B5B42"
+          >
+            START A MISSION <span aria-hidden="true">›</span>
+          </button>
+          <button
+            type="button"
+            onClick="{{ goMissions }}"
+            style="
+              padding: 13px 26px;
+              min-height: 48px;
+              background: #0c1826;
+              border: 2px solid #2a5175;
+              color: #bbd2ea;
+              font-family: 'Pixelify Sans', monospace;
+              font-weight: 700;
+              font-size: 21px;
+              letter-spacing: 0.06em;
+              cursor: pointer;
+              box-shadow: 3px 3px 0 #06111c;
+            "
+            style-hover="border-color:#4FD8E8;color:#EAF4FF"
+            style-active="transform:translate(2px,2px);box-shadow:1px 1px 0 #06111C"
+          >
+            VIEW ALL MISSIONS
+          </button>
+        </div>
+      </section>
+
+      <div style="display:grid;grid-template-columns:{{ duoGrid }};gap:16px">
+        <sc-for list="{{ roleCards }}" as="r" hint-placeholder-count="2">
+          <div
+            role="button"
+            tabindex="0"
+            onClick="{{ r.pick }}"
+            onKeyDown="{{ r.key }}"
+            aria-label="{{ r.aria }}"
+            style="position:relative;background:{{ r.bg }};border:2px solid {{ r.bd }};padding:20px;cursor:pointer;transition:transform 140ms,box-shadow 140ms;box-shadow:{{ r.shadow }}"
+            style-hover="transform:translateY(-3px)"
+          >
+            <div
+              style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-direction:{{ r.hdrDir }};min-height:60px"
+            >
+              <span
+                style="position:relative;display:grid;place-items:center;width:52px;height:48px;background:#08151F;border:2px solid {{ r.bd }}"
+                >{{ r.icon }}<span
+                  aria-hidden="true"
+                  style="position:absolute;left:10px;bottom:-8px;width:9px;height:9px;background:#08151F;border-left:2px solid {{ r.bd }};border-bottom:2px solid {{ r.bd }};transform:rotate(-45deg)"
+                ></span
+              ></span>
+              <h2
+                style="margin:2px 8px 0;font-family:'Pixelify Sans',monospace;font-weight:700;font-size:46px;line-height:1;letter-spacing:.02em;color:{{ r.fg }};text-shadow:0 3px 0 rgba(0,0,0,.4)"
+              >
+                {{ r.title }}
+              </h2>
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; margin-top: 4px">
+              <div
+                aria-hidden="true"
+                style="flex:none;animation:bob 3.2s steps(2,end) {{ r.bobDelay }} infinite"
+              >
+                {{ r.char }}
+              </div>
+              <p style="flex: 1; margin: 0; font-size: 20px; line-height: 1.4; color: #a8bfd6">
+                {{ r.desc }}
+              </p>
+            </div>
+            <div
+              style="display:grid;grid-template-columns:1fr 1fr 1fr;margin-top:16px;background:#08151F;border:2px solid {{ r.bd2 }}"
+            >
+              <div style="padding:9px 6px;text-align:center;border-right:2px solid {{ r.bd2 }}">
+                <span
+                  style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    font-family: 'Pixelify Sans', monospace;
+                    font-size: 22px;
+                    color: #eaf4ff;
+                  "
+                  >{{ r.i1 }}{{ r.n1 }}</span
+                ><span style="font-size: 16px; letter-spacing: 0.1em; color: #7a93ae"
+                  >MISSIONS</span
+                >
+              </div>
+              <div style="padding:9px 6px;text-align:center;border-right:2px solid {{ r.bd2 }}">
+                <span
+                  style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    font-family: 'Pixelify Sans', monospace;
+                    font-size: 22px;
+                    color: #eaf4ff;
+                  "
+                  >{{ r.i2 }}{{ r.n2 }}</span
+                ><span style="font-size: 16px; letter-spacing: 0.1em; color: #7a93ae">BADGES</span>
+              </div>
+              <div style="padding: 9px 6px; text-align: center">
+                <span
+                  style="display:block;font-family:'Pixelify Sans',monospace;font-size:22px;color:{{ r.fg }}"
+                  >{{ r.n3 }}</span
+                ><span style="font-size: 16px; letter-spacing: 0.1em; color: #7a93ae"
+                  >XP EARNED</span
+                >
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick="{{ r.pick }}"
+              style="display:flex;width:100%;align-items:center;justify-content:center;gap:10px;margin-top:14px;padding:12px;min-height:48px;background:{{ r.fg }};border:2px solid {{ r.btnBd }};color:#04140E;font-family:'Pixelify Sans',monospace;font-weight:700;font-size:21px;letter-spacing:.06em;cursor:pointer;box-shadow:3px 3px 0 {{ r.btnSh }}"
+              style-active="transform:translate(2px,2px);box-shadow:1px 1px 0 #071019"
+            >
+              {{ r.cta }} <span aria-hidden="true">›</span>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          padding: 11px;
+          background: #0a1728;
+          border: 2px solid #16324c;
+          font-size: 19px;
+          letter-spacing: 0.14em;
+          color: #7a93ae;
+        "
+      >
+        {{ trophySm }}COMPLETE MISSIONS • EARN XP • UNLOCK BADGES • BECOME ANTI-SCAM LEGEND
+      </div>
+
+      <div style="display:grid;grid-template-columns:{{ tipGrid }};gap:14px">
+        <div style="background: #160f26; border: 2px solid #3c2a63; padding: 14px">
+          <div style="display: flex; align-items: center; gap: 10px">
+            {{ wizardIcon }}<span
+              style="
+                font-family: 'Pixelify Sans', monospace;
+                font-size: 20px;
+                letter-spacing: 0.06em;
+                color: #c7a8ff;
+              "
+              >TIP OF THE DAY</span
+            >
+          </div>
+          <p style="margin: 9px 0 0; font-size: 18px; line-height: 1.4; color: #a8bfd6">
+            {{ tipText }}
+          </p>
+        </div>
+        <sc-for list="{{ homeLinks }}" as="l" hint-placeholder-count="3">
+          <button
+            type="button"
+            onClick="{{ l.go }}"
+            style="display:flex;align-items:center;gap:12px;text-align:left;background:{{ l.bg }};border:2px solid {{ l.bd }};padding:14px;cursor:pointer;transition:transform 140ms"
+            style-hover="transform:translateY(-3px)"
+          >
+            <span style="flex: none">{{ l.icon }}</span>
+            <span style="flex: 1; min-width: 0"
+              ><span
+                style="display:block;font-family:'Pixelify Sans',monospace;font-size:20px;color:{{ l.fg }}"
+                >{{ l.title }}</span
+              ><span style="display: block; font-size: 17px; line-height: 1.3; color: #8fa3bd"
+                >{{ l.sub }}</span
+              ></span
+            >
+            <span aria-hidden="true" style="color:{{ l.fg }};font-size:22px">›</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <aside style="display:flex;flex-direction:column;gap:16px;position:{{ stick }};top:92px">
+      <section style="background: #0a1728; border: 2px solid #1e4670; padding: 14px">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+          "
+        >
+          <h2
+            style="
+              margin: 0;
+              font-family: 'Pixelify Sans', monospace;
+              font-size: 20px;
+              letter-spacing: 0.08em;
+              color: #4fd8e8;
+            "
+          >
+            FEATURED MISSIONS
+          </h2>
+          <button
+            type="button"
+            onClick="{{ goMissions }}"
+            style="
+              background: none;
+              border: none;
+              color: #7a93ae;
+              font-family: 'VT323', monospace;
+              font-size: 18px;
+              letter-spacing: 0.08em;
+              cursor: pointer;
+            "
+            style-hover="color:#2FE0A0"
+          >
+            VIEW ALL
+          </button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <sc-for list="{{ featured }}" as="m" hint-placeholder-count="3">
+            <button
+              type="button"
+              onClick="{{ m.open }}"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 13px;
+                text-align: left;
+                padding: 11px;
+                background: #0c1826;
+                border: 2px solid #1b3550;
+                cursor: pointer;
+                transition:
+                  transform 140ms,
+                  border-color 140ms;
+              "
+              style-hover="transform:translateX(3px);border-color:#2FE0A0"
+            >
+              <span
+                style="flex:none;display:grid;place-items:center;width:46px;height:46px;background:{{ m.tileBg }};border:2px solid {{ m.tileBd }}"
+                >{{ m.icon }}</span
+              >
+              <span style="flex: 1; min-width: 0"
+                ><span
+                  style="
+                    display: block;
+                    font-family: 'Pixelify Sans', monospace;
+                    font-size: 20px;
+                    color: #eaf4ff;
+                  "
+                  >{{ m.t }}</span
+                ><span style="display: block; font-size: 17px; line-height: 1.25; color: #8fa3bd"
+                  >{{ m.d }}</span
+                ></span
+              >
+              <span style="flex: none; text-align: right"
+                ><span style="display:block;font-size:17px;letter-spacing:.08em;color:{{ m.difFg }}"
+                  >{{ m.dif }}</span
+                ><span
+                  style="
+                    display: block;
+                    font-family: 'Pixelify Sans', monospace;
+                    font-size: 18px;
+                    color: #f5c84a;
+                  "
+                  >+{{ m.xp }} XP</span
+                ></span
+              >
+            </button>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="background: #0a1728; border: 2px solid #16324c; padding: 16px">
+        <div
+          aria-hidden="true"
+          style="display: flex; align-items: center; gap: 8px; margin: 0 0 10px"
+        >
+          <span
+            style="width: 8px; height: 8px; background: #4fd8e8; transform: rotate(45deg)"
+          ></span
+          ><span style="flex: 1; height: 2px; background: #16324c"></span
+          ><span
+            style="width: 8px; height: 8px; background: #4fd8e8; transform: rotate(45deg)"
+          ></span>
+        </div>
+        <h2
+          style="
+            margin: 0 0 12px;
+            text-align: center;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 20px;
+            letter-spacing: 0.14em;
+            color: #2fe0a0;
+          "
+        >
+          YOUR PROGRESS
+        </h2>
+        <div style="display: flex; align-items: center; gap: 16px">
+          <div
+            style="
+              flex: none;
+              width: 86px;
+              height: 78px;
+              display: grid;
+              place-items: center;
+              background: #1e6b58;
+              clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+            "
+          >
+            <span
+              style="
+                width: 80px;
+                height: 72px;
+                display: grid;
+                place-items: center;
+                background: #08202a;
+                clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+                text-align: center;
+              "
+            >
+              <span
+                ><span
+                  style="display: block; font-size: 16px; letter-spacing: 0.1em; color: #7a93ae"
+                  >LVL</span
+                ><span
+                  style="
+                    display: block;
+                    font-family: 'Pixelify Sans', monospace;
+                    font-weight: 700;
+                    font-size: 28px;
+                    line-height: 1;
+                    color: #2fe0a0;
+                  "
+                  >{{ lvlPad }}</span
+                ></span
+              >
+            </span>
+          </div>
+          <div style="flex: 1; min-width: 0">
+            <div style="font-family: 'Pixelify Sans', monospace; font-size: 21px; color: #eaf4ff">
+              {{ xpInLvl }} / 1000 XP
+            </div>
+            <div
+              style="
+                margin-top: 7px;
+                height: 18px;
+                background: #08151f;
+                border: 2px solid #1b3550;
+                overflow: hidden;
+              "
+            >
+              <div
+                style="height:100%;background:#2FE0A0;width:{{ xpPct }};transition:width 600ms cubic-bezier(.16,1,.3,1)"
+              ></div>
+            </div>
+          </div>
+        </div>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            margin-top: 14px;
+            background: #1b3550;
+            border: 2px solid #1b3550;
+          "
+        >
+          <div style="background: #0c1826; padding: 10px; text-align: center">
+            <span
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 7px;
+                font-family: 'Pixelify Sans', monospace;
+                font-size: 22px;
+                color: #eaf4ff;
+              "
+              >{{ shieldSm3 }}{{ doneCount }}</span
+            ><span style="font-size: 16px; letter-spacing: 0.06em; color: #7a93ae"
+              >MISSIONS COMPLETED</span
+            >
+          </div>
+          <div style="background: #0c1826; padding: 10px; text-align: center">
+            <span
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 7px;
+                font-family: 'Pixelify Sans', monospace;
+                font-size: 22px;
+                color: #eaf4ff;
+              "
+              >{{ trophySm2 }}{{ badges }}</span
+            ><span style="font-size: 16px; letter-spacing: 0.06em; color: #7a93ae"
+              >BADGES EARNED</span
+            >
+          </div>
+          <div style="background: #0c1826; padding: 10px; text-align: center">
+            <span
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 7px;
+                font-family: 'Pixelify Sans', monospace;
+                font-size: 22px;
+                color: #f5a03a;
+              "
+              >{{ fireIcon2 }}{{ streak }}</span
+            ><span style="font-size: 16px; letter-spacing: 0.06em; color: #7a93ae">DAY STREAK</span>
+          </div>
+        </div>
+        <div
+          style="margin-top: 14px; background: #1a1406; border: 2px solid #6b5216; padding: 13px"
+        >
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span style="flex: none">{{ medalIcon }}</span>
+            <span style="flex: 1; min-width: 0"
+              ><span
+                style="
+                  display: block;
+                  font-family: 'Pixelify Sans', monospace;
+                  font-size: 20px;
+                  letter-spacing: 0.06em;
+                  color: #f5c84a;
+                "
+                >WEEKLY CHALLENGE</span
+              ><span style="display: block; font-size: 18px; line-height: 1.3; color: #c7b274"
+                >Complete 5 missions this week to earn a bonus badge!</span
+              ></span
+            >
+            <span style="flex: none">{{ chestIcon }}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px">
+            <div
+              style="
+                flex: 1;
+                height: 14px;
+                background: #0c1826;
+                border: 2px solid #6b5216;
+                overflow: hidden;
+              "
+            >
+              <div
+                style="height:100%;background:#F5C84A;width:{{ weeklyPct }};transition:width 600ms cubic-bezier(.16,1,.3,1)"
+              ></div>
+            </div>
+            <span style="font-family: 'Pixelify Sans', monospace; font-size: 19px; color: #f5c84a"
+              >{{ weeklyLabel }}</span
+            >
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</sc-if>

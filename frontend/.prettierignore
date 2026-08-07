@@ -1,0 +1,10 @@
+dist
+node_modules
+.pnpm-store
+package-lock.json
+pnpm-lock.yaml
+tsconfig*.json
+src/templates/**
+standalone.html
+ui reference/**
+reference/**

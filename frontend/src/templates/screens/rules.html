@@ -1,0 +1,226 @@
+<sc-if value="{{ isRules }}">
+  <div
+    data-screen-label="Rules"
+    style="display: flex; flex-direction: column; gap: 18px; animation: fadeUp 220ms ease-out both"
+  >
+    <div style="display: flex; align-items: center; gap: 14px">
+      <span
+        style="
+          display: grid;
+          place-items: center;
+          width: 56px;
+          height: 56px;
+          background: #0a1728;
+          border: 2px solid #1e4670;
+        "
+        >{{ bookBig }}</span
+      >
+      <div>
+        <h1
+          style="
+            margin: 0;
+            font-family: 'Pixelify Sans', monospace;
+            font-weight: 700;
+            font-size: 40px;
+            line-height: 1;
+            letter-spacing: 0.03em;
+            color: #eaf4ff;
+          "
+        >
+          SAFETY RULES
+        </h1>
+        <p style="margin: 8px 0 0; font-size: 19px; color: #8fa3bd">
+          Short rules that hold up in a real deal. Each one links to the mission that drills it.
+        </p>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+      <div style="position: relative; flex: 1; min-width: 240px">
+        <label for="rq" style="position: absolute; left: -9999px">Search rules</label>
+        <input
+          id="rq"
+          type="search"
+          value="{{ ruleQ }}"
+          onChange="{{ onRuleSearch }}"
+          placeholder="Search rules…"
+          style="
+            width: 100%;
+            padding: 10px 12px;
+            min-height: 46px;
+            background: #0c1826;
+            border: 2px solid #1b3550;
+            color: #eaf4ff;
+            font-family: 'VT323', monospace;
+            font-size: 19px;
+            outline: none;
+          "
+          style-focus="border-color:#2FE0A0"
+        />
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <sc-for list="{{ ruleCats }}" as="c" hint-placeholder-count="8">
+          <button
+            type="button"
+            onClick="{{ c.on }}"
+            aria-pressed="{{ c.active }}"
+            style="padding:8px 14px;min-height:44px;background:{{ c.bg }};border:2px solid {{ c.bd }};color:{{ c.fg }};font-family:'VT323',monospace;font-size:19px;letter-spacing:.06em;cursor:pointer"
+            style-active="transform:translate(1px,1px)"
+          >
+            {{ c.label }}
+          </button>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{ hasRules }}">
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 14px;
+        "
+      >
+        <sc-for list="{{ rules }}" as="r" hint-placeholder-count="8">
+          <article
+            style="
+              display: flex;
+              flex-direction: column;
+              padding: 15px;
+              background: #0a1728;
+              border: 2px solid #16324c;
+              animation: fadeUp 200ms ease-out both;
+              transition: border-color 140ms;
+            "
+            style-hover="border-color:#2A5175"
+          >
+            <div style="display: flex; gap: 12px">
+              <span
+                style="
+                  flex: none;
+                  display: grid;
+                  place-items: center;
+                  width: 46px;
+                  height: 46px;
+                  background: #08151f;
+                  border: 2px solid #1b3550;
+                "
+                >{{ r.icon }}</span
+              >
+              <span style="flex: 1; min-width: 0">
+                <span style="display: block; font-size: 16px; letter-spacing: 0.1em; color: #5e7794"
+                  >{{ r.cat }}</span
+                >
+                <span
+                  style="
+                    display: block;
+                    font-family: 'Pixelify Sans', monospace;
+                    font-size: 21px;
+                    line-height: 1.15;
+                    color: #eaf4ff;
+                  "
+                  >{{ r.t }}</span
+                >
+              </span>
+            </div>
+            <p
+              style="
+                margin: 12px 0 0;
+                font-family: Inter, system-ui, sans-serif;
+                font-size: 13.5px;
+                line-height: 1.6;
+                color: #a8bfd6;
+              "
+            >
+              {{ r.why }}
+            </p>
+            <div
+              style="
+                margin-top: 11px;
+                padding: 10px 12px;
+                background: #07231a;
+                border: 2px solid #1e6b58;
+              "
+            >
+              <span style="display: block; font-size: 16px; letter-spacing: 0.1em; color: #5f9e86"
+                >SAFE ALTERNATIVE</span
+              >
+              <span
+                style="
+                  display: block;
+                  margin-top: 3px;
+                  font-size: 18px;
+                  line-height: 1.35;
+                  color: #9fd8c0;
+                "
+                >{{ r.alt }}</span
+              >
+            </div>
+            <button
+              type="button"
+              onClick="{{ r.on }}"
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                margin-top: 12px;
+                padding: 10px 12px;
+                min-height: 46px;
+                background: #0c1826;
+                border: 2px solid #1e4670;
+                color: #8fc9ff;
+                font-family: 'VT323', monospace;
+                font-size: 19px;
+                cursor: pointer;
+              "
+              style-hover="border-color:#4FD8E8;color:#EAF4FF"
+            >
+              <span>Train it: {{ r.mission }}</span><span aria-hidden="true">›</span>
+            </button>
+          </article>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ noRules }}">
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          padding: 52px 20px;
+          background: #0a1728;
+          border: 2px dashed #22415f;
+          text-align: center;
+        "
+      >
+        {{ emptyIcon }}
+        <p
+          style="
+            margin: 0;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 23px;
+            color: #eaf4ff;
+          "
+        >
+          No rules match that search
+        </p>
+        <button
+          type="button"
+          onClick="{{ clearRules }}"
+          style="
+            padding: 11px 22px;
+            min-height: 46px;
+            background: #0c1826;
+            border: 2px solid #2a5175;
+            color: #bbd2ea;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 19px;
+            cursor: pointer;
+          "
+        >
+          SHOW ALL RULES
+        </button>
+      </div>
+    </sc-if>
+  </div>
+</sc-if>

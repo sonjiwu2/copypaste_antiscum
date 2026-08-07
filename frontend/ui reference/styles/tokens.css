@@ -1,0 +1,57 @@
+:root {
+  --page-bg: #f8fbff;
+  --surface: #ffffff;
+  --surface-blue: #eef8ff;
+  --surface-green: #f3fff8;
+  --surface-orange: #fff9ef;
+  --surface-purple: #faf7ff;
+  --text-primary: #17233c;
+  --text-secondary: #53617a;
+  --text-muted: #8390a6;
+  --border: #d7e0eb;
+  --primary: #1686e8;
+  --primary-dark: #0c65bd;
+  --buyer: #0c9c63;
+  --seller: #f17a00;
+  --reward: #ffad18;
+  --danger: #f14e45;
+  --purple: #8255dd;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-card: 0 4px 14px rgb(23 35 60 / 8%);
+  --shadow-hover: 0 8px 24px rgb(23 35 60 / 12%);
+  --duration-fast: 140ms;
+  --duration-normal: 220ms;
+  --ease-ui: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pixel-art {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.pixel-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--duration-fast) var(--ease-ui),
+    box-shadow var(--duration-fast) var(--ease-ui);
+}
+
+.pixel-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

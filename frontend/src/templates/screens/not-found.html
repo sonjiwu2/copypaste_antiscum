@@ -1,0 +1,49 @@
+<sc-if value="{{ isNotFound }}">
+  <div
+    style="
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 80px 20px;
+      text-align: center;
+      animation: fadeUp 220ms ease-out both;
+    "
+  >
+    {{ nfIcon }}
+    <h1
+      style="
+        margin: 0;
+        font-family: 'Pixelify Sans', monospace;
+        font-weight: 700;
+        font-size: 44px;
+        color: #eaf4ff;
+      "
+    >
+      PAGE NOT FOUND
+    </h1>
+    <p style="margin: 0; font-size: 20px; color: #8fa3bd">
+      That screen does not exist in this prototype.
+    </p>
+    <button
+      type="button"
+      onClick="{{ goHome }}"
+      style="
+        padding: 13px 24px;
+        min-height: 50px;
+        background: #2fe0a0;
+        border: 2px solid #7cffd0;
+        color: #052c20;
+        font-family: 'Pixelify Sans', monospace;
+        font-weight: 700;
+        font-size: 20px;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        box-shadow: 3px 3px 0 #0b5b42;
+      "
+      style-active="transform:translate(2px,2px);box-shadow:1px 1px 0 #0B5B42"
+    >
+      BACK TO HOME
+    </button>
+  </div>
+</sc-if>

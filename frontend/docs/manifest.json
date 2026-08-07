@@ -1,0 +1,32 @@
+{
+  "source": "Anti-Scam Trainer.dc.html",
+  "screens": [
+    "home",
+    "missions",
+    "play",
+    "result",
+    "scenarios",
+    "progress",
+    "rules",
+    "settings",
+    "not-found"
+  ],
+  "preserved_features": [
+    "hash routing",
+    "filters/search/sort",
+    "two playable scenarios",
+    "choice consequences",
+    "risk meter",
+    "signals and tips",
+    "result and scoring",
+    "xp/badges/skills/streak",
+    "localStorage persistence",
+    "modals/toasts/profile",
+    "Web Audio sounds",
+    "reduced motion",
+    "responsive mobile navigation",
+    "loading/error/empty/locked states"
+  ],
+  "architecture": "modular vanilla ES modules with compatibility runtime",
+  "entry": "src/main.js"
+}

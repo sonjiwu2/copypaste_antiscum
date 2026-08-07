@@ -1,0 +1,766 @@
+<sc-if value="{{ isPlay }}">
+  <div
+    data-screen-label="Mission Play"
+    style="display:grid;grid-template-columns:{{ playGrid }};gap:16px;align-items:start;animation:fadeUp 220ms ease-out both"
+  >
+    <aside style="display:flex;flex-direction:column;gap:14px;position:{{ stick }};top:92px">
+      <section style="background: #0a1728; border: 2px solid #16324c; padding: 13px">
+        <h2
+          style="
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0 0 11px;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 19px;
+            letter-spacing: 0.08em;
+            color: #2fe0a0;
+          "
+        >
+          {{ flagIcon }}MISSION PROGRESS
+        </h2>
+        <div
+          style="
+            display: flex;
+            gap: 11px;
+            padding: 10px;
+            background: #0c1826;
+            border: 2px solid #1b3550;
+          "
+        >
+          <span
+            style="
+              flex: none;
+              display: grid;
+              place-items: center;
+              width: 44px;
+              height: 44px;
+              background: #08151f;
+              border: 2px solid #1b3550;
+            "
+            >{{ playIcon }}</span
+          >
+          <span style="flex: 1; min-width: 0">
+            <span style="display: flex; align-items: center; gap: 8px"
+              ><span
+                style="font-family: 'Pixelify Sans', monospace; font-size: 19px; color: #eaf4ff"
+                >{{ playTitle }}</span
+              ><span
+                style="padding:1px 7px;background:{{ playDifBg }};border:2px solid {{ playDifBd }};color:{{ playDifFg }};font-size:15px"
+                >{{ playDif }}</span
+              ></span
+            >
+            <span style="display: block; font-size: 16px; line-height: 1.25; color: #8fa3bd"
+              >{{ playDesc }}</span
+            >
+          </span>
+        </div>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 17px;
+            letter-spacing: 0.08em;
+            color: #8fa3bd;
+          "
+        >
+          <span>{{ stepLabel }}</span
+          ><span style="font-family: 'Pixelify Sans', monospace; color: #2fe0a0"
+            >{{ stepPct }}</span
+          >
+        </div>
+        <div
+          style="
+            margin-top: 6px;
+            height: 14px;
+            background: #08151f;
+            border: 2px solid #1b3550;
+            overflow: hidden;
+          "
+        >
+          <div
+            style="height:100%;background:#2FE0A0;width:{{ stepPct }};transition:width 400ms cubic-bezier(.16,1,.3,1)"
+          ></div>
+        </div>
+      </section>
+
+      <section style="background: #0a1728; border: 2px solid #16324c; padding: 13px">
+        <h2
+          style="
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0 0 9px;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 19px;
+            letter-spacing: 0.08em;
+            color: #4fd8e8;
+          "
+        >
+          {{ targetIcon2 }}CURRENT OBJECTIVE
+        </h2>
+        <p style="margin: 0; font-size: 18px; line-height: 1.4; color: #a8bfd6">{{ objective }}</p>
+      </section>
+
+      <section
+        aria-live="polite"
+        style="background:#0A1728;border:2px solid {{ riskBd }};padding:13px;text-align:center"
+      >
+        <h2
+          style="
+            margin: 0 0 10px;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 19px;
+            letter-spacing: 0.1em;
+            color: #9fb6d0;
+          "
+        >
+          RISK METER
+        </h2>
+        <div style="display: flex; align-items: center; gap: 12px; text-align: left">
+          <span
+            style="flex:none;display:grid;place-items:center;width:54px;height:54px;background:#0C1826;border:2px solid {{ riskBd }};animation:{{ riskAnim }}"
+            >{{ riskIcon }}</span
+          >
+          <span style="flex: 1; min-width: 0">
+            <span
+              style="display:block;font-family:'Pixelify Sans',monospace;font-size:22px;color:{{ riskFg }}"
+              >{{ riskLabel }}</span
+            >
+            <span style="display: block; font-size: 17px; line-height: 1.3; color: #8fa3bd"
+              >{{ riskDesc }}</span
+            >
+          </span>
+        </div>
+        <div style="display: flex; gap: 3px; margin-top: 12px">
+          <sc-for list="{{ riskSegs }}" as="r" hint-placeholder-count="12"
+            ><span
+              style="flex:1;height:14px;background:{{ r.c }};transition:background 300ms"
+            ></span
+          ></sc-for>
+        </div>
+        <div style="position: relative; height: 12px">
+          <span
+            aria-hidden="true"
+            style="position:absolute;top:0;left:{{ riskMark }};transform:translateX(-50%);color:{{ riskFg }};font-size:15px;transition:left 300ms cubic-bezier(.16,1,.3,1)"
+            >▲</span
+          >
+        </div>
+      </section>
+
+      <section style="background: #0a1728; border: 2px solid #16324c; padding: 13px">
+        <h2
+          style="
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0 0 11px;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 19px;
+            letter-spacing: 0.08em;
+            color: #2fe0a0;
+          "
+        >
+          {{ shieldSm5 }}YOUR BADGES
+        </h2>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px">
+          <sc-for list="{{ playBadges }}" as="b" hint-placeholder-count="3">
+            <button
+              type="button"
+              onClick="{{ b.open }}"
+              style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:9px 4px;background:#0C1826;border:2px solid {{ b.bd }};cursor:pointer;transition:transform 120ms"
+              style-hover="transform:translateY(-2px)"
+            >
+              {{ b.icon }}<span style="font-size:16px;color:{{ b.fg }}">{{ b.label }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <button
+          type="button"
+          onClick="{{ openTips }}"
+          style="
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            margin-top: 11px;
+            padding: 10px;
+            min-height: 46px;
+            background: #1a1406;
+            border: 2px solid #6b5216;
+            color: #f5c84a;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 19px;
+            letter-spacing: 0.06em;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 #0d0a03;
+          "
+          style-active="transform:translate(1px,1px);box-shadow:1px 1px 0 #0D0A03"
+        >
+          {{ bulbIcon }}VIEW TIPS ({{ tipsCount }})
+        </button>
+        <button
+          type="button"
+          onClick="{{ exitPlay }}"
+          style="
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            margin-top: 9px;
+            padding: 10px;
+            min-height: 46px;
+            background: #0c1826;
+            border: 2px solid #2a5175;
+            color: #8fa3bd;
+            font-family: 'VT323', monospace;
+            font-size: 19px;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+          "
+          style-hover="border-color:#F0524B;color:#F0857B"
+        >
+          ✕ EXIT MISSION
+        </button>
+      </section>
+    </aside>
+
+    <section style="min-width: 0; display: flex; flex-direction: column">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 11px 14px;
+          background: #0a1728;
+          border: 2px solid #16324c;
+          flex-wrap: wrap;
+        "
+      >
+        <span style="font-size: 19px; letter-spacing: 0.08em; color: #2fe0a0">{{ roleCrumb }}</span>
+        <span aria-hidden="true" style="color: #3e5470">›</span>
+        <span
+          style="
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 19px;
+            letter-spacing: 0.08em;
+            color: #f0857b;
+          "
+          >{{ withCrumb }}</span
+        >
+        <span
+          style="
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 17px;
+            color: #5e7794;
+          "
+          >CONVERSATION ID: {{ convId }}</span
+        >
+      </div>
+
+      <div
+        ref="{{ chatRef }}"
+        style="
+          flex: 1;
+          min-height: 420px;
+          max-height: 56vh;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          padding: 16px;
+          background: #08131f;
+          border: 2px solid #16324c;
+          border-top: none;
+        "
+      >
+        <sc-for list="{{ msgs }}" as="m" hint-placeholder-count="3">
+          <sc-if value="{{ m.isSys }}">
+            <div
+              style="display: flex; justify-content: center; animation: fadeUp 220ms ease-out both"
+            >
+              <span
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 9px;
+                  padding: 7px 13px;
+                  background: #1f1706;
+                  border: 2px solid #6b5216;
+                  color: #f5c84a;
+                  font-size: 17px;
+                  text-align: center;
+                "
+                >{{ m.icon }}{{ m.t }}</span
+              >
+            </div>
+          </sc-if>
+          <sc-if value="{{ m.isMsg }}">
+            <div
+              style="display:flex;gap:10px;flex-direction:{{ m.dir }};animation:{{ m.anim }} 220ms ease-out both"
+            >
+              <span
+                style="flex:none;display:grid;place-items:center;width:42px;height:42px;background:{{ m.avBg }};border:2px solid {{ m.avBd }}"
+                role="img"
+                aria-label="{{ m.who }}"
+                >{{ m.avatar }}</span
+              >
+              <div
+                style="max-width:76%;padding:11px 14px;background:{{ m.bg }};border:2px solid {{ m.bd }}"
+              >
+                <p style="margin:0;font-size:19px;line-height:1.45;color:{{ m.fg }}">{{ m.t }}</p>
+                <div
+                  style="display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:6px;font-size:16px;color:{{ m.timeFg }}"
+                >
+                  {{ m.time }}<span aria-hidden="true">{{ m.read }}</span>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </sc-for>
+        <sc-if value="{{ typing }}">
+          <div style="display: flex; gap: 10px; align-items: center">
+            <span
+              style="
+                flex: none;
+                display: grid;
+                place-items: center;
+                width: 42px;
+                height: 42px;
+                background: #230f0c;
+                border: 2px solid #6b2a20;
+              "
+              >{{ otherAvatar }}</span
+            >
+            <span
+              style="
+                display: flex;
+                gap: 5px;
+                padding: 14px;
+                background: #101e2e;
+                border: 2px solid #1b3550;
+              "
+            >
+              <span
+                style="
+                  width: 8px;
+                  height: 8px;
+                  background: #5e7794;
+                  animation: blink 0.9s steps(2, end) infinite;
+                "
+              ></span>
+              <span
+                style="
+                  width: 8px;
+                  height: 8px;
+                  background: #5e7794;
+                  animation: blink 0.9s steps(2, end) 0.15s infinite;
+                "
+              ></span>
+              <span
+                style="
+                  width: 8px;
+                  height: 8px;
+                  background: #5e7794;
+                  animation: blink 0.9s steps(2, end) 0.3s infinite;
+                "
+              ></span>
+            </span>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ hasChoices }}">
+        <div
+          style="
+            margin-top: 14px;
+            padding: 15px;
+            background: #0a1728;
+            border: 2px solid #16324c;
+            animation: fadeUp 220ms ease-out both;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 13px">
+            <span style="flex: 1; height: 2px; background: #16324c"></span>
+            <span
+              style="
+                font-family: 'Pixelify Sans', monospace;
+                font-size: 20px;
+                letter-spacing: 0.14em;
+                color: #9fb6d0;
+              "
+              >CHOOSE YOUR RESPONSE</span
+            >
+            <span style="flex: 1; height: 2px; background: #16324c"></span>
+          </div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+              gap: 12px;
+            "
+          >
+            <sc-for list="{{ choices }}" as="c" hint-placeholder-count="3">
+              <button
+                type="button"
+                onClick="{{ c.on }}"
+                disabled="{{ c.dis }}"
+                style="display:flex;align-items:flex-start;gap:11px;padding:14px;min-height:92px;text-align:left;background:{{ c.bg }};border:2px solid {{ c.bd }};color:#EAF4FF;font-family:'VT323',monospace;font-size:19px;line-height:1.35;cursor:{{ c.cur }};opacity:{{ c.op }};box-shadow:{{ c.sh }};transition:transform 140ms,box-shadow 140ms"
+                style-hover="transform:translate(-1px,-1px)"
+                style-active="transform:translate(1px,1px)"
+              >
+                <span
+                  style="flex:none;display:grid;place-items:center;width:34px;height:34px;background:#08151F;border:2px solid {{ c.bd }}"
+                  >{{ c.icon }}</span
+                >
+                <span style="flex: 1">{{ c.t }}</span>
+                <span aria-hidden="true" style="color:{{ c.arrow }};font-size:22px">›</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ hasFb }}">
+        <div
+          role="status"
+          aria-live="polite"
+          style="margin-top:14px;background:{{ fbBg }};border:2px solid {{ fbBd }};padding:16px;animation:{{ fbAnim }}"
+        >
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span
+              style="flex:none;display:grid;place-items:center;width:46px;height:46px;background:#08151F;border:2px solid {{ fbBd }}"
+              >{{ fbIcon }}</span
+            >
+            <h3
+              style="flex:1;margin:0;font-family:'Pixelify Sans',monospace;font-size:24px;color:{{ fbFg }}"
+            >
+              {{ fbTitle }}
+            </h3>
+            <span
+              style="padding:3px 10px;background:#08151F;border:2px solid {{ fbBd }};color:{{ fbFg }};font-size:17px;letter-spacing:.06em"
+              >{{ fbSkill }} {{ fbDelta }}</span
+            >
+          </div>
+          <div style="display:grid;grid-template-columns:{{ duoGrid }};gap:12px;margin-top:14px">
+            <div style="padding:11px 13px;background:#08151F;border:2px solid {{ fbBd2 }}">
+              <span style="display: block; font-size: 16px; letter-spacing: 0.1em; color: #5e7794"
+                >WHAT HAPPENED</span
+              ><span
+                style="
+                  display: block;
+                  margin-top: 4px;
+                  font-family: Inter, system-ui, sans-serif;
+                  font-size: 14px;
+                  line-height: 1.55;
+                  color: #c3d6ea;
+                "
+                >{{ fbWhat }}</span
+              >
+            </div>
+            <div style="padding:11px 13px;background:#08151F;border:2px solid {{ fbBd2 }}">
+              <span style="display: block; font-size: 16px; letter-spacing: 0.1em; color: #5e7794"
+                >{{ fbWhyLabel }}</span
+              ><span
+                style="
+                  display: block;
+                  margin-top: 4px;
+                  font-family: Inter, system-ui, sans-serif;
+                  font-size: 14px;
+                  line-height: 1.55;
+                  color: #c3d6ea;
+                "
+                >{{ fbWhy }}</span
+              >
+            </div>
+            <div style="padding:11px 13px;background:#08151F;border:2px solid {{ fbBd2 }}">
+              <span style="display: block; font-size: 16px; letter-spacing: 0.1em; color: #5e7794"
+                >WATCH FOR THIS SIGNAL</span
+              ><span
+                style="
+                  display: block;
+                  margin-top: 4px;
+                  font-family: Inter, system-ui, sans-serif;
+                  font-size: 14px;
+                  line-height: 1.55;
+                  color: #c3d6ea;
+                "
+                >{{ fbSign }}</span
+              >
+            </div>
+            <div style="padding:11px 13px;background:#08151F;border:2px solid {{ fbBd2 }}">
+              <span style="display: block; font-size: 16px; letter-spacing: 0.1em; color: #5e7794"
+                >IN A REAL DEAL</span
+              ><span
+                style="
+                  display: block;
+                  margin-top: 4px;
+                  font-family: Inter, system-ui, sans-serif;
+                  font-size: 14px;
+                  line-height: 1.55;
+                  color: #c3d6ea;
+                "
+                >{{ fbReal }}</span
+              >
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap">
+            <button
+              type="button"
+              onClick="{{ onNext }}"
+              style="display:flex;align-items:center;gap:9px;padding:12px 24px;min-height:48px;background:{{ fbFg }};border:2px solid {{ fbBd }};color:#04140E;font-family:'Pixelify Sans',monospace;font-weight:700;font-size:20px;letter-spacing:.06em;cursor:pointer;box-shadow:3px 3px 0 #071019"
+              style-active="transform:translate(2px,2px);box-shadow:1px 1px 0 #071019"
+            >
+              CONTINUE <span aria-hidden="true">›</span>
+            </button>
+            <button
+              type="button"
+              onClick="{{ onMore }}"
+              style="
+                padding: 12px 20px;
+                min-height: 48px;
+                background: #0c1826;
+                border: 2px solid #2a5175;
+                color: #bbd2ea;
+                font-family: 'VT323', monospace;
+                font-size: 19px;
+                letter-spacing: 0.06em;
+                cursor: pointer;
+              "
+              style-hover="border-color:#4FD8E8;color:#EAF4FF"
+            >
+              MORE ABOUT THIS RISK
+            </button>
+            <span
+              style="
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-family: 'Pixelify Sans', monospace;
+                font-size: 20px;
+                color: #f5c84a;
+              "
+              >{{ starIcon3 }}+{{ fbXp }} XP</span
+            >
+          </div>
+        </div>
+      </sc-if>
+    </section>
+
+    <aside style="display:flex;flex-direction:column;gap:14px;position:{{ stick }};top:92px">
+      <section style="background: #0a1728; border: 2px solid #6b2029; padding: 13px">
+        <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 11px">
+          {{ flagRedIcon }}
+          <h2
+            style="
+              flex: 1;
+              margin: 0;
+              font-family: 'Pixelify Sans', monospace;
+              font-size: 19px;
+              letter-spacing: 0.06em;
+              color: #f0857b;
+            "
+          >
+            SCAM SIGNALS DETECTED
+          </h2>
+          <span
+            style="
+              display: grid;
+              place-items: center;
+              min-width: 28px;
+              height: 28px;
+              background: #f0524b;
+              color: #2a0605;
+              font-family: 'Pixelify Sans', monospace;
+              font-size: 18px;
+            "
+            >{{ sigCount }}</span
+          >
+        </div>
+        <sc-if value="{{ hasSigs }}">
+          <div style="display: flex; flex-direction: column; gap: 9px">
+            <sc-for list="{{ signals }}" as="g" hint-placeholder-count="3">
+              <button
+                type="button"
+                onClick="{{ g.on }}"
+                style="display:flex;gap:10px;text-align:left;padding:10px;background:#0C1826;border:2px solid {{ g.bd }};cursor:pointer;animation:slideIn 220ms ease-out both;transition:transform 120ms"
+                style-hover="transform:translateX(-2px)"
+              >
+                <span style="flex: none">{{ g.icon }}</span>
+                <span
+                  style="flex: 1; min-width: 0; font-size: 18px; line-height: 1.3; color: #dce9f7"
+                  >{{ g.t }} <span style="color: #7a93ae">{{ g.s }}</span></span
+                >
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noSigs }}">
+          <p
+            style="
+              margin: 0;
+              padding: 14px 10px;
+              text-align: center;
+              font-size: 18px;
+              line-height: 1.35;
+              color: #5e7794;
+            "
+          >
+            No signals yet. Read carefully — they usually appear before the money does.
+          </p>
+        </sc-if>
+      </section>
+
+      <section style="background: #0a1728; border: 2px solid #1e4670; padding: 13px">
+        <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 11px">
+          {{ bookIcon }}
+          <h2
+            style="
+              flex: 1;
+              margin: 0;
+              font-family: 'Pixelify Sans', monospace;
+              font-size: 19px;
+              letter-spacing: 0.06em;
+              color: #8fc9ff;
+            "
+          >
+            PRACTICAL TIPS
+          </h2>
+          <span
+            style="
+              display: grid;
+              place-items: center;
+              min-width: 28px;
+              height: 28px;
+              background: #3d8bfd;
+              color: #04121f;
+              font-family: 'Pixelify Sans', monospace;
+              font-size: 18px;
+            "
+            >{{ tipsCount }}</span
+          >
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 9px">
+          <sc-for list="{{ playTips }}" as="t" hint-placeholder-count="4">
+            <button
+              type="button"
+              onClick="{{ t.on }}"
+              style="
+                display: flex;
+                gap: 10px;
+                align-items: flex-start;
+                text-align: left;
+                padding: 10px;
+                background: #0c1826;
+                border: 2px solid #1b3550;
+                cursor: pointer;
+                transition: border-color 140ms;
+              "
+              style-hover="border-color:#4FD8E8"
+            >
+              <span
+                style="
+                  flex: none;
+                  display: grid;
+                  place-items: center;
+                  width: 30px;
+                  height: 30px;
+                  background: #08151f;
+                  border: 2px solid #1e4670;
+                "
+                >{{ t.icon }}</span
+              >
+              <span style="flex: 1; min-width: 0"
+                ><span
+                  style="
+                    display: block;
+                    font-family: 'Pixelify Sans', monospace;
+                    font-size: 18px;
+                    color: #eaf4ff;
+                  "
+                  >{{ t.t }}</span
+                ><span style="display: block; font-size: 17px; line-height: 1.25; color: #8fa3bd"
+                  >{{ t.d }}</span
+                ></span
+              >
+              <span
+                style="
+                  flex: none;
+                  font-family: 'Pixelify Sans', monospace;
+                  font-size: 17px;
+                  color: #f5c84a;
+                "
+                >+10 XP</span
+              >
+            </button>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="background: #0a1728; border: 2px solid #16324c; padding: 13px">
+        <h2
+          style="
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0 0 11px;
+            font-family: 'Pixelify Sans', monospace;
+            font-size: 19px;
+            letter-spacing: 0.06em;
+            color: #9fb6d0;
+          "
+        >
+          {{ barsIcon }}SESSION STATS
+        </h2>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+            background: #1b3550;
+            border: 2px solid #1b3550;
+          "
+        >
+          <div style="background: #0c1826; padding: 11px; text-align: center">
+            <span style="display: flex; justify-content: center; margin-bottom: 5px"
+              >{{ clockIcon }}</span
+            ><span
+              style="
+                display: block;
+                font-family: 'Pixelify Sans', monospace;
+                font-size: 22px;
+                color: #eaf4ff;
+              "
+              >{{ elapsed }}</span
+            ><span style="font-size: 16px; letter-spacing: 0.08em; color: #5e7794"
+              >TIME ELAPSED</span
+            >
+          </div>
+          <div style="background: #0c1826; padding: 11px; text-align: center">
+            <span style="display: flex; justify-content: center; margin-bottom: 5px"
+              >{{ starIcon4 }}</span
+            ><span
+              style="
+                display: block;
+                font-family: 'Pixelify Sans', monospace;
+                font-size: 22px;
+                color: #f5c84a;
+              "
+              >{{ gained }}</span
+            ><span style="font-size: 16px; letter-spacing: 0.08em; color: #5e7794">XP EARNED</span>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</sc-if>
