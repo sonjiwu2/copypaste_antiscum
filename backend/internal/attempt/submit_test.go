@@ -16,7 +16,7 @@ func startBuyerAttempt(t *testing.T) (*attempt.Service, attempt.View) {
 
 	service := newService(t, embeddedCatalog(t))
 
-	view, err := service.Start(context.Background(), "buyer-fake-delivery")
+	view, err := service.Start(context.Background(), "buyer-iphone-deposit")
 	if err != nil {
 		t.Fatalf("не удалось начать попытку: %v", err)
 	}
@@ -44,7 +44,7 @@ func submit(
 func TestSubmitChoiceAppliesSafeOption(t *testing.T) {
 	service, view := startBuyerAttempt(t)
 
-	transition, err := submit(t, service, view, "stay-on-platform", "key-1")
+	transition, err := submit(t, service, view, "request-live-video", "key-1")
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestSubmitChoiceAppliesSafeOption(t *testing.T) {
 		t.Errorf("score = %d, ожидался %d", transition.Score, attempt.InitialScore)
 	}
 
-	if transition.Accepted.ChoiceID != "stay-on-platform" || transition.Accepted.Label == "" {
+	if transition.Accepted.ChoiceID != "request-live-video" || transition.Accepted.Label == "" {
 		t.Errorf("принятый выбор = %+v", transition.Accepted)
 	}
 
@@ -86,7 +86,7 @@ func TestSubmitChoiceAppliesSafeOption(t *testing.T) {
 func TestSubmitChoiceAppliesUnsafeOption(t *testing.T) {
 	service, view := startBuyerAttempt(t)
 
-	transition, err := submit(t, service, view, "move-to-messenger", "key-1")
+	transition, err := submit(t, service, view, "agree-deposit", "key-1")
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestSubmitChoiceAppliesUnsafeOption(t *testing.T) {
 func TestSubmitChoiceTakesEffectsFromScenarioOnly(t *testing.T) {
 	service, view := startBuyerAttempt(t)
 
-	if _, err := submit(t, service, view, "move-to-messenger", "key-1"); err != nil {
+	if _, err := submit(t, service, view, "agree-deposit", "key-1"); err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
 
@@ -113,16 +113,16 @@ func TestSubmitChoiceTakesEffectsFromScenarioOnly(t *testing.T) {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
 
-	if restored.Score != 80 {
-		t.Errorf("score = %d, ожидался 80 по данным сценария", restored.Score)
+	if restored.Score != 70 {
+		t.Errorf("score = %d, ожидался 70 по данным сценария", restored.Score)
 	}
 
 	if len(restored.Decisions) != 1 {
 		t.Fatalf("решений = %d, ожидалось 1", len(restored.Decisions))
 	}
 
-	if restored.Decisions[0].ChoiceID != "move-to-messenger" {
-		t.Errorf("выбор = %q, ожидался move-to-messenger", restored.Decisions[0].ChoiceID)
+	if restored.Decisions[0].ChoiceID != "agree-deposit" {
+		t.Errorf("выбор = %q, ожидался agree-deposit", restored.Decisions[0].ChoiceID)
 	}
 }
 
@@ -136,15 +136,15 @@ func TestSubmitChoiceReachesTerminal(t *testing.T) {
 	}{
 		{
 			name:        "безопасный финал",
-			choices:     []scenario.ChoiceID{"stay-on-platform", "check-in-app", "refuse-prepay"},
+			choices:     []scenario.ChoiceID{"request-live-video", "request-random-action", "refuse-without-profile-check"},
 			wantOutcome: scenario.OutcomeSafe,
-			wantScore:   100,
+			wantScore:   95,
 		},
 		{
 			name:        "небезопасный финал",
-			choices:     []scenario.ChoiceID{"move-to-messenger", "open-payment-link", "send-prepay"},
+			choices:     []scenario.ChoiceID{"agree-deposit", "transfer-first-deposit", "send-more-money"},
 			wantOutcome: scenario.OutcomeUnsafe,
-			wantScore:   20,
+			wantScore:   10,
 		},
 	}
 
@@ -205,7 +205,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			command: func(view attempt.View) attempt.SubmitChoiceCommand {
 				return attempt.SubmitChoiceCommand{
 					AttemptID: "no-such-attempt", NodeID: view.CurrentNodeID,
-					ChoiceID: "stay-on-platform", IdempotencyKey: "key-1",
+					ChoiceID: "request-live-video", IdempotencyKey: "key-1",
 				}
 			},
 			wantErr: attempt.ErrNotFound,
@@ -214,8 +214,8 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			name: "устаревший узел",
 			command: func(view attempt.View) attempt.SubmitChoiceCommand {
 				return attempt.SubmitChoiceCommand{
-					AttemptID: view.ID, NodeID: "greeting",
-					ChoiceID: "stay-on-platform", IdempotencyKey: "key-1",
+					AttemptID: view.ID, NodeID: "seller-greeting",
+					ChoiceID: "request-live-video", IdempotencyKey: "key-1",
 				}
 			},
 			wantErr: attempt.ErrStaleNode,
@@ -235,7 +235,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			command: func(view attempt.View) attempt.SubmitChoiceCommand {
 				return attempt.SubmitChoiceCommand{
 					AttemptID: view.ID, NodeID: view.CurrentNodeID,
-					ChoiceID: "refuse-prepay", IdempotencyKey: "key-1",
+					ChoiceID: "refuse-without-profile-check", IdempotencyKey: "key-1",
 				}
 			},
 			wantErr: attempt.ErrChoiceNotFound,
@@ -245,7 +245,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			command: func(view attempt.View) attempt.SubmitChoiceCommand {
 				return attempt.SubmitChoiceCommand{
 					AttemptID: view.ID, NodeID: view.CurrentNodeID,
-					ChoiceID: "send-code", IdempotencyKey: "key-1",
+					ChoiceID: "refund-difference-to-buyer", IdempotencyKey: "key-1",
 				}
 			},
 			wantErr: attempt.ErrChoiceNotFound,
@@ -255,7 +255,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			command: func(view attempt.View) attempt.SubmitChoiceCommand {
 				return attempt.SubmitChoiceCommand{
 					AttemptID: view.ID, NodeID: view.CurrentNodeID,
-					ChoiceID: "stay-on-platform",
+					ChoiceID: "request-live-video",
 				}
 			},
 			wantErr: attempt.ErrEmptyIdempotencyKey,
@@ -288,7 +288,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 func TestSubmitChoiceOnCompletedAttempt(t *testing.T) {
 	service, view := startBuyerAttempt(t)
 
-	choices := []scenario.ChoiceID{"stay-on-platform", "check-in-app", "refuse-prepay"}
+	choices := []scenario.ChoiceID{"request-live-video", "request-random-action", "refuse-without-profile-check"}
 	keys := []attempt.IdempotencyKey{"key-a", "key-b", "key-c"}
 
 	var last attempt.Transition
@@ -306,7 +306,7 @@ func TestSubmitChoiceOnCompletedAttempt(t *testing.T) {
 	// Новый ключ на завершённой попытке — отказ.
 	_, err := service.SubmitChoice(context.Background(), attempt.SubmitChoiceCommand{
 		AttemptID: view.ID, NodeID: last.CurrentNodeID,
-		ChoiceID: "stay-on-platform", IdempotencyKey: "key-new",
+		ChoiceID: "request-live-video", IdempotencyKey: "key-new",
 	})
 	if !errors.Is(err, attempt.ErrAlreadyCompleted) {
 		t.Errorf("ошибка = %v, ожидалась ErrAlreadyCompleted", err)
@@ -329,12 +329,12 @@ func TestSubmitChoiceOnCompletedAttempt(t *testing.T) {
 func TestSubmitChoiceIsIdempotent(t *testing.T) {
 	service, view := startBuyerAttempt(t)
 
-	first, err := submit(t, service, view, "move-to-messenger", "key-1")
+	first, err := submit(t, service, view, "agree-deposit", "key-1")
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
 
-	second, err := submit(t, service, view, "move-to-messenger", "key-1")
+	second, err := submit(t, service, view, "agree-deposit", "key-1")
 	if err != nil {
 		t.Fatalf("повтор вернул ошибку: %v", err)
 	}
@@ -370,11 +370,11 @@ func TestSubmitChoiceIsIdempotent(t *testing.T) {
 func TestSubmitChoiceRejectsReusedKeyWithDifferentPayload(t *testing.T) {
 	service, view := startBuyerAttempt(t)
 
-	if _, err := submit(t, service, view, "move-to-messenger", "key-1"); err != nil {
+	if _, err := submit(t, service, view, "agree-deposit", "key-1"); err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
 
-	_, err := submit(t, service, view, "stay-on-platform", "key-1")
+	_, err := submit(t, service, view, "request-live-video", "key-1")
 	if !errors.Is(err, attempt.ErrIdempotencyConflict) {
 		t.Fatalf("ошибка = %v, ожидалась ErrIdempotencyConflict", err)
 	}
@@ -388,7 +388,7 @@ func TestSubmitChoiceRespectsCanceledContext(t *testing.T) {
 
 	_, err := service.SubmitChoice(ctx, attempt.SubmitChoiceCommand{
 		AttemptID: view.ID, NodeID: view.CurrentNodeID,
-		ChoiceID: "stay-on-platform", IdempotencyKey: "key-1",
+		ChoiceID: "request-live-video", IdempotencyKey: "key-1",
 	})
 	if !errors.Is(err, context.Canceled) {
 		t.Errorf("ошибка = %v, ожидалась context.Canceled", err)
@@ -402,7 +402,7 @@ func TestSubmitChoiceUnderConcurrency(t *testing.T) {
 
 	service, view := startBuyerAttempt(t)
 
-	options := []scenario.ChoiceID{"stay-on-platform", "move-to-messenger"}
+	options := []scenario.ChoiceID{"request-live-video", "agree-deposit"}
 
 	var (
 		waitGroup sync.WaitGroup
@@ -474,7 +474,7 @@ func TestSubmitChoiceConcurrentDuplicateReturnsSameResult(t *testing.T) {
 		go func() {
 			defer waitGroup.Done()
 
-			results[i], failures[i] = submit(t, service, view, "move-to-messenger", "same-key")
+			results[i], failures[i] = submit(t, service, view, "agree-deposit", "same-key")
 		}()
 	}
 

@@ -38,12 +38,18 @@ func TestListScenarios(t *testing.T) {
 			target:     "/api/v1/scenarios",
 			wantStatus: http.StatusOK,
 			wantIDs: []string{
-				"buyer-fake-delivery",
+				"buyer-airpods-counterfeit",
+				"buyer-gpu-hidden-repair",
 				"buyer-iphone-deposit",
+				"buyer-macbook-corporate-lock",
 				"buyer-ps5-delivery",
+				"buyer-switch-prepayment",
+				"seller-fake-payment-email",
 				"seller-gpu-return-swap",
 				"seller-laptop-courier",
-				"seller-payment-already-sent",
+				"seller-qr-payment-trap",
+				"seller-sms-code-payment",
+				"seller-third-party-overpayment",
 			},
 		},
 		{
@@ -51,9 +57,12 @@ func TestListScenarios(t *testing.T) {
 			target:     "/api/v1/scenarios?role=buyer",
 			wantStatus: http.StatusOK,
 			wantIDs: []string{
-				"buyer-fake-delivery",
+				"buyer-airpods-counterfeit",
+				"buyer-gpu-hidden-repair",
 				"buyer-iphone-deposit",
+				"buyer-macbook-corporate-lock",
 				"buyer-ps5-delivery",
+				"buyer-switch-prepayment",
 			},
 		},
 		{
@@ -61,9 +70,12 @@ func TestListScenarios(t *testing.T) {
 			target:     "/api/v1/scenarios?role=seller",
 			wantStatus: http.StatusOK,
 			wantIDs: []string{
+				"seller-fake-payment-email",
 				"seller-gpu-return-swap",
 				"seller-laptop-courier",
-				"seller-payment-already-sent",
+				"seller-qr-payment-trap",
+				"seller-sms-code-payment",
+				"seller-third-party-overpayment",
 			},
 		},
 		{
@@ -146,7 +158,7 @@ func TestGetScenario(t *testing.T) {
 	}{
 		{
 			name:       "существующий сценарий",
-			target:     "/api/v1/scenarios/buyer-fake-delivery",
+			target:     "/api/v1/scenarios/buyer-iphone-deposit",
 			wantStatus: http.StatusOK,
 		},
 		{
@@ -180,8 +192,8 @@ func TestGetScenario(t *testing.T) {
 				t.Fatalf("не удалось разобрать ответ: %v", err)
 			}
 
-			if body.ID != "buyer-fake-delivery" {
-				t.Errorf("id = %q, ожидался buyer-fake-delivery", body.ID)
+			if body.ID != "buyer-iphone-deposit" {
+				t.Errorf("id = %q, ожидался buyer-iphone-deposit", body.ID)
 			}
 		})
 	}
@@ -193,7 +205,7 @@ func TestCatalogResponsesHideScenarioGraph(t *testing.T) {
 	targets := []string{
 		"/api/v1/scenarios",
 		"/api/v1/scenarios?role=seller",
-		"/api/v1/scenarios/seller-payment-already-sent",
+		"/api/v1/scenarios/seller-third-party-overpayment",
 	}
 
 	for _, target := range targets {

@@ -39,7 +39,7 @@ func startAttempt(t *testing.T, router http.Handler, scenarioID string) attemptR
 
 func TestStartAttemptEndpoint(t *testing.T) {
 	router := newTestRouter(t)
-	started := startAttempt(t, router, "buyer-fake-delivery")
+	started := startAttempt(t, router, "buyer-iphone-deposit")
 
 	if started.AttemptID == "" {
 		t.Error("идентификатор попытки не должен быть пустым")
@@ -53,8 +53,8 @@ func TestStartAttemptEndpoint(t *testing.T) {
 		t.Errorf("score = %d, ожидался 100", started.Score)
 	}
 
-	if started.Scenario.ID != "buyer-fake-delivery" || started.Scenario.Version != 1 {
-		t.Errorf("сценарий = %+v, ожидался buyer-fake-delivery версии 1", started.Scenario)
+	if started.Scenario.ID != "buyer-iphone-deposit" || started.Scenario.Version != 1 {
+		t.Errorf("сценарий = %+v, ожидался buyer-iphone-deposit версии 1", started.Scenario)
 	}
 
 	if len(started.RevealedNodes) < 2 {
@@ -159,7 +159,7 @@ func TestStartAttemptEndpointRejectsOversizedBody(t *testing.T) {
 // Ответ после перезагрузки страницы должен полностью восстанавливать экран.
 func TestGetAttemptEndpointRestoresState(t *testing.T) {
 	router := newTestRouter(t)
-	started := startAttempt(t, router, "seller-payment-already-sent")
+	started := startAttempt(t, router, "seller-third-party-overpayment")
 
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet,
@@ -220,7 +220,7 @@ func TestAttemptResponsesHideFutureBranches(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/api/v1/attempts",
-		strings.NewReader(`{"scenarioId":"buyer-fake-delivery"}`)))
+		strings.NewReader(`{"scenarioId":"buyer-iphone-deposit"}`)))
 
 	if recorder.Code != http.StatusCreated {
 		t.Fatalf("статус = %d, ожидался 201", recorder.Code)
@@ -242,7 +242,7 @@ func TestAttemptResponsesHideFutureBranches(t *testing.T) {
 	// Дополнительная проверка по сырому тексту: подписи вариантов видны,
 	// а идентификаторы следующих узлов встречаться не должны.
 	body := recorder.Body.String()
-	for _, hiddenNode := range []string{"delivery-message", "safe-ending", "unsafe-ending"} {
+	for _, hiddenNode := range []string{"third-party-card-system", "safe-full-ending", "unsafe-double-deposit-ending"} {
 		if strings.Contains(body, hiddenNode) {
 			t.Errorf("в ответе виден будущий узел %q", hiddenNode)
 		}
@@ -253,8 +253,8 @@ func TestAttemptResponsesHideFutureBranches(t *testing.T) {
 func TestAttemptsAreIndependent(t *testing.T) {
 	router := newTestRouter(t)
 
-	first := startAttempt(t, router, "buyer-fake-delivery")
-	second := startAttempt(t, router, "seller-payment-already-sent")
+	first := startAttempt(t, router, "buyer-iphone-deposit")
+	second := startAttempt(t, router, "seller-third-party-overpayment")
 
 	if first.AttemptID == second.AttemptID {
 		t.Fatal("идентификаторы попыток должны различаться")

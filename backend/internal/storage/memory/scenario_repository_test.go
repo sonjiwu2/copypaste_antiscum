@@ -48,10 +48,10 @@ func TestScenarioRepositoryList(t *testing.T) {
 		filter scenario.Filter
 		want   int
 	}{
-		{name: "без фильтра", filter: scenario.Filter{}, want: 6},
-		{name: "только активные", filter: scenario.Filter{OnlyActive: true}, want: 6},
-		{name: "роль покупателя", filter: scenario.Filter{Role: scenario.RoleBuyer}, want: 3},
-		{name: "роль продавца", filter: scenario.Filter{Role: scenario.RoleSeller}, want: 3},
+		{name: "без фильтра", filter: scenario.Filter{}, want: 12},
+		{name: "только активные", filter: scenario.Filter{OnlyActive: true}, want: 12},
+		{name: "роль покупателя", filter: scenario.Filter{Role: scenario.RoleBuyer}, want: 6},
+		{name: "роль продавца", filter: scenario.Filter{Role: scenario.RoleSeller}, want: 6},
 		{name: "неизвестная роль", filter: scenario.Filter{Role: "courier"}, want: 0},
 	}
 
@@ -74,7 +74,7 @@ func TestScenarioRepositoryList(t *testing.T) {
 func TestScenarioRepositoryGet(t *testing.T) {
 	repository := newRepository(t)
 
-	found, err := repository.Get(context.Background(), "buyer-fake-delivery")
+	found, err := repository.Get(context.Background(), "buyer-iphone-deposit")
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
@@ -98,7 +98,7 @@ func TestScenarioRepositoryRespectsCanceledContext(t *testing.T) {
 		t.Errorf("List: ошибка = %v, ожидалась context.Canceled", err)
 	}
 
-	if _, err := repository.Get(ctx, "buyer-fake-delivery"); !errors.Is(err, context.Canceled) {
+	if _, err := repository.Get(ctx, "buyer-iphone-deposit"); !errors.Is(err, context.Canceled) {
 		t.Errorf("Get: ошибка = %v, ожидалась context.Canceled", err)
 	}
 }
@@ -107,12 +107,12 @@ func TestScenarioRepositoryRespectsCanceledContext(t *testing.T) {
 func TestScenarioRepositoryDoesNotLeakMutableState(t *testing.T) {
 	repository := newRepository(t)
 
-	first, err := repository.Get(context.Background(), "buyer-fake-delivery")
+	first, err := repository.Get(context.Background(), "buyer-iphone-deposit")
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
 
-	node, found := first.Node("channel-decision")
+	node, found := first.Node("deposit-decision")
 	if !found {
 		t.Fatal("узел решения должен существовать")
 	}
@@ -121,12 +121,12 @@ func TestScenarioRepositoryDoesNotLeakMutableState(t *testing.T) {
 	node.Choices[0].Label = "подменённая подпись"
 	node.Choices[0].RiskTags = append(node.Choices[0].RiskTags, "подменённый тег")
 
-	second, err := repository.Get(context.Background(), "buyer-fake-delivery")
+	second, err := repository.Get(context.Background(), "buyer-iphone-deposit")
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
 
-	fresh, _ := second.Node("channel-decision")
+	fresh, _ := second.Node("deposit-decision")
 
 	if fresh.Choices[0].Label != originalLabel {
 		t.Errorf("подпись в хранилище = %q, ожидалась %q", fresh.Choices[0].Label, originalLabel)
@@ -152,7 +152,7 @@ func TestScenarioRepositoryHandlesConcurrentReads(t *testing.T) {
 				return
 			}
 
-			found, err := repository.Get(context.Background(), "seller-payment-already-sent")
+			found, err := repository.Get(context.Background(), "seller-third-party-overpayment")
 			if err != nil {
 				t.Errorf("Get вернул ошибку: %v", err)
 

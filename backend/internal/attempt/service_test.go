@@ -64,7 +64,7 @@ func newService(t *testing.T, catalog attempt.ScenarioCatalog) *attempt.Service 
 func TestStartAttemptRevealsFirstNodes(t *testing.T) {
 	service := newService(t, embeddedCatalog(t))
 
-	view, err := service.Start(context.Background(), "buyer-fake-delivery")
+	view, err := service.Start(context.Background(), "buyer-iphone-deposit")
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
@@ -113,7 +113,7 @@ func TestStartAttemptRevealsFirstNodes(t *testing.T) {
 func TestStartAttemptRevealsAllMessagesBeforeDecision(t *testing.T) {
 	service := newService(t, embeddedCatalog(t))
 
-	view, err := service.Start(context.Background(), "seller-payment-already-sent")
+	view, err := service.Start(context.Background(), "seller-third-party-overpayment")
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
@@ -145,7 +145,7 @@ func TestStartAttemptPropagatesCatalogFailure(t *testing.T) {
 	catalogFailure := errors.New("каталог недоступен")
 	service := newService(t, stubCatalog{failure: catalogFailure})
 
-	if _, err := service.Start(context.Background(), "buyer-fake-delivery"); !errors.Is(err, catalogFailure) {
+	if _, err := service.Start(context.Background(), "buyer-iphone-deposit"); !errors.Is(err, catalogFailure) {
 		t.Errorf("ошибка = %v, ожидалась обёртка над %v", err, catalogFailure)
 	}
 }
@@ -169,7 +169,7 @@ func TestStartAttemptRejectsInactiveScenario(t *testing.T) {
 func TestGetAttemptRestoresState(t *testing.T) {
 	service := newService(t, embeddedCatalog(t))
 
-	started, err := service.Start(context.Background(), "buyer-fake-delivery")
+	started, err := service.Start(context.Background(), "buyer-iphone-deposit")
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
@@ -211,16 +211,16 @@ func TestGetAttemptDetectsScenarioVersionChange(t *testing.T) {
 	catalog := embeddedCatalog(t)
 	service := newService(t, catalog)
 
-	started, err := service.Start(context.Background(), "buyer-fake-delivery")
+	started, err := service.Start(context.Background(), "buyer-iphone-deposit")
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
 
 	updated := buildScenario(t, func(draft *scenario.Draft) {
-		draft.ID = "buyer-fake-delivery"
+		draft.ID = "buyer-iphone-deposit"
 		draft.Version = 2
 	})
-	catalog.scenarios["buyer-fake-delivery"] = updated
+	catalog.scenarios["buyer-iphone-deposit"] = updated
 
 	if _, err := service.Get(context.Background(), started.ID); !errors.Is(err, attempt.ErrScenarioVersionChanged) {
 		t.Errorf("ошибка = %v, ожидалась ErrScenarioVersionChanged", err)
@@ -233,7 +233,7 @@ func TestStartAttemptRespectsCanceledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	if _, err := service.Start(ctx, "buyer-fake-delivery"); !errors.Is(err, context.Canceled) {
+	if _, err := service.Start(ctx, "buyer-iphone-deposit"); !errors.Is(err, context.Canceled) {
 		t.Errorf("ошибка = %v, ожидалась context.Canceled", err)
 	}
 }
@@ -242,7 +242,7 @@ func TestStartAttemptRespectsCanceledContext(t *testing.T) {
 func TestViewHidesInternalChoiceData(t *testing.T) {
 	service := newService(t, embeddedCatalog(t))
 
-	view, err := service.Start(context.Background(), "buyer-fake-delivery")
+	view, err := service.Start(context.Background(), "buyer-iphone-deposit")
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}

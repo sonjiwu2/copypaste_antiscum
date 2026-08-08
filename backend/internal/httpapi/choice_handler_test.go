@@ -39,10 +39,10 @@ func submitChoiceOK(t *testing.T, router http.Handler, attemptID, nodeID, choice
 
 func TestSubmitChoiceEndpoint(t *testing.T) {
 	router := newTestRouter(t)
-	started := startAttempt(t, router, "buyer-fake-delivery")
+	started := startAttempt(t, router, "buyer-iphone-deposit")
 
 	transition := submitChoiceOK(t, router, started.AttemptID,
-		started.CurrentNodeID, "move-to-messenger", "key-1")
+		started.CurrentNodeID, "agree-deposit", "key-1")
 
 	if transition.AttemptID != started.AttemptID {
 		t.Errorf("идентификатор = %q, ожидался %q", transition.AttemptID, started.AttemptID)
@@ -52,11 +52,11 @@ func TestSubmitChoiceEndpoint(t *testing.T) {
 		t.Errorf("статус = %q, ожидался in_progress", transition.Status)
 	}
 
-	if transition.Score != 80 {
-		t.Errorf("score = %d, ожидался 80", transition.Score)
+	if transition.Score != 70 {
+		t.Errorf("score = %d, ожидался 70", transition.Score)
 	}
 
-	if transition.AcceptedChoice.ChoiceID != "move-to-messenger" || transition.AcceptedChoice.Label == "" {
+	if transition.AcceptedChoice.ChoiceID != "agree-deposit" || transition.AcceptedChoice.Label == "" {
 		t.Errorf("принятый выбор = %+v", transition.AcceptedChoice)
 	}
 
@@ -96,7 +96,7 @@ func TestSubmitChoiceEndpointErrors(t *testing.T) {
 		{
 			name: "нет idempotencyKey",
 			body: func(s attemptResponse) string {
-				return fmt.Sprintf(`{"nodeId":%q,"choiceId":"stay-on-platform"}`, s.CurrentNodeID)
+				return fmt.Sprintf(`{"nodeId":%q,"choiceId":"request-live-video"}`, s.CurrentNodeID)
 			},
 			wantStatus: http.StatusBadRequest,
 			wantCode:   CodeInvalidRequest,
@@ -104,7 +104,7 @@ func TestSubmitChoiceEndpointErrors(t *testing.T) {
 		{
 			name: "неизвестная попытка",
 			body: func(s attemptResponse) string {
-				return fmt.Sprintf(`{"nodeId":%q,"choiceId":"stay-on-platform","idempotencyKey":"k"}`, s.CurrentNodeID)
+				return fmt.Sprintf(`{"nodeId":%q,"choiceId":"request-live-video","idempotencyKey":"k"}`, s.CurrentNodeID)
 			},
 			attemptID:  func(attemptResponse) string { return "no-such-attempt" },
 			wantStatus: http.StatusNotFound,
@@ -113,7 +113,7 @@ func TestSubmitChoiceEndpointErrors(t *testing.T) {
 		{
 			name: "устаревший узел",
 			body: func(attemptResponse) string {
-				return `{"nodeId":"greeting","choiceId":"stay-on-platform","idempotencyKey":"k"}`
+				return `{"nodeId":"seller-greeting","choiceId":"request-live-video","idempotencyKey":"k"}`
 			},
 			wantStatus: http.StatusConflict,
 			wantCode:   CodeStaleNode,
@@ -129,7 +129,7 @@ func TestSubmitChoiceEndpointErrors(t *testing.T) {
 		{
 			name: "вариант выбора из другого сценария",
 			body: func(s attemptResponse) string {
-				return fmt.Sprintf(`{"nodeId":%q,"choiceId":"send-code","idempotencyKey":"k"}`, s.CurrentNodeID)
+				return fmt.Sprintf(`{"nodeId":%q,"choiceId":"refund-difference-to-buyer","idempotencyKey":"k"}`, s.CurrentNodeID)
 			},
 			wantStatus: http.StatusUnprocessableEntity,
 			wantCode:   CodeChoiceNotFound,
@@ -139,7 +139,7 @@ func TestSubmitChoiceEndpointErrors(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			router := newTestRouter(t)
-			started := startAttempt(t, router, "buyer-fake-delivery")
+			started := startAttempt(t, router, "buyer-iphone-deposit")
 
 			attemptID := started.AttemptID
 			if testCase.attemptID != nil {
@@ -160,17 +160,17 @@ func TestSubmitChoiceEndpointErrors(t *testing.T) {
 
 func TestSubmitChoiceEndpointIdempotency(t *testing.T) {
 	router := newTestRouter(t)
-	started := startAttempt(t, router, "buyer-fake-delivery")
+	started := startAttempt(t, router, "buyer-iphone-deposit")
 
-	first := submitChoiceOK(t, router, started.AttemptID, started.CurrentNodeID, "move-to-messenger", "key-1")
-	second := submitChoiceOK(t, router, started.AttemptID, started.CurrentNodeID, "move-to-messenger", "key-1")
+	first := submitChoiceOK(t, router, started.AttemptID, started.CurrentNodeID, "agree-deposit", "key-1")
+	second := submitChoiceOK(t, router, started.AttemptID, started.CurrentNodeID, "agree-deposit", "key-1")
 
 	if second.Score != first.Score || second.CurrentNodeID != first.CurrentNodeID {
 		t.Errorf("повтор вернул другой результат: %+v против %+v", second, first)
 	}
 
 	// Тот же ключ с другим выбором — конфликт.
-	body := fmt.Sprintf(`{"nodeId":%q,"choiceId":"stay-on-platform","idempotencyKey":"key-1"}`,
+	body := fmt.Sprintf(`{"nodeId":%q,"choiceId":"request-live-video","idempotencyKey":"key-1"}`,
 		started.CurrentNodeID)
 
 	recorder := submitChoiceRaw(t, router, started.AttemptID, body)
@@ -183,16 +183,16 @@ func TestSubmitChoiceEndpointIdempotency(t *testing.T) {
 
 func TestSubmitChoiceEndpointRejectsCompletedAttempt(t *testing.T) {
 	router := newTestRouter(t)
-	started := startAttempt(t, router, "buyer-fake-delivery")
+	started := startAttempt(t, router, "buyer-iphone-deposit")
 
 	current := started.CurrentNodeID
-	for i, choiceID := range []string{"stay-on-platform", "check-in-app", "refuse-prepay"} {
+	for i, choiceID := range []string{"request-live-video", "request-random-action", "refuse-without-profile-check"} {
 		transition := submitChoiceOK(t, router, started.AttemptID, current, choiceID,
 			fmt.Sprintf("key-%d", i))
 		current = transition.CurrentNodeID
 	}
 
-	body := fmt.Sprintf(`{"nodeId":%q,"choiceId":"stay-on-platform","idempotencyKey":"key-new"}`, current)
+	body := fmt.Sprintf(`{"nodeId":%q,"choiceId":"request-live-video","idempotencyKey":"key-new"}`, current)
 
 	recorder := submitChoiceRaw(t, router, started.AttemptID, body)
 	if recorder.Code != http.StatusConflict {
@@ -206,9 +206,9 @@ func TestSubmitChoiceEndpointRejectsCompletedAttempt(t *testing.T) {
 // куда ведут варианты следующего решения.
 func TestSubmitChoiceResponseHidesFutureBranches(t *testing.T) {
 	router := newTestRouter(t)
-	started := startAttempt(t, router, "buyer-fake-delivery")
+	started := startAttempt(t, router, "buyer-iphone-deposit")
 
-	body := fmt.Sprintf(`{"nodeId":%q,"choiceId":"stay-on-platform","idempotencyKey":"key-1"}`,
+	body := fmt.Sprintf(`{"nodeId":%q,"choiceId":"request-live-video","idempotencyKey":"key-1"}`,
 		started.CurrentNodeID)
 
 	recorder := submitChoiceRaw(t, router, started.AttemptID, body)
@@ -232,7 +232,7 @@ func TestSubmitChoiceResponseHidesFutureBranches(t *testing.T) {
 	}
 
 	// Финальные узлы ещё не достигнуты и не должны упоминаться.
-	for _, hiddenNode := range []string{"safe-ending", "unsafe-ending"} {
+	for _, hiddenNode := range []string{"safe-full-ending", "unsafe-double-deposit-ending"} {
 		if strings.Contains(recorder.Body.String(), hiddenNode) {
 			t.Errorf("в ответе виден будущий узел %q", hiddenNode)
 		}
@@ -244,12 +244,12 @@ func TestSubmitChoiceResponseHidesFutureBranches(t *testing.T) {
 // и текущее решение — но не будущие ветки.
 func TestResumeInTheMiddleOfJourney(t *testing.T) {
 	router := newTestRouter(t)
-	started := startAttempt(t, router, "buyer-fake-delivery")
+	started := startAttempt(t, router, "buyer-iphone-deposit")
 
 	first := submitChoiceOK(t, router, started.AttemptID, started.CurrentNodeID,
-		"move-to-messenger", "step-0")
+		"request-live-video", "step-0")
 	second := submitChoiceOK(t, router, started.AttemptID, first.CurrentNodeID,
-		"check-in-app", "step-1")
+		"request-random-action", "step-1")
 
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet,
@@ -292,7 +292,7 @@ func TestResumeInTheMiddleOfJourney(t *testing.T) {
 		t.Fatalf("решений = %d, ожидалось 2", len(resumed.Decisions))
 	}
 
-	for i, want := range []string{"move-to-messenger", "check-in-app"} {
+	for i, want := range []string{"request-live-video", "request-random-action"} {
 		if resumed.Decisions[i].ChoiceID != want {
 			t.Errorf("решение %d = %q, ожидалось %q", i, resumed.Decisions[i].ChoiceID, want)
 		}
@@ -313,7 +313,7 @@ func TestResumeInTheMiddleOfJourney(t *testing.T) {
 	}
 
 	// Финалы ещё не достигнуты и не должны быть видны.
-	for _, hiddenNode := range []string{"safe-ending", "unsafe-ending"} {
+	for _, hiddenNode := range []string{"safe-full-ending", "unsafe-double-deposit-ending"} {
 		if strings.Contains(recorder.Body.String(), hiddenNode) {
 			t.Errorf("в ответе виден будущий узел %q", hiddenNode)
 		}
@@ -321,7 +321,7 @@ func TestResumeInTheMiddleOfJourney(t *testing.T) {
 
 	// После перезагрузки прохождение продолжается с того же места.
 	final := submitChoiceOK(t, router, started.AttemptID, resumed.CurrentNodeID,
-		"refuse-prepay", "step-2")
+		"refuse-without-profile-check", "step-2")
 	if final.Status != "completed" {
 		t.Errorf("статус = %q, ожидался completed", final.Status)
 	}
@@ -338,17 +338,17 @@ func TestFullJourneyThroughAPI(t *testing.T) {
 	}{
 		{
 			name:        "покупатель проходит безопасно",
-			scenarioID:  "buyer-fake-delivery",
-			choices:     []string{"stay-on-platform", "check-in-app", "refuse-prepay"},
+			scenarioID:  "buyer-iphone-deposit",
+			choices:     []string{"request-live-video", "request-random-action", "refuse-without-profile-check"},
 			wantOutcome: "safe",
-			wantScore:   100,
+			wantScore:   95,
 		},
 		{
 			name:        "продавец теряет доступ",
-			scenarioID:  "seller-payment-already-sent",
-			choices:     []string{"accept-direct-transfer", "send-code", "open-payout-link"},
+			scenarioID:  "seller-third-party-overpayment",
+			choices:     []string{"accept-third-party-transfer", "refund-difference-to-buyer", "handover-camera"},
 			wantOutcome: "unsafe",
-			wantScore:   10,
+			wantScore:   0,
 		},
 	}
 
