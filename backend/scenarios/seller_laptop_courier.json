@@ -1,11 +1,11 @@
 {
   "id": "seller-laptop-courier",
-  "version": 2,
+  "version": 3,
   "slug": "seller-laptop-courier",
   "role": "seller",
   "title": "Покупатель присылает курьера",
   "description": "Продажа ноутбука: покупатель отправляет курьера, присылает чек и торопит передать товар до поступления денег.",
-  "difficulty": "hard",
+  "difficulty": "medium",
   "estimatedMinutes": 7,
   "startNodeId": "buyer-greeting",
   "isActive": true,
@@ -42,8 +42,16 @@
           "nextNodeId": "buyer-asks-address",
           "safetyScore": -10,
           "criticality": "medium",
-          "riskTags": ["third_party_pickup", "off_platform_payment"],
-          "skillEffects": [{"skill": "payment_safety", "delta": 0}],
+          "riskTags": [
+            "third_party_pickup",
+            "off_platform_payment"
+          ],
+          "skillEffects": [
+            {
+              "skill": "payment_safety",
+              "delta": 0
+            }
+          ],
           "consequence": {
             "severity": "warning",
             "title": "Сделка с третьим лицом продолжена",
@@ -57,8 +65,15 @@
           "nextNodeId": "buyer-refuses-meeting",
           "safetyScore": -15,
           "criticality": "low",
-          "riskTags": ["third_party_pickup"],
-          "skillEffects": [{"skill": "verification_discipline", "delta": 1}],
+          "riskTags": [
+            "third_party_pickup"
+          ],
+          "skillEffects": [
+            {
+              "skill": "verification_discipline",
+              "delta": 1
+            }
+          ],
           "consequence": {
             "severity": "safe",
             "title": "Рискованная передача исключена",
@@ -72,8 +87,15 @@
           "nextNodeId": "buyer-rejects-platform",
           "safetyScore": -15,
           "criticality": "low",
-          "riskTags": ["off_platform_payment"],
-          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "riskTags": [
+            "off_platform_payment"
+          ],
+          "skillEffects": [
+            {
+              "skill": "channel_safety",
+              "delta": 1
+            }
+          ],
           "consequence": {
             "severity": "safe",
             "title": "Предложен защищённый канал",
@@ -143,8 +165,16 @@
           "nextNodeId": "unsafe-fake-check-ending",
           "safetyScore": -40,
           "criticality": "high",
-          "riskTags": ["fake_payment_proof", "third_party_pickup"],
-          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "riskTags": [
+            "fake_payment_proof",
+            "third_party_pickup"
+          ],
+          "skillEffects": [
+            {
+              "skill": "payment_safety",
+              "delta": -1
+            }
+          ],
           "consequence": {
             "severity": "dangerous",
             "title": "Чек принят за оплату",
@@ -158,8 +188,16 @@
           "nextNodeId": "courier-order-system",
           "safetyScore": -45,
           "criticality": "high",
-          "riskTags": ["fake_payment_proof", "third_party_pickup"],
-          "skillEffects": [{"skill": "verification_discipline", "delta": -1}],
+          "riskTags": [
+            "fake_payment_proof",
+            "third_party_pickup"
+          ],
+          "skillEffects": [
+            {
+              "skill": "verification_discipline",
+              "delta": -1
+            }
+          ],
           "consequence": {
             "severity": "dangerous",
             "title": "Проверяется не тот факт",
@@ -173,8 +211,15 @@
           "nextNodeId": "buyer-waiting-pressure",
           "safetyScore": 5,
           "criticality": "low",
-          "riskTags": ["fake_payment_proof"],
-          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "riskTags": [
+            "fake_payment_proof"
+          ],
+          "skillEffects": [
+            {
+              "skill": "payment_safety",
+              "delta": 1
+            }
+          ],
           "consequence": {
             "severity": "safe",
             "title": "Правильный критерий оплаты сохранён",
@@ -188,8 +233,15 @@
           "nextNodeId": "bank-check-system",
           "safetyScore": 0,
           "criticality": "low",
-          "riskTags": ["fake_payment_proof"],
-          "skillEffects": [{"skill": "verification_discipline", "delta": 1}],
+          "riskTags": [
+            "fake_payment_proof"
+          ],
+          "skillEffects": [
+            {
+              "skill": "verification_discipline",
+              "delta": 1
+            }
+          ],
           "consequence": {
             "severity": "safe",
             "title": "Оплата проверена независимо",
@@ -245,8 +297,17 @@
           "nextNodeId": "unsafe-pressure-ending",
           "safetyScore": -40,
           "criticality": "high",
-          "riskTags": ["fake_payment_proof", "urgency", "third_party_pickup"],
-          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "riskTags": [
+            "fake_payment_proof",
+            "urgency",
+            "third_party_pickup"
+          ],
+          "skillEffects": [
+            {
+              "skill": "payment_safety",
+              "delta": -1
+            }
+          ],
           "consequence": {
             "severity": "dangerous",
             "title": "Срочность заменила проверку",
@@ -260,8 +321,16 @@
           "nextNodeId": "buyer-demands-compensation",
           "safetyScore": 0,
           "criticality": "low",
-          "riskTags": ["fake_payment_proof", "urgency"],
-          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "riskTags": [
+            "fake_payment_proof",
+            "urgency"
+          ],
+          "skillEffects": [
+            {
+              "skill": "payment_safety",
+              "delta": 1
+            }
+          ],
           "consequence": {
             "severity": "safe",
             "title": "Товар остался у продавца",
@@ -275,8 +344,16 @@
           "nextNodeId": "courier-cannot-wait",
           "safetyScore": -5,
           "criticality": "medium",
-          "riskTags": ["urgency", "third_party_pickup"],
-          "skillEffects": [{"skill": "verification_discipline", "delta": 0}],
+          "riskTags": [
+            "urgency",
+            "third_party_pickup"
+          ],
+          "skillEffects": [
+            {
+              "skill": "verification_discipline",
+              "delta": 0
+            }
+          ],
           "consequence": {
             "severity": "warning",
             "title": "Правило сохранено, давление продолжается",
@@ -311,8 +388,15 @@
           "nextNodeId": "safe-quiet-ending",
           "safetyScore": -5,
           "criticality": "low",
-          "riskTags": ["fake_payment_proof"],
-          "skillEffects": [{"skill": "channel_safety", "delta": 0}],
+          "riskTags": [
+            "fake_payment_proof"
+          ],
+          "skillEffects": [
+            {
+              "skill": "channel_safety",
+              "delta": 0
+            }
+          ],
           "consequence": {
             "severity": "safe",
             "title": "Товар сохранён",
@@ -326,8 +410,16 @@
           "nextNodeId": "safe-full-ending",
           "safetyScore": 5,
           "criticality": "low",
-          "riskTags": ["fake_payment_proof", "third_party_pickup"],
-          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "riskTags": [
+            "fake_payment_proof",
+            "third_party_pickup"
+          ],
+          "skillEffects": [
+            {
+              "skill": "channel_safety",
+              "delta": 1
+            }
+          ],
           "consequence": {
             "severity": "safe",
             "title": "Доказательства сохранены",
@@ -341,8 +433,16 @@
           "nextNodeId": "unsafe-small-loss-ending",
           "safetyScore": -35,
           "criticality": "high",
-          "riskTags": ["urgency", "off_platform_payment"],
-          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "riskTags": [
+            "urgency",
+            "off_platform_payment"
+          ],
+          "skillEffects": [
+            {
+              "skill": "payment_safety",
+              "delta": -1
+            }
+          ],
           "consequence": {
             "severity": "dangerous",
             "title": "Мошенник получил компенсацию",

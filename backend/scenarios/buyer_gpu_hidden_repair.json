@@ -1,0 +1,356 @@
+{
+  "id": "buyer-gpu-hidden-repair",
+  "version": 1,
+  "slug": "buyer-gpu-hidden-repair",
+  "role": "buyer",
+  "title": "Видеокарта после скрытого ремонта",
+  "description": "Покупка RTX 4070 Ti при личной встрече: карта проходит короткий тест, но продавец скрывает нестабильность и следы ремонта.",
+  "difficulty": "medium",
+  "estimatedMinutes": 7,
+  "startNodeId": "seller-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "seller-greeting",
+      "type": "message",
+      "sender": "seller",
+      "text": "Здравствуйте! RTX 4070 Ti ещё продаётся. Полный комплект, коробка и чек. Карта использовалась только для игр, в майнинге не была.",
+      "nextNodeId": "seller-price-reason"
+    },
+    {
+      "id": "seller-price-reason",
+      "type": "message",
+      "sender": "seller",
+      "text": "Продаю за 63 000 ₽, потому что перешёл на RTX 4080. По рынку такие стоят около 72 000 ₽. Могу показать скриншот теста: температуры нормальные, производительность как у новой.",
+      "nextNodeId": "remote-check-decision"
+    },
+    {
+      "id": "remote-check-decision",
+      "type": "decision",
+      "decisionPrompt": "Как вы проверите состояние видеокарты до встречи?",
+      "choices": [
+        {
+          "id": "trust-benchmark-screenshot",
+          "label": "Довериться скриншоту теста и хорошему рейтингу",
+          "nextNodeId": "seller-arranges-meeting",
+          "safetyScore": -20,
+          "criticality": "medium",
+          "riskTags": ["reused_evidence", "hidden_repair"],
+          "skillEffects": [{"skill": "device_verification", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Статичный скриншот принят за диагностику",
+            "explanation": "Скриншот мог быть сделан раньше, отредактирован или относиться к другой видеокарте.",
+            "realWorldRule": "Скриншоты тестов не заменяют проверку конкретного устройства в реальном времени."
+          }
+        },
+        {
+          "id": "request-live-test-video",
+          "label": "Попросить непрерывное видео GPU-Z и стресс-теста",
+          "nextNodeId": "seller-short-video",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["reused_evidence", "short_test"],
+          "skillEffects": [{"skill": "device_verification", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Запрошена проверка конкретного устройства",
+            "explanation": "Непрерывное видео сложнее подменить, но короткий тест всё ещё может не выявить прогревающийся дефект.",
+            "realWorldRule": "Удалённая проверка должна связывать серийный номер, характеристики и работу товара в одном непрерывном видео."
+          }
+        },
+        {
+          "id": "ask-repair-and-warranty-history",
+          "label": "Уточнить ремонт, гарантию и причину низкой цены",
+          "nextNodeId": "seller-denies-repair",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["hidden_repair", "warranty_missing"],
+          "skillEffects": [{"skill": "ownership_verification", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "История товара вынесена в переписку",
+            "explanation": "Прямой вопрос фиксирует заверение продавца, но его ответ всё равно нужно подтвердить осмотром и документами.",
+            "realWorldRule": "Перед покупкой дорогой техники письменно уточняйте историю ремонта и остаток гарантии."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-short-video",
+      "type": "message",
+      "sender": "seller",
+      "text": "Вот непрерывное видео: серийный номер в GPU-Z, затем две минуты FurMark. Температура 67 градусов, артефактов нет. Дольше гонять не хочу — тест сильно нагружает карту.",
+      "nextNodeId": "seller-arranges-meeting"
+    },
+    {
+      "id": "seller-denies-repair",
+      "type": "message",
+      "sender": "seller",
+      "text": "Не ремонтировалась и не вскрывалась. Гарантия магазина закончилась месяц назад, поэтому и цена ниже. На встрече всё проверите.",
+      "nextNodeId": "seller-arranges-meeting"
+    },
+    {
+      "id": "seller-arranges-meeting",
+      "type": "message",
+      "sender": "seller",
+      "text": "Приезжайте вечером. Карта уже стоит в компьютере: запустим игру и тест. Только долго проверять не получится — потом придёт другой покупатель.",
+      "nextNodeId": "meeting-system"
+    },
+    {
+      "id": "meeting-system",
+      "type": "message",
+      "sender": "system",
+      "text": "На встрече видеокарта определяется правильно. Игра запускается, короткий тест проходит. Через несколько минут на экране один раз появляются цветные точки, затем изображение восстанавливается.",
+      "nextNodeId": "artifact-decision"
+    },
+    {
+      "id": "artifact-decision",
+      "type": "decision",
+      "decisionPrompt": "Во время проверки появился краткий графический артефакт. Как вы поступите?",
+      "choices": [
+        {
+          "id": "ignore-single-artifact",
+          "label": "Списать это на кабель и купить карту",
+          "nextNodeId": "seller-confirms-cable",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": ["graphics_artifacts", "confirmation_bias"],
+          "skillEffects": [{"skill": "device_verification", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Признак неисправности проигнорирован",
+            "explanation": "Даже краткий артефакт под нагрузкой может указывать на проблемы памяти, питания, перегрев или неудачный ремонт.",
+            "realWorldRule": "Повторяемый или необъяснённый сбой дорогой техники — причина остановить покупку."
+          }
+        },
+        {
+          "id": "negotiate-discount",
+          "label": "Попросить скидку из-за возможного дефекта",
+          "nextNodeId": "seller-discount-offer",
+          "safetyScore": -25,
+          "criticality": "high",
+          "riskTags": ["graphics_artifacts", "price_over_safety"],
+          "skillEffects": [{"skill": "risk_resistance", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Неизвестный дефект превращён в торг",
+            "explanation": "Скидка не ограничивает стоимость будущего ремонта и не объясняет происхождение сбоя.",
+            "realWorldRule": "Не компенсируйте неизвестную техническую неисправность небольшой скидкой."
+          }
+        },
+        {
+          "id": "repeat-long-test",
+          "label": "Перезапустить ПК и провести более долгий тест",
+          "nextNodeId": "long-test-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["graphics_artifacts", "short_test"],
+          "skillEffects": [{"skill": "device_verification", "delta": 2}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Случайный сбой проверяется повторно",
+            "explanation": "Повторная проверка после прогрева помогает отличить случайную проблему подключения от нестабильности видеокарты.",
+            "realWorldRule": "Подержанную видеокарту проверяйте несколько раз и под продолжительной нагрузкой."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-confirms-cable",
+      "type": "message",
+      "sender": "seller",
+      "text": "Да, этот HDMI-кабель иногда отходит. С картой всё хорошо. Если берёте сейчас, отдам за 62 000 ₽.",
+      "nextNodeId": "unsafe-gpu-ending"
+    },
+    {
+      "id": "seller-discount-offer",
+      "type": "message",
+      "sender": "seller",
+      "text": "Давайте 58 000 ₽ и без претензий. Скорее всего, проблема в драйвере, но мне некогда разбираться.",
+      "nextNodeId": "discount-decision"
+    },
+    {
+      "id": "discount-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец заметно снижает цену, но не подтверждает причину сбоя. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "buy-with-large-discount",
+          "label": "Купить, потому что скидка покрывает риск",
+          "nextNodeId": "unsafe-gpu-ending",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": ["price_over_safety", "hidden_defect"],
+          "skillEffects": [{"skill": "risk_resistance", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Выгода перевесила диагностику",
+            "explanation": "Стоимость ремонта памяти или графического процессора может превысить скидку, а успешный ремонт не гарантирован.",
+            "realWorldRule": "Покупайте неисправную технику только когда дефект точно установлен и его риск осознанно принят."
+          }
+        },
+        {
+          "id": "require-independent-diagnostics",
+          "label": "Предложить диагностику в независимом сервисе",
+          "nextNodeId": "seller-refuses-service",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["hidden_defect", "independent_diagnostics"],
+          "skillEffects": [{"skill": "device_verification", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Риск переводится в проверяемый факт",
+            "explanation": "Независимая диагностика позволяет оценить дефект до передачи денег.",
+            "realWorldRule": "Если неисправность неоднозначна, проверяйте товар у независимого специалиста до покупки."
+          }
+        },
+        {
+          "id": "leave-after-discount",
+          "label": "Отказаться от покупки и сохранить переписку",
+          "nextNodeId": "safe-partial-ending",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["hidden_defect"],
+          "skillEffects": [{"skill": "risk_resistance", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Покупка отменена",
+            "explanation": "Вы сохранили деньги, но подозрительное объявление пока не отправлено на проверку.",
+            "realWorldRule": "От сделки можно отказаться сразу после необъяснённого технического сбоя."
+          }
+        }
+      ]
+    },
+    {
+      "id": "long-test-system",
+      "type": "message",
+      "sender": "system",
+      "text": "После десяти минут нагрузки появляются артефакты, драйвер перезапускается. На одном винте повреждена гарантийная наклейка, а цвет термопрокладок отличается от заводского.",
+      "nextNodeId": "repair-evidence-decision"
+    },
+    {
+      "id": "repair-evidence-decision",
+      "type": "decision",
+      "decisionPrompt": "Долгий тест выявил нестабильность и возможное вскрытие. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "believe-driver-explanation",
+          "label": "Поверить версии о драйвере и купить дешевле",
+          "nextNodeId": "unsafe-gpu-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["hidden_repair", "graphics_artifacts"],
+          "skillEffects": [{"skill": "device_verification", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Совокупность признаков проигнорирована",
+            "explanation": "Артефакты после прогрева и следы вскрытия противоречат заявлению, что карта не ремонтировалась.",
+            "realWorldRule": "Несколько связанных признаков неисправности важнее устного объяснения продавца."
+          }
+        },
+        {
+          "id": "request-independent-service",
+          "label": "Согласиться только после независимой диагностики",
+          "nextNodeId": "seller-refuses-service",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["hidden_repair", "independent_diagnostics"],
+          "skillEffects": [{"skill": "device_verification", "delta": 2}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Проверка не подменена объяснением",
+            "explanation": "Вы готовы продолжить только после определения дефекта независимой стороной.",
+            "realWorldRule": "Продавец не должен сам быть единственным источником информации о спорном дефекте."
+          }
+        },
+        {
+          "id": "refuse-and-report",
+          "label": "Отказаться и пожаловаться за скрытую историю ремонта",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["hidden_repair", "misrepresentation"],
+          "skillEffects": [{"skill": "reporting_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Опасная покупка остановлена",
+            "explanation": "Вы сохранили деньги и сообщили площадке о несоответствии описания фактическому состоянию товара.",
+            "realWorldRule": "Если продавец скрывает ремонт или дефект, прекратите сделку и отправьте объявление на проверку."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-refuses-service",
+      "type": "message",
+      "sender": "seller",
+      "text": "В сервис никуда не поеду. У меня уже есть другой покупатель, который заберёт без лишних проверок.",
+      "nextNodeId": "service-refusal-decision"
+    },
+    {
+      "id": "service-refusal-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец отказывается от независимой диагностики и торопит другим покупателем. Ваше решение?",
+      "choices": [
+        {
+          "id": "yield-after-service-refusal",
+          "label": "Купить, чтобы не упустить низкую цену",
+          "nextNodeId": "unsafe-gpu-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["urgency", "hidden_defect"],
+          "skillEffects": [{"skill": "risk_resistance", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Давление отменило условие безопасности",
+            "explanation": "Отказ от диагностики усиливает риск, а очередь покупателей не подтверждает исправность карты.",
+            "realWorldRule": "Не меняйте решение о проверке из-за угрозы продать товар другому."
+          }
+        },
+        {
+          "id": "walk-away-and-report",
+          "label": "Завершить сделку и пожаловаться на объявление",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["hidden_defect", "urgency"],
+          "skillEffects": [{"skill": "reporting_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Риск окончательно остановлен",
+            "explanation": "Вы не позволили дефициту заменить диагностику и помогли предупредить следующего покупателя.",
+            "realWorldRule": "Отказ продавца от разумной проверки — самостоятельный красный флаг."
+          }
+        }
+      ]
+    },
+    {
+      "id": "unsafe-gpu-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Куплена нестабильная видеокарта",
+        "explanation": "После продолжительной нагрузки видеокарта выдаёт артефакты и отключается. Продавец не отвечает, а ремонт может оказаться дорогим или невозможным."
+      }
+    },
+    {
+      "id": "safe-partial-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Деньги сохранены",
+        "explanation": "Вы отказались от покупки после необъяснённого сбоя, но не отправили объявление на проверку."
+      }
+    },
+    {
+      "id": "safe-reported-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Скрытый дефект выявлен",
+        "explanation": "Вы обнаружили признаки нестабильности и вскрытия до оплаты, отказались от сделки и пожаловались на объявление."
+      }
+    }
+  ]
+}

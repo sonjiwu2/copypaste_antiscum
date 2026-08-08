@@ -1,0 +1,576 @@
+{
+  "id": "seller-qr-payment-trap",
+  "version": 2,
+  "slug": "seller-qr-payment-trap",
+  "role": "seller",
+  "title": "QR-код для получения оплаты",
+  "description": "Продажа объектива: покупатель присылает QR-код, который вместо получения денег создаёт исходящий перевод на имя третьего лица.",
+  "difficulty": "hard",
+  "estimatedMinutes": 7,
+  "startNodeId": "buyer-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "buyer-greeting",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Добрый день, Алексей! Я Михаил Соколов. Объектив Sony 24–70mm ещё продаётся? Готов забрать сегодня за 78 000 ₽ без торга.",
+      "nextNodeId": "seller-confirms-item"
+    },
+    {
+      "id": "seller-confirms-item",
+      "type": "message",
+      "sender": "seller",
+      "text": "Здравствуйте, Михаил. Да, продаётся. Я Алексей Воронов. Можно встретиться вечером и проверить объектив на камере.",
+      "nextNodeId": "buyer-courier-offer"
+    },
+    {
+      "id": "buyer-courier-offer",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Сам приехать не успеваю — пришлю курьера. Оплачу заранее с расчётного счёта. Для мгновенного зачисления мой банк формирует QR-код получателю. Вам нужно только отсканировать его банковским приложением.",
+      "nextNodeId": "qr-initial-decision"
+    },
+    {
+      "id": "qr-initial-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель утверждает, что QR-код нужен вам для получения денег. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "scan-qr-immediately",
+          "label": "Отсканировать QR-код банковским приложением",
+          "nextNodeId": "qr-bank-screen",
+          "safetyScore": -15,
+          "criticality": "medium",
+          "riskTags": [
+            "qr_payment_trap",
+            "operation_direction"
+          ],
+          "skillEffects": [
+            {
+              "skill": "payment_screen_verification",
+              "delta": -1
+            }
+          ],
+          "consequence": {
+            "severity": "warning",
+            "title": "QR-код открыт без проверки назначения",
+            "explanation": "QR-код — только способ передать данные. Он может открыть оплату, перевод или вредоносную страницу и сам по себе ничего не гарантирует.",
+            "realWorldRule": "После сканирования всегда проверяйте тип операции, сумму и получателя до подтверждения."
+          }
+        },
+        {
+          "id": "offer-platform-order",
+          "label": "Предложить оплату и доставку внутри площадки",
+          "nextNodeId": "buyer-business-account-excuse",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": [
+            "off_platform_payment"
+          ],
+          "skillEffects": [
+            {
+              "skill": "channel_safety",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Предложен защищённый способ",
+            "explanation": "Штатное оформление фиксирует сумму, плательщика и статус сделки внутри площадки.",
+            "realWorldRule": "Удалённую оплату оформляйте через встроенный механизм площадки."
+          }
+        },
+        {
+          "id": "request-normal-transfer",
+          "label": "Отказаться от QR и предложить обычный перевод",
+          "nextNodeId": "buyer-insists-qr",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": [
+            "qr_payment_trap"
+          ],
+          "skillEffects": [
+            {
+              "skill": "payment_screen_verification",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Необычный способ оплаты отклонён",
+            "explanation": "Для получения обычного перевода продавцу не нужно подтверждать исходящую операцию.",
+            "realWorldRule": "Получение денег не требует от получателя отправлять деньги или вводить секретные данные."
+          }
+        }
+      ]
+    },
+    {
+      "id": "buyer-business-account-excuse",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Через площадку с корпоративного счёта оплатить не могу. QR — обычный перевод по СБП, деньги сразу придут вам. Курьер уже выехал.",
+      "nextNodeId": "qr-pressure-decision"
+    },
+    {
+      "id": "buyer-insists-qr",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Обычный перевод банк задержит до завтра, а по QR вы получите деньги сразу. Я уже всё оформил, осталось только подтвердить получение.",
+      "nextNodeId": "qr-pressure-decision"
+    },
+    {
+      "id": "qr-pressure-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель настаивает на QR-коде и торопит курьером. Как вы поступите?",
+      "choices": [
+        {
+          "id": "yield-and-scan-qr",
+          "label": "Согласиться и внимательно открыть QR",
+          "nextNodeId": "qr-bank-screen",
+          "safetyScore": -10,
+          "criticality": "medium",
+          "riskTags": [
+            "qr_payment_trap",
+            "courier_pressure"
+          ],
+          "skillEffects": [
+            {
+              "skill": "pressure_resistance",
+              "delta": -1
+            }
+          ],
+          "consequence": {
+            "severity": "warning",
+            "title": "Условие изменено под давлением",
+            "explanation": "Вы согласились на непривычную процедуру, но ещё можете остановиться на экране подтверждения.",
+            "realWorldRule": "Срочность и приезд курьера не делают неизвестный способ оплаты безопасным."
+          }
+        },
+        {
+          "id": "insist-platform-or-meeting",
+          "label": "Оставить только площадку или личную встречу",
+          "nextNodeId": "safe-early-ending",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": [
+            "off_platform_payment",
+            "qr_payment_trap"
+          ],
+          "skillEffects": [
+            {
+              "skill": "pressure_resistance",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Безопасное условие сохранено",
+            "explanation": "Вы не позволили покупателю навязать процедуру, в которой продавец должен подтверждать операцию, но не исследовали QR-код и не отправили жалобу.",
+            "realWorldRule": "Если сторона отказывается от всех прозрачных способов оплаты, сделку следует прекратить."
+          }
+        },
+        {
+          "id": "check-qr-without-confirming",
+          "label": "Открыть QR, но сначала прочитать экран банка",
+          "nextNodeId": "qr-bank-screen",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": [
+            "operation_direction",
+            "recipient_mismatch"
+          ],
+          "skillEffects": [
+            {
+              "skill": "payment_screen_verification",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Подтверждение отделено от просмотра",
+            "explanation": "Сканирование ещё не переводит деньги, если пользователь внимательно проверяет экран и ничего не подтверждает автоматически.",
+            "realWorldRule": "Открытие операции и её подтверждение — разные действия; перед вторым всегда проверяйте детали."
+          }
+        }
+      ]
+    },
+    {
+      "id": "qr-bank-screen",
+      "type": "message",
+      "sender": "system",
+      "text": "Банк показывает: «Перевод по СБП — 78 000 ₽. Получатель: Антон Крылов. С вашего счёта будет списано 78 000 ₽». Кнопка: «Перевести». В переписке продавец — Алексей Воронов, покупатель — Михаил Соколов.",
+      "nextNodeId": "bank-screen-decision"
+    },
+    {
+      "id": "bank-screen-decision",
+      "type": "decision",
+      "decisionPrompt": "На экране указан исходящий перевод Антону Крылову. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "confirm-without-comparison",
+          "label": "Нажать «Перевести», считая это подтверждением получения",
+          "nextNodeId": "first-debit-system",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": [
+            "operation_direction",
+            "recipient_mismatch",
+            "qr_payment_trap"
+          ],
+          "skillEffects": [
+            {
+              "skill": "payment_screen_verification",
+              "delta": -2
+            }
+          ],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Подтверждён исходящий перевод",
+            "explanation": "Банк прямо сообщил о списании. Антон Крылов не совпадает ни с продавцом Алексеем Вороновым, ни с покупателем Михаилом Соколовым.",
+            "realWorldRule": "Для получения денег не подтверждают кнопку «Перевести» и не выбирают стороннего получателя."
+          }
+        },
+        {
+          "id": "ask-about-anton-krylov",
+          "label": "Спросить, кто такой Антон Крылов",
+          "nextNodeId": "buyer-accountant-excuse",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": [
+            "recipient_mismatch"
+          ],
+          "skillEffects": [
+            {
+              "skill": "identity_verification",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Несовпадение замечено",
+            "explanation": "Вы остановились до списания и запросили объяснение, хотя безопаснее опираться на экран банка, а не на новую легенду покупателя.",
+            "realWorldRule": "Любое несовпадение имени получателя требует остановки операции."
+          }
+        },
+        {
+          "id": "cancel-block-report",
+          "label": "Отменить операцию, заблокировать покупателя и пожаловаться",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": [
+            "operation_direction",
+            "recipient_mismatch",
+            "qr_payment_trap"
+          ],
+          "skillEffects": [
+            {
+              "skill": "reporting_discipline",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Ловушка полностью распознана",
+            "explanation": "Вы проверили направление, сумму и имя получателя, не подтвердили списание и сообщили о схеме.",
+            "realWorldRule": "Если QR формирует неожиданный исходящий перевод, отмените его и прекратите общение."
+          }
+        }
+      ]
+    },
+    {
+      "id": "buyer-accountant-excuse",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Антон Крылов — бухгалтер платёжного сервиса. Деньги сначала проходят через него, а затем автоматически зачисляются вам. Это стандартная процедура для корпоративного счёта.",
+      "nextNodeId": "accountant-excuse-decision"
+    },
+    {
+      "id": "accountant-excuse-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель объясняет стороннего получателя платёжным посредником. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "believe-accountant-story",
+          "label": "Поверить объяснению и подтвердить перевод",
+          "nextNodeId": "first-debit-system",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": [
+            "recipient_mismatch",
+            "authority_story"
+          ],
+          "skillEffects": [
+            {
+              "skill": "identity_verification",
+              "delta": -2
+            }
+          ],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Новая легенда перевесила данные банка",
+            "explanation": "Назначение операции осталось исходящим переводом, а слова покупателя не изменили банковские реквизиты.",
+            "realWorldRule": "Текст на официальном экране банка важнее объяснения незнакомого человека в чате."
+          }
+        },
+        {
+          "id": "call-bank-independently",
+          "label": "Закрыть экран и позвонить в банк самостоятельно",
+          "nextNodeId": "bank-warning-system",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": [
+            "recipient_mismatch",
+            "qr_payment_trap"
+          ],
+          "skillEffects": [
+            {
+              "skill": "independent_verification",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Объяснение проверяется независимо",
+            "explanation": "Вы обращаетесь в банк по официальному каналу, а не используете контакты, предоставленные покупателем.",
+            "realWorldRule": "Спорную банковскую операцию проверяйте только через официальный номер или приложение своего банка."
+          }
+        },
+        {
+          "id": "refuse-after-name-mismatch",
+          "label": "Отказаться от сделки и пожаловаться",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": [
+            "recipient_mismatch",
+            "qr_payment_trap"
+          ],
+          "skillEffects": [
+            {
+              "skill": "reporting_discipline",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Несовпадение не оправдано",
+            "explanation": "Вы не позволили вымышленному посреднику скрыть факт исходящего перевода.",
+            "realWorldRule": "Не подтверждайте перевод третьему лицу ради получения оплаты за свой товар."
+          }
+        }
+      ]
+    },
+    {
+      "id": "bank-warning-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Банк подтверждает: QR создаёт обычный исходящий перевод Антону Крылову. Никакого последующего зачисления Алексею Воронову операция не предусматривает.",
+      "nextNodeId": "safe-bank-ending"
+    },
+    {
+      "id": "first-debit-system",
+      "type": "message",
+      "sender": "system",
+      "text": "С вашего счёта списано 78 000 ₽ в пользу Антона Крылова. Михаил пишет, что платёж «завис» и деньги сейчас автоматически вернутся.",
+      "nextNodeId": "buyer-second-qr"
+    },
+    {
+      "id": "buyer-second-qr",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Банк отклонил зачисление. Я сформировал QR отмены: отсканируйте и подтвердите возврат. Курьер уже ждёт объектив у подъезда.",
+      "nextNodeId": "after-debit-decision"
+    },
+    {
+      "id": "after-debit-decision",
+      "type": "decision",
+      "decisionPrompt": "78 000 ₽ уже списаны. Покупатель присылает второй QR и одновременно требует товар. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "handover-lens-after-debit",
+          "label": "Передать объектив курьеру, ожидая зачисление",
+          "nextNodeId": "unsafe-item-and-money-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": [
+            "courier_pressure",
+            "fake_payment_status"
+          ],
+          "skillEffects": [
+            {
+              "skill": "handover_safety",
+              "delta": -2
+            }
+          ],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Товар передан после списания",
+            "explanation": "Вы не получили оплату: наоборот, сами отправили 78 000 ₽ и дополнительно передали объектив.",
+            "realWorldRule": "Товар передаётся только после фактического поступления оплаты, а не после исходящего перевода."
+          }
+        },
+        {
+          "id": "scan-refund-qr",
+          "label": "Отсканировать второй QR для возврата",
+          "nextNodeId": "second-qr-bank-screen",
+          "safetyScore": -20,
+          "criticality": "high",
+          "riskTags": [
+            "recovery_scam",
+            "qr_payment_trap"
+          ],
+          "skillEffects": [
+            {
+              "skill": "payment_screen_verification",
+              "delta": -1
+            }
+          ],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Началась вторая стадия обмана",
+            "explanation": "После первой потери мошенник использует желание быстро вернуть деньги, чтобы добиться повторного списания.",
+            "realWorldRule": "Возврат ошибочного перевода оформляется через банк, а не новым QR-кодом от получателя."
+          }
+        },
+        {
+          "id": "stop-contact-bank-after-debit",
+          "label": "Не отдавать товар и немедленно обратиться в банк",
+          "nextNodeId": "unsafe-first-loss-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": [
+            "recovery_scam",
+            "courier_pressure"
+          ],
+          "skillEffects": [
+            {
+              "skill": "incident_response",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Дальнейший ущерб остановлен",
+            "explanation": "Первый перевод уже совершён, но товар и оставшиеся деньги сохранены; банк получает шанс оперативно обработать обращение.",
+            "realWorldRule": "После мошеннического перевода прекратите контакт, сохраните доказательства и сразу сообщите банку."
+          }
+        }
+      ]
+    },
+    {
+      "id": "second-qr-bank-screen",
+      "type": "message",
+      "sender": "system",
+      "text": "Второй QR снова показывает: «Перевод Антону Крылову — 78 000 ₽. С вашего счёта будет списано 78 000 ₽». Кнопка: «Перевести».",
+      "nextNodeId": "second-qr-decision"
+    },
+    {
+      "id": "second-qr-decision",
+      "type": "decision",
+      "decisionPrompt": "Второй QR тоже создаёт исходящий перевод. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "confirm-second-transfer",
+          "label": "Подтвердить, рассчитывая вернуть первый платёж",
+          "nextNodeId": "unsafe-double-loss-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": [
+            "recovery_scam",
+            "double_payment"
+          ],
+          "skillEffects": [
+            {
+              "skill": "incident_response",
+              "delta": -2
+            }
+          ],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Совершён второй перевод",
+            "explanation": "Банк снова предупреждал о списании, поэтому общая потеря выросла до 156 000 ₽.",
+            "realWorldRule": "Новый исходящий перевод не может отменить предыдущий исходящий перевод."
+          }
+        },
+        {
+          "id": "cancel-second-contact-bank",
+          "label": "Отменить операцию и обратиться в банк",
+          "nextNodeId": "unsafe-first-loss-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": [
+            "recovery_scam"
+          ],
+          "skillEffects": [
+            {
+              "skill": "incident_response",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Повторная потеря предотвращена",
+            "explanation": "Первый платёж уже потерян, но вы распознали повторную операцию и остановили дальнейший ущерб.",
+            "realWorldRule": "При обнаружении обмана не пытайтесь исправлять его инструкциями мошенника."
+          }
+        }
+      ]
+    },
+    {
+      "id": "safe-early-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "QR-схема отклонена",
+        "explanation": "Вы отказались подтверждать неизвестную банковскую процедуру и сохранили объектив и деньги."
+      }
+    },
+    {
+      "id": "safe-reported-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Подмена операции обнаружена",
+        "explanation": "Вы сравнили имена, заметили исходящий перевод Антону Крылову, отменили операцию и пожаловались на Михаила Соколова."
+      }
+    },
+    {
+      "id": "safe-bank-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Банк подтвердил ловушку",
+        "explanation": "Вы независимо проверили назначение QR-кода и не совершили перевод третьему лицу."
+      }
+    },
+    {
+      "id": "unsafe-first-loss-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Потеряно 78 000 ₽",
+        "explanation": "Первый исходящий перевод уже выполнен. Вы сохранили объектив и предотвратили повторное списание, но потеряли 78 000 ₽."
+      }
+    },
+    {
+      "id": "unsafe-item-and-money-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Потеряны деньги и объектив",
+        "explanation": "Вы перевели мошеннику 78 000 ₽ и передали курьеру объектив стоимостью 78 000 ₽. Общий ущерб составил 156 000 ₽."
+      }
+    },
+    {
+      "id": "unsafe-double-loss-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Дважды подтверждён исходящий перевод",
+        "explanation": "Вы дважды перевели Антону Крылову по 78 000 ₽. Общая потеря составила 156 000 ₽."
+      }
+    }
+  ]
+}

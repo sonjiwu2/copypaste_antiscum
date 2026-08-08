@@ -1,0 +1,488 @@
+{
+  "id": "seller-third-party-overpayment",
+  "version": 1,
+  "slug": "seller-third-party-overpayment",
+  "role": "seller",
+  "title": "Переплата от третьего лица",
+  "description": "Продажа дорогой камеры: деньги действительно поступают, но плательщик не совпадает с покупателем, а переплату просят вернуть на другие реквизиты.",
+  "difficulty": "hard",
+  "estimatedMinutes": 8,
+  "startNodeId": "buyer-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "buyer-greeting",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Добрый день. Камера ещё продаётся? Я фотограф, модель знаю, торговаться не буду. Заберу сегодня через курьера.",
+      "nextNodeId": "buyer-third-party-payment"
+    },
+    {
+      "id": "buyer-third-party-payment",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Я в другом городе, но камера срочно нужна для съёмки. Оплачу полностью заранее. Платить будет жена со своего счёта, потому что у меня дневной лимит.",
+      "nextNodeId": "payer-decision"
+    },
+    {
+      "id": "payer-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель предлагает оплату от третьего лица. Что вы ответите?",
+      "choices": [
+        {
+          "id": "accept-third-party-transfer",
+          "label": "Согласиться после фактического поступления денег",
+          "nextNodeId": "buyer-promises-transfer",
+          "safetyScore": -20,
+          "criticality": "medium",
+          "riskTags": ["third_party_payment", "triangular_fraud"],
+          "skillEffects": [{"skill": "payment_source_verification", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Плательщик не является покупателем",
+            "explanation": "Фактическое поступление подтверждает перевод, но не объясняет его происхождение и не связывает отправителя с получателем товара.",
+            "realWorldRule": "В дорогой сделке плательщик, покупатель и получатель товара должны быть однозначно связаны."
+          }
+        },
+        {
+          "id": "require-buyers-own-account",
+          "label": "Попросить оплатить со счёта самого покупателя",
+          "nextNodeId": "buyer-limit-excuse",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["third_party_payment"],
+          "skillEffects": [{"skill": "payment_source_verification", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Источник платежа поставлен под контроль",
+            "explanation": "Совпадение участника переписки и плательщика снижает риск треугольной схемы.",
+            "realWorldRule": "Не принимайте оплату дорогого товара от неизвестного третьего лица без безопасного оформления."
+          }
+        },
+        {
+          "id": "offer-platform-delivery",
+          "label": "Предложить оплату и доставку внутри площадки",
+          "nextNodeId": "buyer-delivery-error",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["third_party_payment", "off_platform_payment"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Предложен штатный процесс",
+            "explanation": "Встроенное оформление фиксирует участников, сумму и статус сделки в одном месте.",
+            "realWorldRule": "Для удалённой сделки используйте оплату и доставку, отображающиеся внутри площадки."
+          }
+        }
+      ]
+    },
+    {
+      "id": "buyer-promises-transfer",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Отлично. Деньги увидите в своём банковском приложении, никаких чеков и ссылок. Сейчас жена переведёт.",
+      "nextNodeId": "payment-received-system"
+    },
+    {
+      "id": "buyer-limit-excuse",
+      "type": "message",
+      "sender": "buyer",
+      "text": "На моей карте лимит. Могу прислать фотографию паспорта жены, чтобы вы не переживали.",
+      "nextNodeId": "identity-decision"
+    },
+    {
+      "id": "buyer-delivery-error",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Для этой камеры доставка у меня почему-то недоступна. Я готов заплатить сразу, зачем усложнять? Могу подтвердить личность жены паспортом.",
+      "nextNodeId": "identity-decision"
+    },
+    {
+      "id": "identity-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель предлагает фотографию паспорта плательщика как гарантию. Как вы поступите?",
+      "choices": [
+        {
+          "id": "accept-passport-photo",
+          "label": "Согласиться после получения фотографии паспорта",
+          "nextNodeId": "passport-photo-system",
+          "safetyScore": -25,
+          "criticality": "high",
+          "riskTags": ["identity_document_trust", "third_party_payment"],
+          "skillEffects": [{"skill": "identity_verification", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Фотография принята за идентификацию",
+            "explanation": "Изображение документа могло быть похищено и не подтверждает согласие его владельца на перевод или сделку.",
+            "realWorldRule": "Фотография паспорта от собеседника не подтверждает личность плательщика."
+          }
+        },
+        {
+          "id": "verify-delivery-in-app",
+          "label": "Самостоятельно проверить доставку в своём приложении",
+          "nextNodeId": "delivery-available-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["off_platform_payment"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Слова проверены независимо",
+            "explanation": "Вы не полагаетесь на описание ошибки покупателем и проверяете доступность штатного способа самостоятельно.",
+            "realWorldRule": "Статус функций площадки проверяйте в собственном приложении, а не со слов собеседника."
+          }
+        },
+        {
+          "id": "refuse-third-party-payment",
+          "label": "Отказаться от сторонней оплаты и завершить сделку",
+          "nextNodeId": "safe-early-ending",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["third_party_payment"],
+          "skillEffects": [{"skill": "payment_source_verification", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Рискованная схема отклонена",
+            "explanation": "Вы сохранили товар, хотя не проверили объявление и не сообщили о поведении аккаунта площадке.",
+            "realWorldRule": "Продавец вправе прекратить сделку, если невозможно однозначно установить плательщика и получателя."
+          }
+        }
+      ]
+    },
+    {
+      "id": "passport-photo-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Покупатель присылает фотографию паспорта женщины. Невозможно установить, знает ли владелец документа о сделке.",
+      "nextNodeId": "payment-received-system"
+    },
+    {
+      "id": "delivery-available-system",
+      "type": "message",
+      "sender": "system",
+      "text": "В вашем приложении доставка для объявления доступна. Покупатель продолжает настаивать на прямом переводе от жены.",
+      "nextNodeId": "platform-insistence-decision"
+    },
+    {
+      "id": "platform-insistence-decision",
+      "type": "decision",
+      "decisionPrompt": "Вы обнаружили, что заявленная ошибка не подтверждается. Что дальше?",
+      "choices": [
+        {
+          "id": "yield-to-direct-transfer",
+          "label": "Всё-таки принять прямой перевод",
+          "nextNodeId": "payment-received-system",
+          "safetyScore": -30,
+          "criticality": "high",
+          "riskTags": ["third_party_payment", "inconsistent_story"],
+          "skillEffects": [{"skill": "channel_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Несоответствие проигнорировано",
+            "explanation": "Покупатель сообщил ложную или непроверенную причину ухода от штатного оформления.",
+            "realWorldRule": "Если объяснение собеседника противоречит данным вашего приложения, не продолжайте сделку на его условиях."
+          }
+        },
+        {
+          "id": "insist-on-platform",
+          "label": "Оставить только оформление внутри площадки",
+          "nextNodeId": "buyer-refuses-platform",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["off_platform_payment"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Безопасное условие сохранено",
+            "explanation": "Вы не меняете процесс после обнаружения противоречия.",
+            "realWorldRule": "Безопасные условия сделки не отменяются из-за давления или удобства второй стороны."
+          }
+        },
+        {
+          "id": "cancel-and-report-account",
+          "label": "Завершить разговор и пожаловаться на аккаунт",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["inconsistent_story", "third_party_payment"],
+          "skillEffects": [{"skill": "reporting_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Схема остановлена до перевода",
+            "explanation": "Вы сохранили товар и сообщили площадке о подозрительной попытке изменить способ оплаты.",
+            "realWorldRule": "Несколько согласованных красных флагов — достаточная причина прекратить сделку и отправить жалобу."
+          }
+        }
+      ]
+    },
+    {
+      "id": "buyer-refuses-platform",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Тогда не получится. Мне нужна камера сегодня, а разбираться с приложением времени нет.",
+      "nextNodeId": "safe-platform-ending"
+    },
+    {
+      "id": "payment-received-system",
+      "type": "message",
+      "sender": "system",
+      "text": "В банковском приложении действительно появляется входящий перевод на 128 000 ₽. Имя отправителя отличается от имени покупателя.",
+      "nextNodeId": "buyer-overpayment-request"
+    },
+    {
+      "id": "buyer-overpayment-request",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Жена случайно перевела 128 000 вместо 118 000. Верните лишние 10 000 на мою карту, а камеру уже можно отдавать курьеру.",
+      "nextNodeId": "refund-decision"
+    },
+    {
+      "id": "refund-decision",
+      "type": "decision",
+      "decisionPrompt": "Деньги реально поступили, но переплату просят вернуть другому человеку. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "refund-difference-to-buyer",
+          "label": "Вернуть 10 000 ₽ на карту покупателя",
+          "nextNodeId": "refund-sent-system",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["overpayment_refund", "money_mule", "different_refund_details"],
+          "skillEffects": [{"skill": "refund_safety", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Деньги направлены новому получателю",
+            "explanation": "Вы самостоятельно создали второй перевод, не связанный банковской системой с исходным отправителем.",
+            "realWorldRule": "Не возвращайте неизвестный перевод по новым реквизитам из переписки."
+          }
+        },
+        {
+          "id": "refund-full-to-chat-details",
+          "label": "Отменить сделку и вернуть всю сумму по указанным реквизитам",
+          "nextNodeId": "buyer-different-details-pressure",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": ["different_refund_details", "money_mule"],
+          "skillEffects": [{"skill": "refund_safety", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Возврат оформляется как новый перевод",
+            "explanation": "Даже возврат полной суммы опасен, если реквизиты диктует не исходный отправитель и операция совершается вручную.",
+            "realWorldRule": "Ошибочное поступление возвращайте только через свой банк исходному отправителю."
+          }
+        },
+        {
+          "id": "contact-bank",
+          "label": "Не перемещать деньги и обратиться в свой банк",
+          "nextNodeId": "bank-advice-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["overpayment_refund", "third_party_payment"],
+          "skillEffects": [{"skill": "refund_safety", "delta": 2}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Возврат передан банку",
+            "explanation": "Вы не создаёте новый перевод и сохраняете связь возврата с первоначальной операцией.",
+            "realWorldRule": "При неизвестном или ошибочном поступлении сначала обращайтесь в собственный банк."
+          }
+        }
+      ]
+    },
+    {
+      "id": "refund-sent-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Вы переводите 10 000 ₽ на реквизиты покупателя. Курьер сообщает, что уже приехал за камерой.",
+      "nextNodeId": "handover-decision"
+    },
+    {
+      "id": "buyer-different-details-pressure",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Жена сейчас недоступна. Отправьте деньги на мой номер — это наш общий бюджет. Курьер уже ждёт.",
+      "nextNodeId": "handover-decision"
+    },
+    {
+      "id": "handover-decision",
+      "type": "decision",
+      "decisionPrompt": "Курьер ждёт, а покупатель требует продолжить. Как вы поступите?",
+      "choices": [
+        {
+          "id": "handover-camera",
+          "label": "Передать камеру, ведь основная сумма поступила",
+          "nextNodeId": "unsafe-camera-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["third_party_payment", "courier_pressure", "triangular_fraud"],
+          "skillEffects": [{"skill": "handover_safety", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Товар передан не плательщику",
+            "explanation": "Поступление денег не связывает неизвестного отправителя с покупателем и курьером.",
+            "realWorldRule": "Не передавайте товар, пока происхождение спорного платежа не проверено банком."
+          }
+        },
+        {
+          "id": "delay-and-contact-sender",
+          "label": "Не отдавать камеру до проверки отправителя",
+          "nextNodeId": "buyer-sender-unavailable",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["third_party_payment"],
+          "skillEffects": [{"skill": "payment_source_verification", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Передача остановлена",
+            "explanation": "Вы сохраняете товар, но фотография документа и слова покупателя всё ещё не подтверждают волю отправителя.",
+            "realWorldRule": "До выяснения спорного платежа товар должен оставаться у продавца."
+          }
+        },
+        {
+          "id": "contact-bank-before-handover",
+          "label": "Отпустить курьера и сразу позвонить в банк",
+          "nextNodeId": "bank-advice-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["courier_pressure", "overpayment_refund"],
+          "skillEffects": [{"skill": "refund_safety", "delta": 2}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Спешка прекращена",
+            "explanation": "Стоимость ожидания курьера не важнее сохранности дорогого товара и корректной банковской процедуры.",
+            "realWorldRule": "Третье лицо у двери не должно влиять на решение по спорной оплате."
+          }
+        }
+      ]
+    },
+    {
+      "id": "buyer-sender-unavailable",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Жена не может говорить. Я уже прислал её паспорт. Если не отдадите камеру, напишу заявление, что вы присвоили деньги.",
+      "nextNodeId": "bank-advice-system"
+    },
+    {
+      "id": "bank-advice-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Поддержка банка рекомендует не возвращать деньги по реквизитам из переписки, не передавать товар и зарегистрировать обращение по неизвестному переводу.",
+      "nextNodeId": "buyer-threat"
+    },
+    {
+      "id": "buyer-threat",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Я оплатил камеру. Если сейчас не отдадите её или не вернёте деньги на мою карту, обращусь в полицию.",
+      "nextNodeId": "final-decision"
+    },
+    {
+      "id": "final-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель угрожает заявлением вопреки рекомендации банка. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "handover-after-threat",
+          "label": "Передать камеру, чтобы избежать конфликта",
+          "nextNodeId": "unsafe-camera-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["threat_pressure", "triangular_fraud"],
+          "skillEffects": [{"skill": "handover_safety", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Угроза изменила безопасное решение",
+            "explanation": "Вы передали товар человеку, который не совершал исходный перевод, несмотря на рекомендацию банка.",
+            "realWorldRule": "Давление и угрозы не отменяют необходимость установить происхождение платежа."
+          }
+        },
+        {
+          "id": "manual-refund-after-threat",
+          "label": "Вернуть деньги по реквизитам покупателя",
+          "nextNodeId": "unsafe-transfer-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["money_mule", "different_refund_details", "threat_pressure"],
+          "skillEffects": [{"skill": "refund_safety", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Создан новый подозрительный перевод",
+            "explanation": "Деньги отправлены не исходному плательщику, а на продиктованные собеседником реквизиты.",
+            "realWorldRule": "Не нарушайте рекомендации своего банка под давлением участника сделки."
+          }
+        },
+        {
+          "id": "preserve-evidence-and-report",
+          "label": "Сохранить переписку, отменить передачу и действовать через банк",
+          "nextNodeId": "safe-bank-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["third_party_payment", "overpayment_refund", "triangular_fraud"],
+          "skillEffects": [
+            {"skill": "refund_safety", "delta": 2},
+            {"skill": "reporting_discipline", "delta": 1}
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Сделка и денежная цепочка остановлены",
+            "explanation": "Товар остаётся у вас, доказательства сохранены, а возврат обрабатывается банком с привязкой к исходному платежу.",
+            "realWorldRule": "При подозрительном переводе сохраняйте доказательства и взаимодействуйте только со своим банком и площадкой."
+          }
+        }
+      ]
+    },
+    {
+      "id": "safe-early-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Сторонняя оплата отклонена",
+        "explanation": "Вы не приняли деньги неизвестного происхождения и не передали камеру третьему лицу."
+      }
+    },
+    {
+      "id": "safe-platform-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Безопасное условие сохранено",
+        "explanation": "Покупатель отказался от сделки, когда вы настояли на штатном оформлении внутри площадки."
+      }
+    },
+    {
+      "id": "safe-reported-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Попытка остановлена до платежа",
+        "explanation": "Вы заметили противоречие, прекратили общение и отправили аккаунт на проверку."
+      }
+    },
+    {
+      "id": "safe-bank-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Товар и деньги защищены",
+        "explanation": "Камера осталась у вас, а неизвестный перевод обрабатывается банком без отправки средств на посторонние реквизиты."
+      }
+    },
+    {
+      "id": "unsafe-camera-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Камера передана участнику схемы",
+        "explanation": "Камеру стоимостью 118 000 ₽ забрал курьер, а настоящий отправитель позднее сообщил банку о мошенническом переводе. Происхождение денег приходится объяснять банку и полиции."
+      }
+    },
+    {
+      "id": "unsafe-transfer-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Вы стали звеном денежной цепочки",
+        "explanation": "Вы отправили деньги другому получателю по указанию покупателя. Собеседник исчез, а исходный перевод оказался связан с мошенничеством."
+      }
+    }
+  ]
+}

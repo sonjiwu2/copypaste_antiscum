@@ -1,0 +1,287 @@
+{
+  "id": "buyer-switch-prepayment",
+  "version": 1,
+  "slug": "buyer-switch-prepayment",
+  "role": "buyer",
+  "title": "Предоплата за бронь",
+  "description": "Покупка Nintendo Switch OLED: продавец торопит другими покупателями и просит перевести задаток на карту до встречи.",
+  "difficulty": "easy",
+  "estimatedMinutes": 4,
+  "startNodeId": "seller-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "seller-greeting",
+      "type": "message",
+      "sender": "seller",
+      "text": "Здравствуйте! Nintendo Switch OLED ещё продаётся. Полный комплект, приставка почти новая, цена 18 000 ₽.",
+      "nextNodeId": "seller-urgency"
+    },
+    {
+      "id": "seller-urgency",
+      "type": "message",
+      "sender": "seller",
+      "text": "Посмотреть можно вечером, но мне уже пишут ещё два покупателя. За возвратный задаток 2 000 ₽ поставлю бронь и сниму объявление.",
+      "nextNodeId": "prepayment-decision"
+    },
+    {
+      "id": "prepayment-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец просит задаток до встречи и проверки приставки. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "pay-deposit",
+          "label": "Перевести 2 000 ₽, чтобы забронировать товар",
+          "nextNodeId": "deposit-sent-system",
+          "safetyScore": -30,
+          "criticality": "high",
+          "riskTags": ["advance_payment", "urgency"],
+          "skillEffects": [{"skill": "payment_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Деньги отправлены до проверки",
+            "explanation": "Задаток не подтверждает существование приставки и не гарантирует встречу с продавцом.",
+            "realWorldRule": "Не переводите предоплату незнакомому продавцу до проверки товара и безопасного оформления сделки."
+          }
+        },
+        {
+          "id": "offer-platform-reservation",
+          "label": "Предложить оплату или резервирование внутри площадки",
+          "nextNodeId": "seller-platform-excuse",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["advance_payment", "off_platform_payment"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Предложен защищённый способ",
+            "explanation": "Вы не отправляете деньги прямым переводом и проверяете готовность продавца использовать штатный процесс.",
+            "realWorldRule": "Оплата и резервирование должны отображаться внутри площадки."
+          }
+        },
+        {
+          "id": "refuse-prepayment",
+          "label": "Отказаться от предоплаты и договориться только о встрече",
+          "nextNodeId": "seller-last-pressure",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["advance_payment"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Предоплата отклонена",
+            "explanation": "Вы не рискуете деньгами до личной проверки товара.",
+            "realWorldRule": "Для личной сделки платите только после осмотра товара."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-platform-excuse",
+      "type": "message",
+      "sender": "seller",
+      "text": "Через площадку не получится: у объявления временно не работает оплата. Проще перевести 2 000 ₽ по номеру телефона.",
+      "nextNodeId": "platform-excuse-decision"
+    },
+    {
+      "id": "seller-last-pressure",
+      "type": "message",
+      "sender": "seller",
+      "text": "Без задатка ничего обещать не могу. Другой покупатель готов перевести прямо сейчас.",
+      "nextNodeId": "last-pressure-decision"
+    },
+    {
+      "id": "platform-excuse-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец отказывается от штатной оплаты и просит прямой перевод. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "accept-direct-deposit",
+          "label": "Согласиться на прямой перевод",
+          "nextNodeId": "deposit-sent-system",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": ["advance_payment", "off_platform_payment"],
+          "skillEffects": [{"skill": "channel_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Защищённый процесс заменён переводом",
+            "explanation": "История о технической ошибке не создаёт гарантий возврата денег.",
+            "realWorldRule": "Сбой безопасного способа оплаты — причина отложить сделку, а не перейти к незащищённому переводу."
+          }
+        },
+        {
+          "id": "wait-for-platform",
+          "label": "Отложить сделку до восстановления оплаты",
+          "nextNodeId": "safe-paused-ending",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["off_platform_payment"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Сделка отложена",
+            "explanation": "Деньги сохранены, хотя подозрительное объявление не отправлено на проверку.",
+            "realWorldRule": "Если безопасный способ недоступен, дождитесь его восстановления или откажитесь от сделки."
+          }
+        },
+        {
+          "id": "block-and-report",
+          "label": "Отказаться, заблокировать продавца и пожаловаться",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["advance_payment", "off_platform_payment"],
+          "skillEffects": [{"skill": "reporting_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Схема полностью остановлена",
+            "explanation": "Вы сохранили деньги и сообщили площадке о попытке получить прямую предоплату.",
+            "realWorldRule": "Жалуйтесь на объявления, где продавец настойчиво требует предоплату вне площадки."
+          }
+        }
+      ]
+    },
+    {
+      "id": "last-pressure-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец торопит другим покупателем. Ваше решение?",
+      "choices": [
+        {
+          "id": "yield-to-urgency",
+          "label": "Всё-таки перевести задаток",
+          "nextNodeId": "deposit-sent-system",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": ["advance_payment", "urgency"],
+          "skillEffects": [{"skill": "pressure_resistance", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Спешка изменила безопасное решение",
+            "explanation": "Очередь покупателей не подтверждает существование товара и не защищает перевод.",
+            "realWorldRule": "Не меняйте правила безопасности из-за страха упустить выгодное предложение."
+          }
+        },
+        {
+          "id": "end-conversation",
+          "label": "Завершить разговор без перевода",
+          "nextNodeId": "safe-early-ending",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["urgency"],
+          "skillEffects": [{"skill": "pressure_resistance", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Деньги сохранены",
+            "explanation": "Вы не поддались давлению, но не отправили подозрительное объявление на проверку.",
+            "realWorldRule": "Выгодный товар можно упустить; переведённые мошеннику деньги — тоже, но уже без товара."
+          }
+        },
+        {
+          "id": "report-after-pressure",
+          "label": "Завершить разговор и пожаловаться",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["advance_payment", "urgency"],
+          "skillEffects": [{"skill": "reporting_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Давление распознано",
+            "explanation": "Вы не перевели деньги и помогли площадке проверить продавца.",
+            "realWorldRule": "Требование срочной предоплаты — повод прекратить сделку и отправить жалобу."
+          }
+        }
+      ]
+    },
+    {
+      "id": "deposit-sent-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Вы переводите продавцу 2 000 ₽. После этого он сообщает, что другой покупатель готов оплатить всю сумму, и просит немедленно перевести оставшиеся 16 000 ₽.",
+      "nextNodeId": "full-payment-decision"
+    },
+    {
+      "id": "full-payment-decision",
+      "type": "decision",
+      "decisionPrompt": "Задаток уже отправлен. Продавец требует доплатить всю сумму до встречи. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "pay-remaining-amount",
+          "label": "Перевести оставшиеся 16 000 ₽",
+          "nextNodeId": "unsafe-full-loss-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["sunk_cost", "advance_payment"],
+          "skillEffects": [{"skill": "payment_safety", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Первая потеря увеличена",
+            "explanation": "Желание сохранить уже отправленный задаток привело к переводу полной стоимости несуществующего товара.",
+            "realWorldRule": "Не отправляйте дополнительные деньги только потому, что часть суммы уже потеряна."
+          }
+        },
+        {
+          "id": "stop-after-deposit",
+          "label": "Не доплачивать, сохранить переписку и пожаловаться",
+          "nextNodeId": "unsafe-deposit-loss-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["sunk_cost", "advance_payment"],
+          "skillEffects": [{"skill": "incident_response", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Дальнейший ущерб остановлен",
+            "explanation": "Задаток уже потерян, но вы не увеличили ущерб и сохранили доказательства.",
+            "realWorldRule": "После обнаружения обмана прекратите переводы, сохраните переписку и обратитесь в банк и поддержку."
+          }
+        }
+      ]
+    },
+    {
+      "id": "safe-early-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Предоплата не отправлена",
+        "explanation": "Вы отказались рисковать деньгами до встречи и проверки приставки."
+      }
+    },
+    {
+      "id": "safe-paused-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Сделка безопасно отложена",
+        "explanation": "Вы не заменили недоступный штатный способ прямым переводом."
+      }
+    },
+    {
+      "id": "safe-reported-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Мошенничество предотвращено",
+        "explanation": "Вы отказались от предоплаты, заблокировали продавца и отправили объявление на проверку."
+      }
+    },
+    {
+      "id": "unsafe-deposit-loss-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Потеряно 2 000 ₽",
+        "explanation": "Продавец прекратил отвечать. Вы потеряли задаток, но вовремя остановили дальнейшие переводы."
+      }
+    },
+    {
+      "id": "unsafe-full-loss-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Потеряно 18 000 ₽",
+        "explanation": "После полной предоплаты продавец удалил объявление и перестал отвечать. Приставка не была получена."
+      }
+    }
+  ]
+}
