@@ -949,10 +949,4 @@ cookie `ast_profile` означает потерю анонимной истор
 
 <div align="center">
 
-**Антискам тренажёр** · Кейс 5, Avito Start
-
-[🌐 Открыть приложение](https://antiscum-frontend.onrender.com) ·
-[⚙️ API](https://antiscum-backend.onrender.com/healthz) ·
-[💻 Репозиторий](https://github.com/sonjiwu2/copypaste_antiscum)
-
 </div>
