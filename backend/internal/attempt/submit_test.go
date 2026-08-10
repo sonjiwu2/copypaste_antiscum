@@ -16,7 +16,7 @@ func startBuyerAttempt(t *testing.T) (*attempt.Service, attempt.View) {
 
 	service := newService(t, embeddedCatalog(t))
 
-	view, err := service.Start(context.Background(), "buyer-fake-delivery")
+	view, err := service.Start(context.Background(), testProfile, "buyer-fake-delivery")
 	if err != nil {
 		t.Fatalf("не удалось начать попытку: %v", err)
 	}
@@ -35,6 +35,7 @@ func submit(
 
 	return service.SubmitChoice(context.Background(), attempt.SubmitChoiceCommand{
 		AttemptID:      view.ID,
+		ProfileID:      testProfile,
 		NodeID:         view.CurrentNodeID,
 		ChoiceID:       choiceID,
 		IdempotencyKey: key,
@@ -108,7 +109,7 @@ func TestSubmitChoiceTakesEffectsFromScenarioOnly(t *testing.T) {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
 
-	restored, err := service.Get(context.Background(), view.ID)
+	restored, err := service.Get(context.Background(), testProfile, view.ID)
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
@@ -123,6 +124,37 @@ func TestSubmitChoiceTakesEffectsFromScenarioOnly(t *testing.T) {
 
 	if restored.Decisions[0].ChoiceID != "move-to-messenger" {
 		t.Errorf("выбор = %q, ожидался move-to-messenger", restored.Decisions[0].ChoiceID)
+	}
+}
+
+// В переписку попадает закреплённая за действием реплика, а не подпись кнопки:
+// собеседник должен видеть живую фразу, а не название хода.
+func TestSubmitChoiceReturnsPlayerReply(t *testing.T) {
+	service, view := startBuyerAttempt(t)
+
+	transition, err := submit(t, service, view, "move-to-messenger", "key-1")
+	if err != nil {
+		t.Fatalf("неожиданная ошибка: %v", err)
+	}
+
+	reply := transition.Accepted.PlayerReply
+	if reply == "" {
+		t.Fatal("принятый выбор должен нести реплику игрока")
+	}
+
+	if reply == transition.Accepted.Label {
+		t.Errorf("реплика совпадает с подписью кнопки: %q", reply)
+	}
+
+	restored, err := service.Get(context.Background(), testProfile, view.ID)
+	if err != nil {
+		t.Fatalf("неожиданная ошибка: %v", err)
+	}
+
+	// Та же реплика восстанавливается при перечитывании попытки: иначе после
+	// перезагрузки страницы лента диалога осталась бы с пропуском.
+	if restored.Decisions[0].PlayerReply != reply {
+		t.Errorf("реплика решения = %q, ожидалась %q", restored.Decisions[0].PlayerReply, reply)
 	}
 }
 
@@ -204,7 +236,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			name: "неизвестная попытка",
 			command: func(view attempt.View) attempt.SubmitChoiceCommand {
 				return attempt.SubmitChoiceCommand{
-					AttemptID: "no-such-attempt", NodeID: view.CurrentNodeID,
+					AttemptID: "no-such-attempt", ProfileID: testProfile, NodeID: view.CurrentNodeID,
 					ChoiceID: "stay-on-platform", IdempotencyKey: "key-1",
 				}
 			},
@@ -214,7 +246,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			name: "устаревший узел",
 			command: func(view attempt.View) attempt.SubmitChoiceCommand {
 				return attempt.SubmitChoiceCommand{
-					AttemptID: view.ID, NodeID: "greeting",
+					AttemptID: view.ID, ProfileID: testProfile, NodeID: "greeting",
 					ChoiceID: "stay-on-platform", IdempotencyKey: "key-1",
 				}
 			},
@@ -224,7 +256,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			name: "неизвестный вариант выбора",
 			command: func(view attempt.View) attempt.SubmitChoiceCommand {
 				return attempt.SubmitChoiceCommand{
-					AttemptID: view.ID, NodeID: view.CurrentNodeID,
+					AttemptID: view.ID, ProfileID: testProfile, NodeID: view.CurrentNodeID,
 					ChoiceID: "no-such-choice", IdempotencyKey: "key-1",
 				}
 			},
@@ -234,7 +266,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			name: "вариант выбора другого узла",
 			command: func(view attempt.View) attempt.SubmitChoiceCommand {
 				return attempt.SubmitChoiceCommand{
-					AttemptID: view.ID, NodeID: view.CurrentNodeID,
+					AttemptID: view.ID, ProfileID: testProfile, NodeID: view.CurrentNodeID,
 					ChoiceID: "refuse-prepay", IdempotencyKey: "key-1",
 				}
 			},
@@ -244,7 +276,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			name: "вариант выбора другого сценария",
 			command: func(view attempt.View) attempt.SubmitChoiceCommand {
 				return attempt.SubmitChoiceCommand{
-					AttemptID: view.ID, NodeID: view.CurrentNodeID,
+					AttemptID: view.ID, ProfileID: testProfile, NodeID: view.CurrentNodeID,
 					ChoiceID: "send-code", IdempotencyKey: "key-1",
 				}
 			},
@@ -254,7 +286,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			name: "пустой ключ повтора",
 			command: func(view attempt.View) attempt.SubmitChoiceCommand {
 				return attempt.SubmitChoiceCommand{
-					AttemptID: view.ID, NodeID: view.CurrentNodeID,
+					AttemptID: view.ID, ProfileID: testProfile, NodeID: view.CurrentNodeID,
 					ChoiceID: "stay-on-platform",
 				}
 			},
@@ -272,7 +304,7 @@ func TestSubmitChoiceRejectsInvalidRequests(t *testing.T) {
 			}
 
 			// Отклонённый запрос не должен менять состояние попытки.
-			after, getErr := service.Get(context.Background(), view.ID)
+			after, getErr := service.Get(context.Background(), testProfile, view.ID)
 			if getErr != nil {
 				t.Fatalf("не удалось перечитать попытку: %v", getErr)
 			}
@@ -305,7 +337,7 @@ func TestSubmitChoiceOnCompletedAttempt(t *testing.T) {
 
 	// Новый ключ на завершённой попытке — отказ.
 	_, err := service.SubmitChoice(context.Background(), attempt.SubmitChoiceCommand{
-		AttemptID: view.ID, NodeID: last.CurrentNodeID,
+		AttemptID: view.ID, ProfileID: testProfile, NodeID: last.CurrentNodeID,
 		ChoiceID: "stay-on-platform", IdempotencyKey: "key-new",
 	})
 	if !errors.Is(err, attempt.ErrAlreadyCompleted) {
@@ -314,7 +346,7 @@ func TestSubmitChoiceOnCompletedAttempt(t *testing.T) {
 
 	// Повтор последнего запроса возвращает тот же результат, а не отказ.
 	replay, err := service.SubmitChoice(context.Background(), attempt.SubmitChoiceCommand{
-		AttemptID: view.ID, NodeID: last.Accepted.NodeID,
+		AttemptID: view.ID, ProfileID: testProfile, NodeID: last.Accepted.NodeID,
 		ChoiceID: last.Accepted.ChoiceID, IdempotencyKey: "key-c",
 	})
 	if err != nil {
@@ -353,7 +385,7 @@ func TestSubmitChoiceIsIdempotent(t *testing.T) {
 	}
 
 	// Главное: эффекты применены ровно один раз.
-	after, err := service.Get(context.Background(), view.ID)
+	after, err := service.Get(context.Background(), testProfile, view.ID)
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
@@ -387,7 +419,7 @@ func TestSubmitChoiceRespectsCanceledContext(t *testing.T) {
 	cancel()
 
 	_, err := service.SubmitChoice(ctx, attempt.SubmitChoiceCommand{
-		AttemptID: view.ID, NodeID: view.CurrentNodeID,
+		AttemptID: view.ID, ProfileID: testProfile, NodeID: view.CurrentNodeID,
 		ChoiceID: "stay-on-platform", IdempotencyKey: "key-1",
 	})
 	if !errors.Is(err, context.Canceled) {
@@ -419,6 +451,7 @@ func TestSubmitChoiceUnderConcurrency(t *testing.T) {
 
 			_, err := service.SubmitChoice(context.Background(), attempt.SubmitChoiceCommand{
 				AttemptID:      view.ID,
+				ProfileID:      testProfile,
 				NodeID:         view.CurrentNodeID,
 				ChoiceID:       options[i%len(options)],
 				IdempotencyKey: attempt.IdempotencyKey("key-" + string(rune('a'+i))),
@@ -446,7 +479,7 @@ func TestSubmitChoiceUnderConcurrency(t *testing.T) {
 		t.Fatalf("принято переходов = %d, ожидался ровно 1 (конфликтов %d)", accepted, conflicts)
 	}
 
-	after, err := service.Get(context.Background(), view.ID)
+	after, err := service.Get(context.Background(), testProfile, view.ID)
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}
@@ -490,7 +523,7 @@ func TestSubmitChoiceConcurrentDuplicateReturnsSameResult(t *testing.T) {
 		}
 	}
 
-	after, err := service.Get(context.Background(), view.ID)
+	after, err := service.Get(context.Background(), testProfile, view.ID)
 	if err != nil {
 		t.Fatalf("неожиданная ошибка: %v", err)
 	}

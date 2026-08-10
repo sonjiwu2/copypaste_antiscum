@@ -9,6 +9,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/profile"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
 )
 
@@ -71,7 +72,12 @@ func (d Decision) clone() Decision {
 
 // Attempt — одно прохождение зафиксированной версии сценария.
 type Attempt struct {
-	ID              ID
+	ID ID
+
+	// ProfileID — владелец попытки. Прогресс считается по владельцу, поэтому
+	// попытка без него существовать не может.
+	ProfileID profile.ID
+
 	ScenarioID      scenario.ID
 	ScenarioVersion scenario.Version
 	CurrentNodeID   scenario.NodeID
@@ -98,6 +104,7 @@ type Attempt struct {
 // StartParams — данные для создания попытки.
 type StartParams struct {
 	ID              ID
+	ProfileID       profile.ID
 	ScenarioID      scenario.ID
 	ScenarioVersion scenario.Version
 	StartNodeID     scenario.NodeID
@@ -116,6 +123,7 @@ func Start(params StartParams) (Attempt, error) {
 
 	started := Attempt{
 		ID:                  params.ID,
+		ProfileID:           params.ProfileID,
 		ScenarioID:          params.ScenarioID,
 		ScenarioVersion:     params.ScenarioVersion,
 		CurrentNodeID:       params.CurrentNodeID,
@@ -140,6 +148,8 @@ func (p StartParams) validate() error {
 	switch {
 	case p.ID == "":
 		return ErrEmptyAttemptID
+	case p.ProfileID == "":
+		return ErrEmptyProfileID
 	case p.ScenarioID == "":
 		return ErrEmptyScenarioID
 	case p.ScenarioVersion < 1:
@@ -150,6 +160,18 @@ func (p StartParams) validate() error {
 		return ErrEmptyStartTime
 	case len(p.RevealedNodeIDs) == 0:
 		return ErrNothingRevealed
+	}
+
+	return nil
+}
+
+// EnsureOwnedBy проверяет, что попытка принадлежит этому профилю.
+//
+// Идентификатор попытки остаётся секретом, но одного секрета мало: после
+// появления прогресса чужая попытка не должна попадать ни в чью историю.
+func (a Attempt) EnsureOwnedBy(owner profile.ID) error {
+	if a.ProfileID != owner {
+		return ErrForbidden
 	}
 
 	return nil

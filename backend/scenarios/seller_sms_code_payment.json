@@ -1,0 +1,242 @@
+{
+  "id": "seller-sms-code-payment",
+  "version": 1,
+  "slug": "seller-sms-code-payment",
+  "role": "seller",
+  "title": "SMS-код для получения оплаты",
+  "description": "Продажа смартфона: покупатель просит данные карты и код из SMS якобы для подтверждения входящего перевода.",
+  "difficulty": "easy",
+  "estimatedMinutes": 4,
+  "startNodeId": "buyer-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "buyer-greeting",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Здравствуйте! Смартфон ещё продаётся? Всё устраивает, готов купить за 32 000 ₽ без торга.",
+      "nextNodeId": "buyer-payment-offer"
+    },
+    {
+      "id": "buyer-payment-offer",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Оплачу сейчас переводом. Напишите номер карты, срок действия и три цифры с обратной стороны — мой банк просит их для перевода продавцу.",
+      "nextNodeId": "card-data-decision"
+    },
+    {
+      "id": "card-data-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель просит реквизиты карты для входящего перевода. Что вы сообщите?",
+      "choices": [
+        {
+          "id": "share-full-card-details",
+          "label": "Сообщить номер, срок действия и CVC",
+          "playerReply": "Записывайте: номер карты, срок действия и три цифры с обратной стороны.",
+          "nextNodeId": "buyer-asks-sms-code",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["card_credentials", "cvc_disclosure"],
+          "skillEffects": [{"skill": "credential_safety", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Переданы секретные данные карты",
+            "explanation": "CVC и срок действия используются для списаний, а не для получения перевода.",
+            "realWorldRule": "Для входящего перевода никогда не нужны CVC, PIN, пароль или код из SMS."
+          }
+        },
+        {
+          "id": "share-card-number-only",
+          "label": "Сообщить только номер карты",
+          "playerReply": "Дам только номер карты. Срок действия и код с оборота не сообщаю.",
+          "nextNodeId": "buyer-asks-sms-code",
+          "safetyScore": -10,
+          "criticality": "medium",
+          "riskTags": ["card_number_disclosure"],
+          "skillEffects": [{"skill": "credential_safety", "delta": 0}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Секреты не переданы",
+            "explanation": "Одного номера карты обычно недостаточно для списания, но безопаснее использовать номер телефона или встроенную оплату площадки.",
+            "realWorldRule": "Передавайте только минимально необходимые реквизиты и никогда не сообщайте данные подтверждения операций."
+          }
+        },
+        {
+          "id": "offer-sbp-or-platform",
+          "label": "Предложить перевод по номеру телефона или оплату площадки",
+          "playerReply": "Для перевода хватит номера телефона, либо оплатите через площадку.",
+          "nextNodeId": "buyer-claims-transfer-error",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["credential_request"],
+          "skillEffects": [{"skill": "payment_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Секретные данные сохранены",
+            "explanation": "Вы предлагаете способ, который не требует раскрывать реквизиты для списания.",
+            "realWorldRule": "Для получения перевода достаточно безопасного идентификатора или штатной оплаты площадки."
+          }
+        }
+      ]
+    },
+    {
+      "id": "buyer-claims-transfer-error",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Перевод почти прошёл, но банк просит код подтверждения получателя. Сейчас вам придёт SMS — просто пришлите шесть цифр.",
+      "nextNodeId": "sms-arrives-system"
+    },
+    {
+      "id": "buyer-asks-sms-code",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Отлично. Теперь банк отправит вам SMS для подтверждения зачисления. Продиктуйте код, и деньги сразу появятся на счёте.",
+      "nextNodeId": "sms-arrives-system"
+    },
+    {
+      "id": "sms-arrives-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Приходит SMS: «Код 481926 для входа в интернет-банк. Никому не сообщайте код, в том числе сотрудникам банка». Денег на счёте нет.",
+      "nextNodeId": "sms-code-decision"
+    },
+    {
+      "id": "sms-code-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель просит код, хотя SMS предупреждает никому его не сообщать. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "share-sms-code",
+          "label": "Продиктовать код для завершения перевода",
+          "playerReply": "Код 481926, диктую.",
+          "nextNodeId": "account-access-system",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["sms_code_disclosure", "account_takeover"],
+          "skillEffects": [{"skill": "credential_safety", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Передан код входа",
+            "explanation": "SMS прямо указывало, что код предназначен для входа в интернет-банк, а не для входящего перевода.",
+            "realWorldRule": "Код из SMS принадлежит только вам; его нельзя сообщать покупателям, продавцам или сотрудникам банка."
+          }
+        },
+        {
+          "id": "read-sms-and-refuse",
+          "label": "Прочитать назначение SMS и отказать",
+          "playerReply": "В самой SMS написано, что это код для входа в интернет-банк. Никому его сообщать не буду.",
+          "nextNodeId": "buyer-pressure-after-refusal",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["sms_code_disclosure"],
+          "skillEffects": [{"skill": "credential_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Назначение кода проверено",
+            "explanation": "Вы ориентируетесь на текст банка, а не на объяснение покупателя.",
+            "realWorldRule": "Всегда читайте, какую операцию подтверждает код, и никому его не передавайте."
+          }
+        },
+        {
+          "id": "block-and-contact-bank",
+          "label": "Заблокировать покупателя и самостоятельно связаться с банком",
+          "playerReply": "Код не дам, разговор заканчиваю. В банк позвоню сам по номеру с карты.",
+          "nextNodeId": "safe-bank-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["sms_code_disclosure", "account_takeover"],
+          "skillEffects": [
+            {"skill": "credential_safety", "delta": 1},
+            {"skill": "reporting_discipline", "delta": 1}
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Попытка захвата аккаунта остановлена",
+            "explanation": "Код не раскрыт, контакт прекращён, а банк может проверить попытку входа.",
+            "realWorldRule": "При неожиданном коде входа прекратите общение и свяжитесь с банком по официальному каналу."
+          }
+        }
+      ]
+    },
+    {
+      "id": "buyer-pressure-after-refusal",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Вы неправильно поняли сообщение. Без кода деньги вернутся мне, а я уже вызвал курьера. Просто продиктуйте цифры.",
+      "nextNodeId": "final-code-decision"
+    },
+    {
+      "id": "final-code-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель продолжает требовать код. Ваше окончательное решение?",
+      "choices": [
+        {
+          "id": "yield-and-share-code",
+          "label": "Поверить покупателю и сообщить код",
+          "playerReply": "Хорошо, чтобы деньги не вернулись обратно, диктую код.",
+          "nextNodeId": "account-access-system",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["sms_code_disclosure", "pressure"],
+          "skillEffects": [{"skill": "pressure_resistance", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Предупреждение банка проигнорировано",
+            "explanation": "Срочность курьера не изменила назначение кода: он подтверждает вход в ваш банк.",
+            "realWorldRule": "Никогда не меняйте решение о секретном коде под давлением."
+          }
+        },
+        {
+          "id": "end-block-report",
+          "label": "Завершить разговор, заблокировать и пожаловаться",
+          "playerReply": "Код входа в банк я не сообщу ни при каких условиях. Блокирую вас и жалуюсь на аккаунт.",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["sms_code_disclosure", "pressure"],
+          "skillEffects": [{"skill": "reporting_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Социальная инженерия распознана",
+            "explanation": "Вы сохранили доступ к банку и сообщили площадке о мошенническом аккаунте.",
+            "realWorldRule": "Если собеседник требует секретный код, прекратите сделку и отправьте жалобу."
+          }
+        }
+      ]
+    },
+    {
+      "id": "account-access-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Мошенник входит в ваш интернет-банк. Вы получаете уведомление о переводе 32 000 ₽ на неизвестный счёт.",
+      "nextNodeId": "unsafe-ending"
+    },
+    {
+      "id": "safe-bank-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Код сохранён в тайне",
+        "explanation": "Вы не сообщили код, заблокировали покупателя и обратились в банк по официальному каналу."
+      }
+    },
+    {
+      "id": "safe-reported-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Мошенничество предотвращено",
+        "explanation": "Вы не поддались повторному давлению, сохранили доступ к счёту и пожаловались на покупателя."
+      }
+    },
+    {
+      "id": "unsafe-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Мошенник получил доступ к банку",
+        "explanation": "Переданный SMS-код подтвердил вход в интернет-банк. Со счёта похищено 32 000 ₽."
+      }
+    }
+  ]
+}

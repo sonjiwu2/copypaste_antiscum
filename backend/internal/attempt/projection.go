@@ -38,9 +38,11 @@ type PublicNode struct {
 
 // PublicDecision — уже сделанный выбор вместе с показанным объяснением.
 type PublicDecision struct {
-	NodeID      scenario.NodeID
-	ChoiceID    scenario.ChoiceID
+	NodeID   scenario.NodeID
+	ChoiceID scenario.ChoiceID
+	// ChoiceLabel — название действия, PlayerReply — реплика игрока в переписке.
 	ChoiceLabel string
+	PlayerReply string
 	Consequence scenario.Consequence
 }
 
@@ -71,9 +73,10 @@ type View struct {
 
 // AcceptedChoice — выбор, который сервер принял и применил.
 type AcceptedChoice struct {
-	NodeID   scenario.NodeID
-	ChoiceID scenario.ChoiceID
-	Label    string
+	NodeID      scenario.NodeID
+	ChoiceID    scenario.ChoiceID
+	Label       string
+	PlayerReply string
 }
 
 // Transition — результат одного шага прохождения.
@@ -110,9 +113,10 @@ func transitionOf(source Attempt, definition scenario.Scenario, decision Decisio
 		Status:    StatusInProgress,
 		Score:     decision.ScoreAfter,
 		Accepted: AcceptedChoice{
-			NodeID:   decision.NodeID,
-			ChoiceID: decision.ChoiceID,
-			Label:    decision.ChoiceLabel,
+			NodeID:      decision.NodeID,
+			ChoiceID:    decision.ChoiceID,
+			Label:       decision.ChoiceLabel,
+			PlayerReply: playerReplyOf(definition, decision.NodeID, decision.ChoiceID),
 		},
 		Consequence:   decision.Consequence,
 		RevealedNodes: revealedNodes,
@@ -147,6 +151,7 @@ func viewOf(source Attempt, definition scenario.Scenario) (View, error) {
 			NodeID:      decision.NodeID,
 			ChoiceID:    decision.ChoiceID,
 			ChoiceLabel: decision.ChoiceLabel,
+			PlayerReply: playerReplyOf(definition, decision.NodeID, decision.ChoiceID),
 			Consequence: decision.Consequence,
 		})
 	}
@@ -170,6 +175,28 @@ func viewOf(source Attempt, definition scenario.Scenario) (View, error) {
 		UpdatedAt:     source.UpdatedAt,
 		CompletedAt:   source.CompletedAt,
 	}, nil
+}
+
+// playerReplyOf возвращает закреплённую за выбором реплику игрока.
+//
+// Реплика читается из версии сценария, к которой привязана попытка, поэтому
+// снимок в решении не нужен: содержимое этой версии уже неизменяемо.
+func playerReplyOf(
+	definition scenario.Scenario,
+	nodeID scenario.NodeID,
+	choiceID scenario.ChoiceID,
+) string {
+	node, found := definition.Node(nodeID)
+	if !found {
+		return ""
+	}
+
+	choice, found := node.Choice(choiceID)
+	if !found {
+		return ""
+	}
+
+	return choice.PlayerReply
 }
 
 // publicNodeOf оставляет от узла только то, что можно показать пользователю.

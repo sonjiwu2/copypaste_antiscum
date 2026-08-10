@@ -1,0 +1,459 @@
+{
+  "id": "buyer-macbook-corporate-lock",
+  "version": 2,
+  "slug": "buyer-macbook-corporate-lock",
+  "role": "buyer",
+  "title": "MacBook с корпоративной блокировкой",
+  "description": "Покупка MacBook Pro при личной встрече: настоящий серийный номер и рабочее устройство скрывают Activation Lock и корпоративное управление.",
+  "difficulty": "medium",
+  "estimatedMinutes": 8,
+  "startNodeId": "seller-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "seller-greeting",
+      "type": "message",
+      "sender": "seller",
+      "text": "Здравствуйте! Да, MacBook ещё продаётся. Покупал для работы, но перешёл на более мощную модель. Этот почти не использовал.",
+      "nextNodeId": "seller-completeness"
+    },
+    {
+      "id": "seller-completeness",
+      "type": "message",
+      "sender": "seller",
+      "text": "Коробка и электронный чек есть. Серийный номер можете заранее проверить. Нужно закрыть кредит до конца недели, поэтому цена ниже рынка, но без торга.",
+      "nextNodeId": "serial-system"
+    },
+    {
+      "id": "serial-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Продавец присылает фотографию серийного номера. На сайте Apple определяется соответствующая модель MacBook Pro.",
+      "nextNodeId": "serial-decision"
+    },
+    {
+      "id": "serial-decision",
+      "type": "decision",
+      "decisionPrompt": "Серийный номер определяется на официальном сайте. Что вы будете проверять дальше?",
+      "choices": [
+        {
+          "id": "trust-serial",
+          "label": "Считать серийный номер достаточным подтверждением",
+          "playerReply": "Номер определился, мне этого достаточно. Давайте встречаться.",
+          "nextNodeId": "seller-easy-meeting",
+          "safetyScore": -20,
+          "criticality": "medium",
+          "riskTags": [
+            "serial_number_reuse",
+            "ownership_not_verified"
+          ],
+          "skillEffects": [
+            {
+              "skill": "ownership_verification",
+              "delta": -1
+            }
+          ],
+          "consequence": {
+            "severity": "warning",
+            "title": "Модель подтверждена, владелец — нет",
+            "explanation": "Настоящий серийный номер подтверждает модель устройства, но не право продавца распоряжаться им. Номер также можно скопировать с другого ноутбука.",
+            "realWorldRule": "Проверка серийного номера не заменяет проверку права собственности и блокировок устройства."
+          }
+        },
+        {
+          "id": "compare-serials",
+          "label": "Сравнить номера на корпусе, в системе и на коробке",
+          "playerReply": "На встрече сверю номера на корпусе, в системе и на коробке.",
+          "nextNodeId": "matching-serials-system",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": [
+            "serial_number_reuse"
+          ],
+          "skillEffects": [
+            {
+              "skill": "device_verification",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Проверена целостность комплекта",
+            "explanation": "Совпадение номеров снижает риск подмены корпуса, коробки или устройства, но ещё не исключает чужую собственность и удалённое управление.",
+            "realWorldRule": "У дорогой техники сверяйте серийный номер во всех доступных местах."
+          }
+        },
+        {
+          "id": "request-ownership-documents",
+          "label": "Запросить чек и документ, подтверждающий собственника",
+          "playerReply": "Пришлите, пожалуйста, чек и документ, по которому ноутбук принадлежит вам.",
+          "nextNodeId": "company-receipt-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": [
+            "ownership_not_verified"
+          ],
+          "skillEffects": [
+            {
+              "skill": "ownership_verification",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Проверяется происхождение устройства",
+            "explanation": "Для дорогого устройства важно проверить не только характеристики, но и основания, по которым продавец им владеет.",
+            "realWorldRule": "Документ о покупке должен связывать товар с продавцом либо объяснять законную передачу ему собственности."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-easy-meeting",
+      "type": "message",
+      "sender": "seller",
+      "text": "Отлично. В кафе подключитесь к Wi‑Fi, проверите экран, клавиатуру и характеристики.",
+      "nextNodeId": "meeting-system"
+    },
+    {
+      "id": "matching-serials-system",
+      "type": "message",
+      "sender": "system",
+      "text": "На встрече номера на корпусе, в macOS и на коробке совпадают. Однако это не показывает, принадлежит ли устройство организации.",
+      "nextNodeId": "meeting-system"
+    },
+    {
+      "id": "company-receipt-system",
+      "type": "message",
+      "sender": "seller",
+      "text": "Чек оформлен на компанию, где я раньше работал. Ноутбук отдали мне при увольнении. Отдельного акта сейчас с собой нет.",
+      "nextNodeId": "meeting-system"
+    },
+    {
+      "id": "meeting-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Вы встречаетесь в кафе. MacBook включается, характеристики соответствуют объявлению, корпус и экран в хорошем состоянии.",
+      "nextNodeId": "seller-no-reset"
+    },
+    {
+      "id": "seller-no-reset",
+      "type": "message",
+      "sender": "seller",
+      "text": "Можете всё посмотреть. Только полностью стирать систему сейчас не хотелось бы: там остались рабочие файлы. После оплаты я дома окончательно удалю устройство из учётной записи.",
+      "nextNodeId": "account-check-decision"
+    },
+    {
+      "id": "account-check-decision",
+      "type": "decision",
+      "decisionPrompt": "Ноутбук работает, но продавец не хочет стирать его до оплаты. Как вы поступите?",
+      "choices": [
+        {
+          "id": "pay-after-basic-check",
+          "label": "Оплатить после обычной проверки функций",
+          "playerReply": "Экран и клавиатура в порядке, характеристики совпадают. Оплачиваю.",
+          "nextNodeId": "seller-promises-account-removal",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": [
+            "activation_lock",
+            "deferred_verification"
+          ],
+          "skillEffects": [
+            {
+              "skill": "device_verification",
+              "delta": -2
+            }
+          ],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Ключевая проверка отложена",
+            "explanation": "Работающая macOS не доказывает, что после сброса устройство активируется без данных прежнего владельца или организации.",
+            "realWorldRule": "Не оплачивайте подержанное устройство до проверки его активации после полного сброса."
+          }
+        },
+        {
+          "id": "disable-find-my",
+          "label": "Попросить выйти из Apple Account и отключить «Локатор»",
+          "playerReply": "Выйдите, пожалуйста, из Apple Account и отключите «Локатор» при мне.",
+          "nextNodeId": "signed-out-system",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": [
+            "activation_lock"
+          ],
+          "skillEffects": [
+            {
+              "skill": "account_security",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Проверяется блокировка владельца",
+            "explanation": "Выход из учётной записи — важный шаг, но без сброса не обнаруживает все варианты корпоративного управления.",
+            "realWorldRule": "Перед покупкой продавец должен выйти из своих учётных записей и отключить функции поиска устройства."
+          }
+        },
+        {
+          "id": "require-full-reset",
+          "label": "Потребовать полный сброс и первоначальную настройку",
+          "playerReply": "Нужен полный сброс и первоначальная настройка при мне. Иначе оплачивать не буду.",
+          "nextNodeId": "seller-hurry-pressure",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": [
+            "activation_lock",
+            "remote_management"
+          ],
+          "skillEffects": [
+            {
+              "skill": "device_verification",
+              "delta": 2
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Запрошена решающая проверка",
+            "explanation": "Полный сброс и подключение к сети позволяют обнаружить Activation Lock и автоматическую корпоративную регистрацию.",
+            "realWorldRule": "Дорогую электронику проверяйте в состоянии, в котором будете пользоваться ею после покупки."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-promises-account-removal",
+      "type": "message",
+      "sender": "seller",
+      "text": "Спасибо за доверие. Учётную запись и рабочие данные удалю сегодня вечером.",
+      "nextNodeId": "unsafe-locked-ending"
+    },
+    {
+      "id": "signed-out-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Продавец выходит из видимой учётной записи и отключает «Локатор». После полного сброса ноутбук пока не проверялся.",
+      "nextNodeId": "reset-decision"
+    },
+    {
+      "id": "seller-hurry-pressure",
+      "type": "message",
+      "sender": "seller",
+      "text": "Сброс займёт слишком много времени. Через двадцать минут у меня следующая встреча. Могу написать расписку и показать паспорт.",
+      "nextNodeId": "reset-decision"
+    },
+    {
+      "id": "reset-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец предлагает заменить техническую проверку распиской. Что вы выберете?",
+      "choices": [
+        {
+          "id": "accept-without-reset",
+          "label": "Поверить продавцу и оплатить без сброса",
+          "playerReply": "Хорошо, верю на слово. Перевожу деньги без сброса.",
+          "nextNodeId": "unsafe-locked-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": [
+            "activation_lock",
+            "urgency"
+          ],
+          "skillEffects": [
+            {
+              "skill": "device_verification",
+              "delta": -2
+            }
+          ],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Проверка сорвана спешкой",
+            "explanation": "Расписание продавца не уменьшает риск блокировки устройства после оплаты.",
+            "realWorldRule": "Если продавец не оставляет времени на обязательную проверку, перенесите встречу или откажитесь от сделки."
+          }
+        },
+        {
+          "id": "accept-receipt",
+          "label": "Взять расписку с паспортными данными и оплатить",
+          "playerReply": "Тогда напишите расписку с паспортными данными, и я оплачу.",
+          "nextNodeId": "receipt-system",
+          "safetyScore": -30,
+          "criticality": "high",
+          "riskTags": [
+            "identity_document_trust",
+            "activation_lock"
+          ],
+          "skillEffects": [
+            {
+              "skill": "ownership_verification",
+              "delta": -1
+            }
+          ],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Бумага не сняла блокировку",
+            "explanation": "Расписка может помочь зафиксировать обстоятельства сделки, но не делает устройство технически и юридически чистым.",
+            "realWorldRule": "Документы дополняют проверку товара, а не заменяют её."
+          }
+        },
+        {
+          "id": "insist-on-reset",
+          "label": "Не оплачивать до сброса и подключения к интернету",
+          "playerReply": "Расписка блокировку не снимет. Сбрасываем, подключаем к интернету, и только после этого деньги.",
+          "nextNodeId": "reset-started-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": [
+            "activation_lock",
+            "remote_management"
+          ],
+          "skillEffects": [
+            {
+              "skill": "device_verification",
+              "delta": 2
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Условие безопасности сохранено",
+            "explanation": "Вы не позволили спешке и документам заменить фактическую проверку активации.",
+            "realWorldRule": "Оплата производится только после выполнения заранее определённых проверок."
+          }
+        }
+      ]
+    },
+    {
+      "id": "receipt-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Продавец заполняет расписку. Подлинность указанных данных и право собственности организации на месте не подтверждены.",
+      "nextNodeId": "unsafe-locked-ending"
+    },
+    {
+      "id": "reset-started-system",
+      "type": "message",
+      "sender": "system",
+      "text": "После стирания и подключения к Wi‑Fi появляется экран удалённого управления: устройство зарегистрировано за организацией и требует корпоративную авторизацию.",
+      "nextNodeId": "management-decision"
+    },
+    {
+      "id": "management-decision",
+      "type": "decision",
+      "decisionPrompt": "Обнаружено корпоративное управление. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "believe-former-admin",
+          "label": "Поверить, что бывший администратор снимет управление позже",
+          "playerReply": "Ладно, раз это просто старый профиль компании — оплачиваю.",
+          "nextNodeId": "seller-admin-promise",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": [
+            "remote_management",
+            "deferred_verification"
+          ],
+          "skillEffects": [
+            {
+              "skill": "ownership_verification",
+              "delta": -2
+            }
+          ],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Контроль остаётся у третьей стороны",
+            "explanation": "До удаления устройства из корпоративной системы продавец не может гарантировать, что ноутбук останется доступен.",
+            "realWorldRule": "Не покупайте устройство, пока прежний владелец или организация сохраняет технический контроль над ним."
+          }
+        },
+        {
+          "id": "wait-for-transfer-documents",
+          "label": "Отложить сделку до документов и снятия управления",
+          "playerReply": "Пока не будет акта передачи и снятого управления, сделку откладываем.",
+          "nextNodeId": "seller-disappears",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": [
+            "ownership_not_verified",
+            "remote_management"
+          ],
+          "skillEffects": [
+            {
+              "skill": "ownership_verification",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Сделка поставлена на паузу",
+            "explanation": "Вы не платите до устранения блокировки, хотя подозрительное объявление пока не отправлено на проверку.",
+            "realWorldRule": "Обещание снять ограничение позже не заменяет снятие ограничения до оплаты."
+          }
+        },
+        {
+          "id": "refuse-and-report",
+          "label": "Отказаться от покупки и пожаловаться на объявление",
+          "playerReply": "Ноутбуком управляет организация, покупать его я не буду. Объявление отправлю на проверку.",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": [
+            "ownership_not_verified",
+            "remote_management"
+          ],
+          "skillEffects": [
+            {
+              "skill": "reporting_discipline",
+              "delta": 1
+            }
+          ],
+          "consequence": {
+            "severity": "safe",
+            "title": "Риск полностью остановлен",
+            "explanation": "Вы сохранили деньги, отказались от контролируемого третьей стороной устройства и помогли проверить объявление.",
+            "realWorldRule": "Обнаружив чужую блокировку или управление, прекратите сделку и сообщите площадке."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-admin-promise",
+      "type": "message",
+      "sender": "seller",
+      "text": "Это просто старый профиль компании. Я позвоню бывшему администратору, и вечером он удалит устройство. Сейчас можно спокойно оплачивать.",
+      "nextNodeId": "unsafe-locked-ending"
+    },
+    {
+      "id": "seller-disappears",
+      "type": "message",
+      "sender": "system",
+      "text": "После просьбы прислать акт передачи и снять корпоративное управление продавец прекращает отвечать.",
+      "nextNodeId": "safe-paused-ending"
+    },
+    {
+      "id": "unsafe-locked-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Ноутбук заблокирован",
+        "explanation": "После оплаты MacBook потребовал данные прежнего владельца или организации. Вы потеряли 145 000 ₽ и не можете полноценно пользоваться устройством."
+      }
+    },
+    {
+      "id": "safe-paused-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Покупка отложена",
+        "explanation": "Деньги сохранены: вы отказались платить до подтверждения собственности и снятия корпоративного управления."
+      }
+    },
+    {
+      "id": "safe-reported-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Опасная сделка остановлена",
+        "explanation": "Вы обнаружили корпоративное управление до оплаты, отказались от покупки и отправили объявление на проверку."
+      }
+    }
+  ]
+}

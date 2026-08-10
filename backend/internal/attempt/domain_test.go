@@ -14,6 +14,7 @@ var startMoment = time.Date(2026, time.August, 3, 12, 0, 0, 0, time.UTC)
 func validStartParams() attempt.StartParams {
 	return attempt.StartParams{
 		ID:              "attempt-1",
+		ProfileID:       "test-profile-owner",
 		ScenarioID:      "buyer-fake-delivery",
 		ScenarioVersion: 1,
 		StartNodeID:     "greeting",

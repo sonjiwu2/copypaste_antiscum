@@ -19,6 +19,7 @@ func newAttempt(t *testing.T, id attempt.ID) attempt.Attempt {
 
 	created, err := attempt.Start(attempt.StartParams{
 		ID:              id,
+		ProfileID:       "memory-test-profile",
 		ScenarioID:      "buyer-fake-delivery",
 		ScenarioVersion: 1,
 		StartNodeID:     "greeting",

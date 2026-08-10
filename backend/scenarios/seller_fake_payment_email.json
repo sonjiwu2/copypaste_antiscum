@@ -1,0 +1,239 @@
+{
+  "id": "seller-fake-payment-email",
+  "version": 1,
+  "slug": "seller-fake-payment-email",
+  "role": "seller",
+  "title": "Письмо о якобы полученной оплате",
+  "description": "Продажа монитора: покупатель присылает поддельное уведомление площадки и ссылку для получения денег.",
+  "difficulty": "easy",
+  "estimatedMinutes": 4,
+  "startNodeId": "buyer-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "buyer-greeting",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Здравствуйте! Монитор ещё продаётся? Цена 45 000 ₽ устраивает, оформлю доставку без торга.",
+      "nextNodeId": "buyer-claims-payment"
+    },
+    {
+      "id": "buyer-claims-payment",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Готово, я уже оплатил. Вам должно прийти письмо от площадки. Откройте его и нажмите «Получить деньги», после этого появится номер отправления.",
+      "nextNodeId": "email-system"
+    },
+    {
+      "id": "email-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Приходит письмо «Ваш товар оплачен». Отправитель: avito-payments@delivery-order.info. В письме находится кнопка «Получить 45 000 ₽». Заказа внутри приложения нет.",
+      "nextNodeId": "email-decision"
+    },
+    {
+      "id": "email-decision",
+      "type": "decision",
+      "decisionPrompt": "Письмо сообщает об оплате, но заказа в приложении нет. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "open-payment-button",
+          "label": "Нажать «Получить 45 000 ₽»",
+          "playerReply": "Нашёл письмо, нажимаю «Получить 45 000 ₽».",
+          "nextNodeId": "fake-page-system",
+          "safetyScore": -30,
+          "criticality": "high",
+          "riskTags": ["phishing_link", "fake_payment_notification"],
+          "skillEffects": [{"skill": "link_safety", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Открыта внешняя платёжная страница",
+            "explanation": "Адрес отправителя не принадлежит площадке, а подтверждение сделки отсутствует в приложении.",
+            "realWorldRule": "Не открывайте платёжные ссылки из писем, если заказ не отображается внутри площадки."
+          }
+        },
+        {
+          "id": "check-order-in-app",
+          "label": "Проверить раздел заказов в приложении",
+          "playerReply": "Секунду, сначала посмотрю раздел заказов в приложении.",
+          "nextNodeId": "no-order-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["fake_payment_notification"],
+          "skillEffects": [{"skill": "channel_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Статус проверен в доверенном канале",
+            "explanation": "Официальный статус сделки нужно проверять в собственном приложении, а не в письме от покупателя.",
+            "realWorldRule": "Настоящая оплата и заказ должны отображаться внутри площадки."
+          }
+        },
+        {
+          "id": "inspect-sender-and-refuse",
+          "label": "Проверить адрес отправителя и отказаться от ссылки",
+          "playerReply": "Письмо пришло с постороннего домена. По ссылке из него я переходить не буду.",
+          "nextNodeId": "buyer-pressure-message",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["lookalike_domain", "phishing_link"],
+          "skillEffects": [{"skill": "link_safety", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Подозрительный домен замечен",
+            "explanation": "Название площадки в адресе не делает сторонний домен официальным.",
+            "realWorldRule": "Проверяйте домен целиком, а не знакомое слово внутри адреса."
+          }
+        }
+      ]
+    },
+    {
+      "id": "fake-page-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Страница похожа на форму площадки и просит номер карты, срок действия, CVC и текущий баланс для «проверки возможности зачисления».",
+      "nextNodeId": "card-form-decision"
+    },
+    {
+      "id": "card-form-decision",
+      "type": "decision",
+      "decisionPrompt": "Внешняя страница просит секретные данные карты. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "enter-card-details",
+          "label": "Заполнить форму для получения оплаты",
+          "playerReply": "Заполняю форму, чтобы деньги пришли.",
+          "nextNodeId": "unsafe-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["card_credentials", "phishing_link"],
+          "skillEffects": [{"skill": "credential_safety", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Данные переданы мошеннику",
+            "explanation": "CVC и баланс не нужны для входящего перевода; форма собирает сведения для списания денег.",
+            "realWorldRule": "Для получения оплаты не вводят CVC, PIN, код из SMS или баланс карты."
+          }
+        },
+        {
+          "id": "close-page-and-report",
+          "label": "Закрыть страницу, сменить пароль при необходимости и пожаловаться",
+          "playerReply": "Страница просит CVC и баланс — для получения денег это не нужно. Закрываю её и жалуюсь.",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["phishing_link"],
+          "skillEffects": [{"skill": "incident_response", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Передача данных остановлена",
+            "explanation": "Ссылка уже была открыта, но секретные данные не введены и дальнейший риск ограничен.",
+            "realWorldRule": "Если открыли подозрительную ссылку, ничего не вводите, закройте страницу и сообщите о ней площадке."
+          }
+        }
+      ]
+    },
+    {
+      "id": "no-order-system",
+      "type": "message",
+      "sender": "system",
+      "text": "В приложении нет нового заказа, оплаты или номера отправления. Покупатель продолжает утверждать, что система обновляется с задержкой.",
+      "nextNodeId": "buyer-pressure-message"
+    },
+    {
+      "id": "buyer-pressure-message",
+      "type": "message",
+      "sender": "buyer",
+      "text": "У меня деньги уже списались. Если вы сейчас не подтвердите получение по ссылке, платёж пропадёт и я пожалуюсь в поддержку.",
+      "nextNodeId": "final-email-decision"
+    },
+    {
+      "id": "final-email-decision",
+      "type": "decision",
+      "decisionPrompt": "Покупатель давит возможной потерей платежа, но заказа в приложении нет. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "trust-delay-and-open-link",
+          "label": "Поверить задержке и открыть ссылку",
+          "playerReply": "Ладно, наверное приложение действительно обновляется с задержкой. Открываю ссылку.",
+          "nextNodeId": "fake-page-system",
+          "safetyScore": -35,
+          "criticality": "high",
+          "riskTags": ["phishing_link", "pressure"],
+          "skillEffects": [{"skill": "pressure_resistance", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Давление заменило официальное подтверждение",
+            "explanation": "Слова покупателя и письмо не создают заказ внутри приложения.",
+            "realWorldRule": "Не меняйте безопасное решение из-за угроз и срочности собеседника."
+          }
+        },
+        {
+          "id": "contact-official-support",
+          "label": "Написать в поддержку через приложение",
+          "playerReply": "Напишу в поддержку через приложение и уточню, была ли оплата.",
+          "nextNodeId": "support-confirms-fraud",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["fake_payment_notification"],
+          "skillEffects": [{"skill": "independent_verification", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Статус проверяется независимо",
+            "explanation": "Вы используете официальный канал, но ещё не отправили жалобу на покупателя.",
+            "realWorldRule": "Связывайтесь с поддержкой только через собственное приложение или официальный сайт."
+          }
+        },
+        {
+          "id": "block-and-report-buyer",
+          "label": "Заблокировать покупателя и пожаловаться",
+          "playerReply": "Заказа нет, ссылку я не открою. Блокирую вас и передаю переписку площадке.",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["phishing_link", "fake_payment_notification"],
+          "skillEffects": [{"skill": "reporting_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Фишинговая схема остановлена",
+            "explanation": "Вы не открыли ссылку, не раскрыли данные и сообщили площадке о мошенническом аккаунте.",
+            "realWorldRule": "Поддельное уведомление об оплате — основание прекратить сделку и отправить жалобу."
+          }
+        }
+      ]
+    },
+    {
+      "id": "support-confirms-fraud",
+      "type": "message",
+      "sender": "system",
+      "text": "Официальная поддержка подтверждает, что заказ не создавался, а письмо отправлено со стороннего домена.",
+      "nextNodeId": "safe-support-ending"
+    },
+    {
+      "id": "safe-reported-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Поддельное письмо распознано",
+        "explanation": "Вы не передали данные карты, сохранили монитор и отправили покупателя на проверку."
+      }
+    },
+    {
+      "id": "safe-support-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Оплата не подтверждена",
+        "explanation": "Поддержка подтвердила отсутствие заказа. Товар и банковские данные остались у вас."
+      }
+    },
+    {
+      "id": "unsafe-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Данные карты украдены",
+        "explanation": "Поддельная страница получила реквизиты карты. С вашего счёта попытались списать деньги, а настоящего заказа не существовало."
+      }
+    }
+  ]
+}

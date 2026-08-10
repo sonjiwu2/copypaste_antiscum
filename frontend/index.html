@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f8fbff" />
+    <meta
+      name="description"
+      content="Учись распознавать мошенников и совершать безопасные сделки в интерактивных сценариях."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Антискам-тренажёр" />
+    <meta
+      property="og:description"
+      content="Учись распознавать мошенников и совершать безопасные сделки."
+    />
+    <meta property="og:image" content="/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>Антискам-тренажёр</title>
+    <script>
+      // Тема ставится до отрисовки: иначе при тёмном оформлении на загрузке
+      // мелькает светлый экран. Значение то же, что читает приложение.
+      (function () {
+        try {
+          var saved = JSON.parse(localStorage.getItem('antiscam.settings.v1'))
+          var theme = saved && saved.state && saved.state.settings && saved.state.settings.theme
+          if (theme === 'dark') {
+            document.documentElement.dataset.theme = 'dark'
+            document.querySelector('meta[name="theme-color"]').content = '#1c2630'
+          }
+        } catch (error) {
+          // Хранилище недоступно — остаётся светлая тема по умолчанию.
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

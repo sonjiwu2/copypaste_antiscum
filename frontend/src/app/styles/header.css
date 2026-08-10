@@ -1,0 +1,227 @@
+/* Каркас страницы и верхняя панель: логотип, навигация, XP, профиль. */
+
+.app-shell {
+  display: grid;
+  grid-template-rows: 82px minmax(0, 1fr);
+  width: 100%;
+  height: 100vh;
+  min-height: 720px;
+  overflow: hidden;
+  background: var(--c-bg-blue-s1);
+}
+
+.app-header {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  height: 82px;
+  padding: 0 20px 0 35px;
+  background: rgb(var(--c-surface-rgb) / 98%);
+  border-bottom: 1px solid var(--c-bd-neutral-b1);
+}
+
+.brand {
+  display: flex;
+  flex: 0 0 350px;
+  align-items: center;
+  gap: 13px;
+  height: 72px;
+  padding: 0;
+  color: var(--text-primary);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.brand__shield {
+  width: 65px;
+  height: 63px;
+  object-fit: cover;
+}
+
+.brand__copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-family: 'Monocraft', monospace;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 0.96;
+  letter-spacing: 0.085em;
+  white-space: nowrap;
+}
+
+.brand__copy strong,
+.brand__copy b {
+  font-weight: 600;
+}
+
+.brand__copy b {
+  margin-top: 5px;
+  color: var(--primary);
+  letter-spacing: 0.135em;
+}
+
+.primary-nav {
+  align-self: stretch;
+  display: flex;
+  align-items: stretch;
+  gap: 7px;
+  min-width: 680px;
+}
+
+.nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 162px;
+  padding: 2px 15px 0;
+  color: var(--c-fg-neutral-a2);
+  font-family: 'Monocraft', monospace;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    background 140ms ease;
+}
+
+.nav-link::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  content: '';
+  background: transparent;
+}
+
+.nav-link:hover,
+.nav-link--active {
+  color: var(--primary);
+}
+
+.nav-link:hover {
+  background: linear-gradient(180deg, transparent, rgb(22 134 232 / 4%));
+}
+.nav-link--active::after {
+  background: var(--primary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin-left: auto;
+}
+
+.energy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 106px;
+  height: 46px;
+  padding: 0 14px;
+  white-space: nowrap;
+  color: var(--primary);
+  font-family: 'Monocraft', monospace;
+  font-size: 18px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  box-shadow: 0 2px 7px rgb(23 35 60 / 5%);
+  cursor: pointer;
+}
+
+.energy .pixel-icon {
+  color: var(--c-fg-orange-a2);
+}
+
+.profile {
+  position: relative;
+}
+
+.profile__button {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) 22px;
+  align-items: center;
+  width: 205px;
+  height: 62px;
+  padding: 0 10px 0 0;
+  text-align: left;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  box-shadow: 0 2px 8px rgb(23 35 60 / 5%);
+  cursor: pointer;
+}
+
+.profile__avatar {
+  display: grid;
+  width: 62px;
+  height: 60px;
+  place-items: center;
+  overflow: hidden;
+}
+
+.profile__avatar img {
+  width: 56px;
+  height: 57px;
+  object-fit: contain;
+}
+
+.profile__copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.profile__copy strong {
+  font-size: 18px;
+  line-height: 1.05;
+}
+.profile__copy small {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.profile__chevron {
+  color: var(--c-fg-neutral-a2);
+  font-size: 21px;
+  text-align: center;
+}
+
+.profile-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 50;
+  display: grid;
+  width: 205px;
+  padding: 7px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  box-shadow: 0 12px 28px rgb(23 35 60 / 15%);
+}
+
+.profile-menu button {
+  padding: 9px 10px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.profile-menu button:hover {
+  color: var(--primary);
+  background: var(--c-bg-blue-s1);
+}

@@ -26,6 +26,7 @@ type scenarioSummary struct {
 	Description      string `json:"description"`
 	Difficulty       string `json:"difficulty"`
 	EstimatedMinutes int    `json:"estimatedMinutes"`
+	MaxDecisions     int    `json:"maxDecisions"`
 }
 
 func scenarioSummaryOf(metadata scenario.Metadata) scenarioSummary {
@@ -38,6 +39,7 @@ func scenarioSummaryOf(metadata scenario.Metadata) scenarioSummary {
 		Description:      metadata.Description,
 		Difficulty:       string(metadata.Difficulty),
 		EstimatedMinutes: metadata.EstimatedMinutes,
+		MaxDecisions:     metadata.MaxDecisions,
 	}
 }
 
@@ -100,9 +102,11 @@ type attemptOutcome struct {
 }
 
 type attemptDecision struct {
-	NodeID      string             `json:"nodeId"`
-	ChoiceID    string             `json:"choiceId"`
-	Label       string             `json:"label"`
+	NodeID   string `json:"nodeId"`
+	ChoiceID string `json:"choiceId"`
+	Label    string `json:"label"`
+	// PlayerReply — реплика игрока, которая попадает в ленту переписки.
+	PlayerReply string             `json:"playerReply"`
 	Consequence attemptConsequence `json:"consequence"`
 }
 
@@ -165,9 +169,10 @@ type transitionResponse struct {
 }
 
 type acceptedChoice struct {
-	NodeID   string `json:"nodeId"`
-	ChoiceID string `json:"choiceId"`
-	Label    string `json:"label"`
+	NodeID      string `json:"nodeId"`
+	ChoiceID    string `json:"choiceId"`
+	Label       string `json:"label"`
+	PlayerReply string `json:"playerReply"`
 }
 
 func transitionResponseOf(transition attempt.Transition) transitionResponse {
@@ -177,9 +182,10 @@ func transitionResponseOf(transition attempt.Transition) transitionResponse {
 		Score:     transition.Score,
 		Outcome:   string(transition.Outcome),
 		AcceptedChoice: acceptedChoice{
-			NodeID:   string(transition.Accepted.NodeID),
-			ChoiceID: string(transition.Accepted.ChoiceID),
-			Label:    transition.Accepted.Label,
+			NodeID:      string(transition.Accepted.NodeID),
+			ChoiceID:    string(transition.Accepted.ChoiceID),
+			Label:       transition.Accepted.Label,
+			PlayerReply: transition.Accepted.PlayerReply,
 		},
 		Consequence: attemptConsequence{
 			Severity:      string(transition.Consequence.Severity),
@@ -240,9 +246,10 @@ func attemptDecisionsOf(decisions []attempt.PublicDecision) []attemptDecision {
 
 	for _, decision := range decisions {
 		converted = append(converted, attemptDecision{
-			NodeID:   string(decision.NodeID),
-			ChoiceID: string(decision.ChoiceID),
-			Label:    decision.ChoiceLabel,
+			NodeID:      string(decision.NodeID),
+			ChoiceID:    string(decision.ChoiceID),
+			Label:       decision.ChoiceLabel,
+			PlayerReply: decision.PlayerReply,
 			Consequence: attemptConsequence{
 				Severity:      string(decision.Consequence.Severity),
 				Title:         decision.Consequence.Title,

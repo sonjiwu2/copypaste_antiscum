@@ -1,0 +1,1031 @@
+/* Адаптивные правила. Идут последними, поэтому перекрывают базовые размеры. */
+
+@media (max-width: 1450px) and (min-height: 851px) {
+  .brand {
+    flex-basis: 315px;
+  }
+  .primary-nav {
+    min-width: 600px;
+  }
+  .nav-link {
+    min-width: 142px;
+    padding-inline: 11px;
+  }
+  .header-actions {
+    gap: 14px;
+  }
+  .role-card__content {
+    left: 190px;
+    right: 55px;
+  }
+  .role-stats {
+    left: 174px;
+    right: 22px;
+  }
+}
+
+@media (max-width: 1240px) {
+  .app-shell {
+    display: block;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  .app-header {
+    height: auto;
+    min-height: 78px;
+    padding-left: 18px;
+  }
+  .brand {
+    flex-basis: 250px;
+  }
+  .brand__shield {
+    width: 56px;
+    height: 55px;
+  }
+  .brand__copy {
+    font-size: 20px;
+  }
+  .primary-nav {
+    min-width: 0;
+  }
+  .nav-link {
+    min-width: auto;
+  }
+  .energy {
+    display: none;
+  }
+  .home-layout {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    margin-block: 16px;
+  }
+  .home-main {
+    grid-template-rows: 306px 292px 176px;
+  }
+  .home-sidebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: minmax(364px, auto);
+    align-items: stretch;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .featured-panel {
+    grid-row: auto;
+    height: auto;
+    min-height: 364px;
+  }
+  .progress-panel {
+    height: 206px;
+    margin: 0;
+  }
+  .leaderboard-panel {
+    height: auto;
+    min-height: 364px;
+    margin: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-header {
+    flex-wrap: wrap;
+    padding: 6px 14px 0;
+  }
+  .brand {
+    flex: 1 1 240px;
+    height: 62px;
+  }
+  .profile__button {
+    width: 175px;
+  }
+  .primary-nav {
+    order: 3;
+    width: calc(100% + 28px);
+    height: 55px;
+    margin: 0 -14px;
+    overflow-x: auto;
+    border-top: 1px solid var(--c-bd-neutral-b1);
+  }
+  .nav-link {
+    flex: 1 0 130px;
+  }
+  .home-main {
+    display: flex;
+    flex-direction: column;
+  }
+  .hero-card {
+    height: 306px;
+  }
+  .role-grid {
+    min-height: 292px;
+  }
+  .utility-grid {
+    grid-template-columns: 1.72fr 1fr;
+  }
+  .utility-card {
+    min-height: 176px;
+  }
+  .home-sidebar {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .profile__button {
+    width: 148px;
+  }
+  .home-layout {
+    margin: 12px;
+  }
+  .hero-card {
+    height: 390px;
+  }
+  .hero-copy {
+    width: 100%;
+    height: 58%;
+    padding: 25px 24px;
+    background: linear-gradient(180deg, var(--c-bg-blue-s2) 0%, rgb(var(--c-tint-blue-rgb) / 96%) 82%, transparent 100%);
+  }
+  .hero-copy h1 {
+    font-size: 43px;
+  }
+  .hero-copy p {
+    margin-top: 12px;
+    font-size: 17px;
+  }
+  .hero-art {
+    top: auto;
+    width: 100%;
+    height: 53%;
+  }
+  .hero-art::after {
+    background: linear-gradient(180deg, rgb(var(--c-tint-blue-rgb) / 90%), transparent 36%);
+  }
+  .role-grid {
+    grid-template-columns: 1fr;
+  }
+  .role-card {
+    min-height: 292px;
+  }
+  .utility-grid,
+  .home-sidebar {
+    grid-template-columns: 1fr;
+  }
+  .featured-panel {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand__copy {
+    font-size: 17px;
+  }
+  .brand__shield {
+    width: 49px;
+    height: 48px;
+  }
+  .profile__copy {
+    display: none;
+  }
+  .profile__button {
+    grid-template-columns: 55px 18px;
+    width: 76px;
+  }
+  .role-character {
+    left: -8px;
+    width: 165px;
+  }
+  .role-card__content {
+    left: 155px;
+    right: 15px;
+  }
+  .role-card__content h2 {
+    font-size: 31px;
+  }
+  .role-stats {
+    right: 13px;
+    left: 145px;
+  }
+  .role-cta {
+    right: 13px;
+    left: 13px;
+  }
+  .mission-row {
+    grid-template-columns: 60px minmax(0, 1fr);
+  }
+  .mission-tile {
+    width: 60px;
+    height: 60px;
+  }
+
+  .mission-tile > .pixel-icon {
+    width: 48px;
+    height: 48px;
+  }
+  .mission-xp {
+    display: none;
+  }
+  .utility-card__body {
+    grid-template-columns: 95px minmax(0, 1fr);
+  }
+  .utility-card--tip .utility-card__body {
+    grid-template-columns: 125px minmax(0, 1fr);
+  }
+  .utility-card--tip h2 {
+    margin-left: 0;
+  }
+}
+
+button:not(:disabled):active {
+  filter: brightness(0.96);
+  transform: translateY(1px) scale(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/*
+ * Компактная настольная раскладка повторяет пропорции эталонного экрана
+ * 1280 × 640. Все три колонки правой панели и нижний ряд остаются видимыми
+ * без прокрутки и не перекрывают друг друга.
+ */
+@media (min-width: 1241px) and (max-height: 850px) {
+  /* Пришло из прежнего дубля этого медиазапроса: ниже эти свойства не заданы. */
+  .app-header {
+    padding-left: 26px;
+  }
+
+  .brand {
+    flex-basis: 300px;
+  }
+
+  .nav-link {
+    padding-inline: 10px;
+  }
+
+  .nav-link::after {
+    height: 3px;
+  }
+
+  .progress-panel {
+    margin-top: 8px;
+  }
+
+  .leaderboard-panel {
+    margin-top: 12px;
+  }
+
+  .utility-card--tip h2 {
+    margin: 0;
+  }
+
+  .utility-card p {
+    min-height: 35px;
+    margin: 4px 0;
+    font-size: 10px;
+    line-height: 1.25;
+    -webkit-line-clamp: 3;
+  }
+
+  .utility-card--tip p {
+    margin-top: 3px;
+    -webkit-line-clamp: 4;
+  }
+
+  .app-shell {
+    grid-template-rows: 60px minmax(0, 1fr);
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+
+  .app-header {
+    height: 60px;
+    padding: 0 9px 0 23px;
+  }
+
+  .brand {
+    flex: 0 0 230px;
+    height: 58px;
+    gap: 8px;
+  }
+
+  .brand__shield {
+    width: 42px;
+    height: 43px;
+  }
+
+  .brand__copy {
+    font-size: 17px;
+    line-height: 0.98;
+    letter-spacing: 0.055em;
+  }
+
+  .brand__copy b {
+    margin-top: 3px;
+    letter-spacing: 0.075em;
+  }
+
+  .primary-nav {
+    flex: 0 0 500px;
+    min-width: 0;
+    gap: 0;
+  }
+
+  .nav-link {
+    flex: 0 0 125px;
+    min-width: 0;
+    gap: 7px;
+    padding: 2px 7px 0;
+    font-size: 12px;
+  }
+
+  .nav-link .pixel-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .header-actions {
+    gap: 18px;
+  }
+
+  .energy {
+    width: 73px;
+    height: 34px;
+    gap: 7px;
+    padding: 0 9px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .energy .pixel-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .profile__button {
+    grid-template-columns: 43px minmax(0, 1fr) 14px;
+    width: 140px;
+    height: 43px;
+    padding-right: 6px;
+    border-radius: 8px;
+  }
+
+  .profile__avatar {
+    width: 43px;
+    height: 41px;
+  }
+
+  .profile__avatar img {
+    width: 39px;
+    height: 40px;
+  }
+
+  .profile__copy strong {
+    font-size: 13px;
+  }
+
+  .profile__copy small {
+    margin-top: 2px;
+    font-size: 10px;
+  }
+
+  .profile__chevron {
+    font-size: 16px;
+  }
+
+  .home-layout {
+    align-self: stretch;
+    grid-template-columns: minmax(0, 1fr) 390px;
+    grid-template-rows: minmax(0, 1fr);
+    gap: 14px;
+    height: calc(100dvh - 82px);
+    min-height: 528px;
+    margin: 13px 8px 9px 10px;
+  }
+
+  .home-main {
+    grid-template-rows:
+      minmax(188px, 1.25fr)
+      minmax(190px, 1.32fr)
+      minmax(128px, 1fr);
+    gap: 11px;
+    height: 100%;
+  }
+
+  .pixel-card {
+    border-radius: 9px;
+    box-shadow: 0 2px 8px rgb(23 35 60 / 7%);
+  }
+
+  .hero-copy {
+    width: 64%;
+    padding: 14px 25px;
+    background: linear-gradient(
+      90deg,
+      var(--c-bg-blue-s2) 0%,
+      var(--c-bg-blue-s2) 68%,
+      rgb(var(--c-tint-blue-rgb) / 88%) 78%,
+      rgb(var(--c-tint-blue-rgb) / 42%) 91%,
+      rgb(var(--c-tint-blue-rgb) / 0%) 100%
+    );
+  }
+
+  .hero-copy h1 {
+    font-size: 34px;
+    line-height: 1.03;
+    letter-spacing: 0.025em;
+  }
+
+  .hero-copy p {
+    margin-top: 13px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .hero-button {
+    width: 180px;
+    min-height: 36px;
+    margin-top: 12px;
+    padding: 0 12px 0 16px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+
+  .hero-button .pixel-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .hero-art {
+    width: 52%;
+  }
+
+  .hero-frame-static {
+    right: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero-art::after {
+    background: linear-gradient(
+      90deg,
+      var(--c-bg-blue-s2) 0%,
+      rgb(var(--c-tint-blue-rgb) / 94%) 12%,
+      rgb(var(--c-tint-blue-rgb) / 62%) 24%,
+      rgb(var(--c-tint-blue-rgb) / 18%) 38%,
+      transparent 48%
+    );
+  }
+
+  .role-grid {
+    grid-template-columns: minmax(0, 0.945fr) minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .role-card {
+    height: 100%;
+  }
+
+  .role-character {
+    top: 2px;
+    bottom: 43px;
+    left: 10px;
+    width: clamp(138px, 8.4vw, 162px);
+  }
+
+  .role-character__image--buyer {
+    width: clamp(130px, 8.5vw, 164px);
+    height: clamp(160px, 11vw, 211px);
+    transform: translate(-3px, 1px);
+  }
+
+  .role-character__image--seller {
+    width: clamp(124px, 8.1vw, 156px);
+    height: clamp(155px, 10.7vw, 205px);
+  }
+
+  .role-card__icon {
+    top: 11px;
+    right: 13px;
+    width: 32px;
+    height: 34px;
+  }
+
+  .role-card__content {
+    top: clamp(18px, 1.5vw, 29px);
+    right: 38px;
+    left: clamp(148px, 10.2vw, 176px);
+    display: grid;
+    row-gap: 5px;
+    align-content: start;
+  }
+
+  .role-card__content h2 {
+    font-size: clamp(28px, 1.75vw, 34px);
+  }
+
+  .role-card__content p {
+    max-width: none;
+    margin: 0;
+    font-size: clamp(13px, 0.76vw, 14px);
+    line-height: 1.25;
+  }
+
+  .role-badge {
+    gap: 4px;
+    font-size: clamp(11px, 0.63vw, 12px);
+  }
+
+  .role-badge .pixel-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .role-stats {
+    right: 20px;
+    bottom: 48px;
+    left: clamp(148px, 10.2vw, 176px);
+    height: 44px;
+    border-radius: 7px;
+  }
+
+  .role-stats span {
+    font-size: clamp(11px, 0.62vw, 12px);
+  }
+
+  .role-stats strong {
+    margin-top: 2px;
+    font-size: clamp(15px, 0.82vw, 16px);
+  }
+
+  .role-cta {
+    right: 20px;
+    bottom: 8px;
+    left: 20px;
+    height: 34px;
+    font-size: 14px;
+    border-radius: 6px;
+  }
+
+  .role-cta .pixel-icon {
+    right: 9px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .home-sidebar {
+    display: grid;
+    grid-template-rows: minmax(240px, 1.8fr) minmax(278px, 2fr);
+    height: 100%;
+    gap: 8px;
+  }
+
+  .featured-panel {
+    height: auto;
+    min-height: 0;
+    padding: 8px 11px;
+  }
+
+  .progress-panel {
+    height: auto;
+    margin: 0;
+    padding: 8px 11px;
+  }
+
+  .leaderboard-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
+    padding: 8px 11px;
+  }
+
+  .panel-heading {
+    min-height: 20px;
+  }
+
+  .sidebar-panel h2,
+  .utility-card h2 {
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .heading-asset {
+    width: 17px;
+    height: 18px;
+  }
+
+  .panel-heading > button {
+    padding: 2px 0;
+    font-size: 10px;
+  }
+
+  .mission-list {
+    gap: 7px;
+    margin-top: 7px;
+  }
+
+  .mission-row {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 8px;
+    height: 44px;
+    padding-right: 8px;
+    border-radius: 7px;
+  }
+
+  .mission-tile {
+    width: 44px;
+    height: 44px;
+    border-radius: 7px;
+  }
+
+  .mission-tile > .pixel-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .mission-copy strong {
+    font-size: 11px;
+    line-height: 1.15;
+  }
+
+  .mission-copy small {
+    margin-top: 2px;
+    font-size: 9px;
+    line-height: 1.15;
+    -webkit-line-clamp: 1;
+  }
+
+  .mission-xp {
+    font-size: 10px;
+  }
+
+  .progress-panel > h2 {
+    margin-bottom: 13px;
+  }
+
+  .progress-panel > h2 .pixel-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .level-row {
+    font-size: 10px;
+  }
+
+  .progress-track {
+    height: 4px;
+    margin-top: 3px;
+  }
+
+  .progress-caption {
+    margin-top: 1px;
+    font-size: 9px;
+  }
+
+  .progress-stats {
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .progress-stat {
+    height: 57px;
+    border-radius: 7px;
+  }
+
+  .progress-stat__icon {
+    height: 17px;
+  }
+
+  .progress-stat__icon .pixel-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .progress-stat strong {
+    font-size: 12px;
+  }
+
+  .progress-stat small {
+    margin-top: 2px;
+    font-size: 8px;
+  }
+
+  .leader-list {
+    margin-top: 4px;
+  }
+
+  .leaderboard-status {
+    padding: 2px 5px;
+    font-size: 8px;
+  }
+
+  .leaderboard-placeholder {
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 8px;
+    margin-top: 5px;
+    padding: 6px 8px;
+    border-radius: 6px;
+  }
+
+  .leaderboard-placeholder__icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+  }
+
+  .leaderboard-placeholder__icon .pixel-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .leaderboard-placeholder strong {
+    font-size: 10px;
+  }
+
+  .leaderboard-placeholder p {
+    margin-top: 2px;
+    font-size: 8px;
+    line-height: 1.25;
+  }
+
+  .leader-row {
+    grid-template-columns: 20px 28px minmax(0, 1fr) auto;
+    min-height: 29px;
+  }
+
+  .rank {
+    width: 17px;
+    height: 17px;
+    font-size: 10px;
+    border-radius: 5px;
+  }
+
+  .leader-avatar {
+    width: 26px;
+    height: 27px;
+  }
+
+  .leader-avatar img {
+    width: 24px;
+    height: 26px;
+  }
+
+  .leader-row strong {
+    font-size: 10px;
+  }
+
+  .leader-row > span:last-child {
+    font-size: 9px;
+  }
+
+  .utility-grid {
+    grid-template-columns: 1.1fr repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .utility-card {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    row-gap: 4px;
+    padding: clamp(12px, 0.95vw, 18px) 8px 8px;
+  }
+
+  .utility-card__body {
+    grid-template-columns: clamp(66px, 4.4vw, 84px) minmax(0, 1fr);
+    gap: clamp(6px, 0.55vw, 10px);
+    align-items: center;
+  }
+
+  .utility-card__art img {
+    width: clamp(66px, 4.4vw, 84px);
+    height: clamp(66px, 4.4vw, 84px);
+  }
+
+  .utility-card h2 {
+    min-height: 18px;
+    font-size: clamp(13px, 0.78vw, 15px);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .utility-card--tip h2 {
+    font-size: clamp(14px, 0.82vw, 16px);
+  }
+
+  .utility-card h2 .pixel-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .utility-card p,
+  .utility-card--tip p {
+    min-height: 0;
+    margin: 0;
+    font-size: clamp(11px, 0.63vw, 12px);
+    line-height: 1.3;
+  }
+
+  .utility-card--tip p {
+    font-size: clamp(11px, 0.65vw, 12px);
+  }
+
+  .utility-card__action {
+    min-height: 30px;
+    height: 30px;
+    padding: 0 9px;
+    font-size: clamp(12px, 0.67vw, 13px);
+    border-radius: 6px;
+  }
+
+  .utility-card--tip .utility-card__action {
+    width: calc(100% + 16px);
+    min-height: 30px;
+    height: 30px;
+    margin: 0 -8px -8px;
+    padding: 0 16px;
+  }
+
+  .utility-card__action .pixel-icon {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (min-width: 1241px) and (max-width: 1360px) and (max-height: 850px) {
+  .role-card__content {
+    top: 13px;
+    right: 34px;
+    left: 142px;
+    row-gap: 3px;
+  }
+
+  .role-card__content h2 {
+    font-size: 26px;
+  }
+
+  .role-card__content p {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .role-badge {
+    gap: 3px;
+    font-size: 10px;
+  }
+
+  .role-badge .pixel-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .role-stats {
+    left: 142px;
+    height: 40px;
+  }
+
+  .role-stats span {
+    font-size: 10px;
+  }
+
+  .role-stats strong {
+    font-size: 14px;
+  }
+
+  .role-cta {
+    font-size: 12px;
+  }
+
+  .utility-card__body {
+    grid-template-columns: 60px minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .utility-card__art img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .utility-card h2 {
+    font-size: 12px;
+  }
+
+  .utility-card--tip h2 {
+    font-size: 13px;
+  }
+
+  .utility-card p,
+  .utility-card--tip p {
+    font-size: 10px;
+    line-height: 1.2;
+    -webkit-line-clamp: 4;
+  }
+
+  .utility-card--tip p {
+    -webkit-line-clamp: 5;
+  }
+
+  .utility-card__action {
+    font-size: 11px;
+  }
+}
+
+@media (min-width: 1241px) and (min-height: 851px) {
+  .home-layout {
+    height: calc(100vh - 124px);
+    min-height: 0;
+  }
+
+  .home-main {
+    grid-template-rows: minmax(0, 1.75fr) minmax(0, 1.69fr) minmax(0, 1fr);
+    gap: 13px;
+    height: auto;
+  }
+
+  .role-card {
+    height: 100%;
+  }
+
+  .role-character {
+    width: 210px;
+  }
+
+  .role-character__image--buyer {
+    width: 202px;
+    height: min(100%, 254px);
+    transform: translate(-4px, 1px);
+  }
+
+  .role-character__image--seller {
+    width: 193px;
+    height: min(100%, 246px);
+  }
+
+  .role-card__content,
+  .role-stats {
+    left: 220px;
+  }
+
+  .home-sidebar {
+    display: grid;
+    grid-template-rows: minmax(0, 1.71fr) minmax(0, 2fr);
+    height: auto;
+    min-height: 0;
+    gap: 10px;
+  }
+
+  .featured-panel {
+    height: auto;
+    min-height: 0;
+  }
+
+  .progress-panel {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+  }
+
+  .leaderboard-panel {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+  }
+
+  .featured-panel .mission-list {
+    flex: 1;
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+  }
+
+  .featured-panel .mission-row {
+    height: auto;
+    min-height: 0;
+  }
+
+  .progress-panel .progress-stats,
+  .leaderboard-panel .leader-list {
+    flex: 1;
+  }
+
+  .progress-panel .progress-stat {
+    height: auto;
+  }
+
+  .leaderboard-panel .leader-list {
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+
+  .leaderboard-panel .leader-row {
+    min-height: 0;
+  }
+}

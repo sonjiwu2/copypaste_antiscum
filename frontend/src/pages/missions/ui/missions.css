@@ -1,0 +1,786 @@
+.app-shell.app-shell--missions {
+  display: block;
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+  background: var(--c-bg-blue-s1);
+}
+
+.app-shell--missions .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.missions-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  min-height: calc(100vh - 82px);
+  padding: 12px 14px 18px;
+  color: var(--c-fg-neutral-t2);
+  background: var(--c-bg-blue-s1);
+}
+
+.mission-filters {
+  position: sticky;
+  top: 76px;
+  align-self: start;
+  max-height: calc(100vh - 90px);
+  overflow: auto;
+  padding: 14px 12px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgb(23 35 60 / 5%);
+  scrollbar-width: thin;
+}
+
+.filter-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--c-bd-neutral-s2);
+}
+
+.filter-title h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--c-fg-neutral-t2);
+  font-family: 'Monocraft', monospace;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+.filter-title button {
+  padding: 3px 0;
+  color: var(--c-fg-blue-a2);
+  font-size: 12px;
+  background: transparent;
+  border: 0;
+}
+
+.filter-group {
+  min-width: 0;
+  margin: 15px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.filter-group legend {
+  margin-bottom: 8px;
+  color: var(--c-fg-neutral-t1);
+  font-family: 'Monocraft', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.role-filter-row,
+.difficulty-filter-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.role-filter-row button,
+.difficulty-filter-row button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 6px 3px 5px;
+  color: var(--c-fg-neutral-t1);
+  font-size: 10px;
+  line-height: 1.1;
+  text-align: center;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 6px;
+}
+
+.role-filter-row button:hover,
+.difficulty-filter-row button:hover {
+  border-color: var(--c-bd-blue-b2);
+}
+
+.role-filter-row button.is-active,
+.difficulty-filter-row button.is-active {
+  color: var(--c-fg-blue-t1);
+  background: var(--c-bg-blue-s1);
+  border-color: var(--c-bd-blue-a2);
+  box-shadow: 0 0 0 1px rgb(22 134 232 / 10%);
+}
+
+/* Иконка роли и сложности не сжимается, когда подпись длинная. */
+.role-filter-row .pixel-icon,
+.difficulty-filter-row .pixel-icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+}
+.difficulty-filter-row button.is-easy {
+  color: var(--c-fg-green-t1);
+  border-color: var(--c-bd-green-a2);
+  background: var(--c-bg-green-s1);
+}
+.difficulty-filter-row button.is-medium {
+  color: var(--c-fg-orange-t1);
+  border-color: var(--c-bd-orange-a1);
+  background: var(--c-bg-orange-s1);
+}
+.difficulty-filter-row button.is-hard {
+  color: var(--c-fg-red-a2);
+  border-color: var(--c-bd-red-a1);
+  background: var(--c-bg-red-s1);
+}
+
+.filter-group--list {
+  display: grid;
+  gap: 4px;
+}
+
+.filter-group--list label {
+  display: grid;
+  grid-template-columns: 15px 17px minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 25px;
+  gap: 5px;
+  padding: 2px 3px;
+  color: var(--c-fg-neutral-t1);
+  font-size: 11px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Длинное название типа схемы сокращается, а не переносится на второй ряд. */
+.filter-group--list label > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-group--list label:hover {
+  background: var(--c-bg-blue-s1);
+}
+.filter-group--list input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--c-bg-blue-a2);
+}
+.filter-group--list small {
+  min-width: 19px;
+  padding: 1px 4px;
+  color: var(--c-fg-neutral-a2);
+  font-size: 10px;
+  text-align: center;
+  background: var(--c-bg-neutral-s2);
+  border-radius: 4px;
+}
+
+.progress-filter label {
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  min-height: 25px;
+}
+.progress-filter label.is-active {
+  color: var(--c-fg-blue-t1);
+  background: var(--c-bg-blue-s1);
+  outline: 1px solid var(--c-bd-blue-a2);
+}
+
+.view-more-filter {
+  justify-self: start;
+  padding: 4px 2px;
+  color: var(--c-fg-blue-a2);
+  font-size: 11px;
+  background: transparent;
+  border: 0;
+}
+
+.reset-filters {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 34px;
+  margin-top: 13px;
+  color: var(--c-fg-blue-a2);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-blue-a2);
+  border-radius: 6px;
+}
+
+.mission-catalog {
+  min-width: 0;
+}
+
+
+
+
+
+.catalog-toolbar {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 72px;
+  min-height: 52px;
+  padding: 8px 16px;
+  color: var(--c-fg-neutral-a2);
+  font-size: 12px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+}
+
+.catalog-toolbar__count {
+  white-space: nowrap;
+}
+
+.catalog-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.catalog-toolbar select {
+  width: 142px;
+  height: 34px;
+  padding: 0 10px;
+  color: var(--c-fg-neutral-t1);
+  font-size: 12px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 6px;
+}
+
+.catalog-sections {
+  display: grid;
+  gap: 16px;
+  padding: 0 12px 15px;
+  background: var(--c-bg-neutral-s1);
+  border-right: 1px solid var(--c-bd-neutral-s2);
+  border-left: 1px solid var(--c-bd-neutral-s2);
+}
+.catalog-section {
+  min-width: 0;
+}
+
+.catalog-section__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 31px;
+  margin-bottom: 6px;
+}
+
+.catalog-section__heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--c-fg-neutral-t2);
+  font-family: 'Monocraft', monospace;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+.catalog-section__heading button {
+  color: var(--c-fg-blue-a2);
+  font-size: 11px;
+  background: transparent;
+  border: 0;
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.catalog-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 147px;
+  padding: 10px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-blue-b1);
+  border-radius: 10px;
+  box-shadow: 0 2px 7px rgb(23 35 60 / 4%);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.catalog-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgb(23 35 60 / 9%);
+}
+.catalog-card--orange {
+  background: var(--c-bg-orange-s1);
+  border-color: var(--c-bd-orange-b2);
+}
+.catalog-card--green {
+  background: var(--c-bg-green-s1);
+  border-color: var(--c-bd-green-b2);
+}
+.catalog-card--purple {
+  background: var(--c-bg-purple-s1);
+  border-color: var(--c-bd-purple-b1);
+}
+.catalog-card--red {
+  background: var(--c-bg-red-s1);
+  border-color: var(--c-bd-red-b1);
+}
+.catalog-card--slate {
+  background: var(--c-bg-neutral-s1);
+  border-color: var(--c-bd-neutral-b1);
+}
+.catalog-card--locked {
+  opacity: 0.78;
+}
+
+.catalog-card__top {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+/*
+ * Заголовок карточки — кнопка. ::after растянут по карточке, поэтому нажатие
+ * в любом месте открывает описание, а рамка фокуса остаётся на самой карточке.
+ */
+.catalog-card__open {
+  display: -webkit-box;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.catalog-card__open::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  content: '';
+}
+
+.catalog-card__open:focus-visible {
+  outline: none;
+}
+
+.catalog-card:focus-within {
+  border-color: var(--c-bd-blue-a2);
+  box-shadow: 0 0 0 2px rgb(22 134 232 / 25%);
+}
+
+.catalog-card__open:hover {
+  color: var(--c-fg-blue-t1);
+}
+
+.catalog-art {
+  display: grid;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  overflow: hidden;
+  color: var(--c-fg-neutral-s1);
+  font-family: 'Monocraft', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--c-bg-blue-s2);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 9px;
+}
+
+.catalog-art img {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+}
+.catalog-art--purple {
+  color: var(--c-fg-purple-a2);
+  background: var(--c-bg-purple-s2);
+  border-color: var(--c-bd-purple-a1);
+}
+.catalog-art--orange {
+  color: var(--c-fg-orange-t1);
+  background: var(--c-bg-orange-s2);
+  border-color: var(--c-bd-orange-a1);
+}
+.catalog-art--blue {
+  color: var(--c-fg-blue-a2);
+  background: var(--c-bg-blue-s2);
+  border-color: var(--c-bd-blue-a1);
+}
+.catalog-art--green {
+  color: var(--c-fg-green-t1);
+  background: var(--c-bg-green-s2);
+  border-color: var(--c-bd-green-a2);
+}
+.catalog-art--red {
+  color: var(--c-fg-red-a2);
+  background: var(--c-bg-red-s1);
+  border-color: var(--c-bd-red-a1);
+}
+.catalog-art--slate {
+  color: var(--c-fg-neutral-t1);
+  background: var(--c-bg-neutral-s2);
+  border-color: var(--c-bd-neutral-a1);
+}
+
+.catalog-card__copy {
+  min-width: 0;
+}
+.catalog-card h3 {
+  margin: 2px 0 0;
+  min-width: 0;
+  color: var(--c-fg-neutral-t2);
+  font-size: 13px;
+  line-height: 1.15;
+}
+.catalog-card p {
+  display: -webkit-box;
+  min-height: 28px;
+  margin: 5px 0 0;
+  overflow: hidden;
+  color: var(--c-fg-neutral-a2);
+  font-size: 11px;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.catalog-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 7px;
+}
+.catalog-tag {
+  padding: 2px 7px;
+  font-size: 10px;
+  line-height: 1.1;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 4px;
+}
+.catalog-tag--easy {
+  color: var(--c-fg-green-t1);
+  background: var(--c-bg-green-s1);
+  border-color: var(--c-bd-green-b2);
+}
+.catalog-tag--medium {
+  color: var(--c-fg-orange-t1);
+  background: var(--c-bg-orange-s1);
+  border-color: var(--c-bd-orange-b2);
+}
+.catalog-tag--hard {
+  color: var(--c-fg-red-a2);
+  background: var(--c-bg-red-s1);
+  border-color: var(--c-bd-red-b2);
+}
+.catalog-tag--role {
+  color: var(--c-fg-blue-t1);
+  background: var(--c-bg-blue-s1);
+  border-color: var(--c-bd-blue-b2);
+}
+
+.catalog-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  margin-top: auto;
+  padding-top: 7px;
+  border-top: 1px solid var(--c-bd-neutral-b1);
+}
+
+.catalog-card__xp {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--c-fg-blue-a2);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.catalog-card__launch {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  height: 29px;
+  color: var(--c-fg-neutral-s1);
+  font-size: 11px;
+  font-weight: 600;
+  background: linear-gradient(180deg, var(--c-bg-blue-a2), var(--c-bg-blue-a2));
+  border: 0;
+  border-radius: 5px;
+}
+.catalog-card__launch:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--c-bg-blue-a1), var(--c-bg-blue-a2));
+}
+
+.catalog-card__launch:disabled {
+  color: var(--c-fg-neutral-t1);
+  background: var(--c-bg-neutral-b1);
+  cursor: not-allowed;
+}
+
+.catalog-progress,
+.catalog-unlock {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 8px 0 2px;
+  font-size: 10px;
+}
+
+.catalog-progress {
+  color: var(--c-fg-blue-t1);
+}
+
+.catalog-unlock {
+  color: var(--c-fg-neutral-a2);
+}
+
+
+/* Загрузка и ошибка занимают место каталога, чтобы страница не прыгала. */
+.missions-layout--state {
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+}
+
+.catalog-state {
+  display: grid;
+  gap: 8px;
+  place-items: center;
+  max-width: 420px;
+  padding: 40px 24px;
+  text-align: center;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 10px;
+}
+
+.catalog-state strong {
+  color: var(--c-fg-neutral-t2);
+  font-family: 'Monocraft', monospace;
+  font-size: 15px;
+}
+
+.catalog-state p {
+  margin: 0;
+  color: var(--c-fg-neutral-a2);
+  font-size: 12px;
+}
+
+.catalog-state button {
+  height: 34px;
+  margin-top: 6px;
+  padding: 0 18px;
+  color: var(--c-fg-neutral-s1);
+  font-size: 12px;
+  background: var(--c-bg-blue-a2);
+  border: 0;
+  border-radius: 6px;
+}
+
+.catalog-state__spinner {
+  animation: catalog-spin 1.1s linear infinite;
+}
+
+@keyframes catalog-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.catalog-empty {
+  padding: 45px 20px;
+  text-align: center;
+  background: var(--c-bg-blue-s1);
+  border: 1px dashed var(--c-bd-neutral-b2);
+  border-radius: 10px;
+}
+.catalog-empty strong {
+  font-family: 'Monocraft', monospace;
+  font-size: 21px;
+}
+.catalog-empty p {
+  margin: 7px 0 15px;
+  color: var(--c-fg-neutral-a2);
+}
+.catalog-empty button {
+  height: 38px;
+  padding: 0 20px;
+  color: var(--c-fg-neutral-s1);
+  background: var(--c-bg-blue-a2);
+  border: 0;
+  border-radius: 6px;
+}
+
+.mission-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(17 31 52 / 48%);
+  backdrop-filter: blur(3px);
+}
+.mission-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(430px, 100%);
+  padding: 27px;
+  text-align: center;
+  background: var(--c-bg-neutral-s1);
+  border: 2px solid var(--c-bd-blue-a2);
+  border-radius: 14px;
+  box-shadow: 0 22px 60px rgb(23 35 60 / 28%);
+}
+.mission-dialog > .catalog-art {
+  width: 76px;
+  height: 76px;
+  flex-basis: 76px;
+}
+.mission-dialog > .catalog-art img {
+  width: 76px;
+  height: 76px;
+}
+.mission-dialog h2 {
+  margin: 15px 0 0;
+  color: var(--c-fg-blue-t1);
+  font-family: 'Monocraft', monospace;
+  font-size: 27px;
+}
+.mission-dialog > p {
+  margin: 8px 0 0;
+  color: var(--c-fg-neutral-a2);
+}
+.mission-dialog__details {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.mission-dialog__details span {
+  padding: 4px 10px;
+  color: var(--c-fg-neutral-t1);
+  font-size: 12px;
+  background: var(--c-bg-blue-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 5px;
+}
+.mission-dialog__actions {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 9px;
+  width: 100%;
+  margin-top: 21px;
+}
+.mission-dialog__actions button {
+  height: 42px;
+  color: var(--c-fg-neutral-t1);
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b2);
+  border-radius: 7px;
+}
+.mission-dialog__actions button:last-child {
+  color: var(--c-fg-neutral-s1);
+  font-weight: 600;
+  background: var(--c-bg-blue-a2);
+  border-color: var(--c-bd-blue-a2);
+}
+.mission-dialog__close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  color: var(--c-fg-neutral-a2);
+  font-size: 23px;
+  background: transparent;
+  border: 0;
+}
+
+@media (max-width: 1180px) {
+  .missions-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+  .catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-height: 850px) and (min-width: 1181px) {
+  .catalog-toolbar {
+    min-height: 42px;
+    padding: 5px 14px;
+  }
+  .catalog-sections {
+    gap: 9px;
+    padding-bottom: 8px;
+  }
+  .catalog-section__heading {
+    min-height: 24px;
+    margin-bottom: 4px;
+  }
+  .catalog-card {
+    min-height: 130px;
+    padding: 8px 9px;
+  }
+  .catalog-card__footer {
+    min-height: 30px;
+    padding-top: 5px;
+  }
+}
+
+@media (max-width: 820px) {
+  .missions-layout {
+    display: block;
+    padding: 10px;
+  }
+  .mission-filters {
+    position: static;
+    max-height: none;
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  .catalog-grid,
+  .catalog-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .catalog-toolbar__count {
+  white-space: nowrap;
+}
+
+.catalog-toolbar label {
+    justify-content: space-between;
+  }
+}

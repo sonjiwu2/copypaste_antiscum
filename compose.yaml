@@ -2,20 +2,72 @@
 # Usage from repository root:
 #   docker compose up --build
 #
-# Current MVP: backend only (in-memory attempts, embedded scenarios).
-# PostgreSQL and frontend slots are documented in README for later wiring.
+# Startup order: postgres becomes healthy -> migrate applies the schema and
+# exits -> backend starts and reports readiness on /readyz.
+#
+# `docker compose down`     keeps the database volume (progress survives).
+# `docker compose down -v`  removes it — that is the explicit full reset.
 
 name: antiscam
 
 services:
+  postgres:
+    image: postgres:16.14-alpine
+    container_name: antiscam-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-antiscam}
+      POSTGRES_USER: ${POSTGRES_USER:-antiscam}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-locally}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - antiscam
+    # Port 5432 is intentionally not published: the database is reachable only
+    # from the compose network. Add a mapping locally if you need psql access.
+
+  # Schema is applied once, before the API starts. The binary embeds the
+  # migrations, so it can never drift from the code in the same image.
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        GO_VERSION: "1.25.12"
+        GO_IMAGE_VARIANT: "alpine3.23"
+        ALPINE_VERSION: "3.23.5"
+    image: antiscam-backend:local
+    container_name: antiscam-migrate
+    init: true
+    restart: "no"
+    entrypoint: ["/usr/local/bin/migrate"]
+    command: ["up"]
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER:-antiscam}:${POSTGRES_PASSWORD:-change-me-locally}@postgres:5432/${POSTGRES_DB:-antiscam}?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    user: "65532:65532"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    networks:
+      - antiscam
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
       args:
-        GO_VERSION: "1.25.0"
-        GO_IMAGE_VARIANT: "alpine3.21"
-        ALPINE_VERSION: "3.21.3"
+        GO_VERSION: "1.25.12"
+        GO_IMAGE_VARIANT: "alpine3.23"
+        ALPINE_VERSION: "3.23.5"
     image: antiscam-backend:local
     container_name: antiscam-backend
     init: true
@@ -25,6 +77,30 @@ services:
     environment:
       HTTP_ADDR: ":8080"
       LOG_LEVEL: "${LOG_LEVEL:-info}"
+      STORAGE_DRIVER: "postgres"
+      DATABASE_URL: "postgres://${POSTGRES_USER:-antiscam}:${POSTGRES_PASSWORD:-change-me-locally}@postgres:5432/${POSTGRES_DB:-antiscam}?sslmode=disable"
+      # Empty by default: the frontend is served from the same origin, so no
+      # cross-origin access is granted unless it is configured explicitly.
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-}"
+      COOKIE_SAME_SITE: "${COOKIE_SAME_SITE:-lax}"
+      COOKIE_SECURE: "${COOKIE_SECURE:-false}"
+      # Секрет остаётся только в backend-контейнере. Frontend его не получает.
+      GROQ_API_KEY: "${GROQ_API_KEY:-}"
+      GROQ_MODEL: "${GROQ_MODEL:-openai/gpt-oss-20b}"
+      GROQ_BASE_URL: "${GROQ_BASE_URL:-https://api.groq.com/openai/v1}"
+      GROQ_REQUEST_TIMEOUT: "${GROQ_REQUEST_TIMEOUT:-40s}"
+      XAI_API_KEY: "${XAI_API_KEY:-}"
+      XAI_MODEL: "${XAI_MODEL:-grok-4.3}"
+      XAI_BASE_URL: "${XAI_BASE_URL:-https://api.x.ai/v1}"
+      XAI_REQUEST_TIMEOUT: "${XAI_REQUEST_TIMEOUT:-40s}"
+      HTTP_WRITE_TIMEOUT: "${HTTP_WRITE_TIMEOUT:-60s}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # A failed migration blocks the API: it must never serve requests
+      # against a schema it does not expect.
+      migrate:
+        condition: service_completed_successfully
     user: "65532:65532"
     security_opt:
       - no-new-privileges:true
@@ -32,7 +108,9 @@ services:
     tmpfs:
       - /tmp
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      # Readiness, not liveness: the API is only healthy once the database
+      # answers.
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/readyz"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -40,44 +118,54 @@ services:
     networks:
       - antiscam
 
-  # --- Future: PostgreSQL (Backend №2) ---------------------------------------
-  # Uncomment and wire DATABASE_* only when the app actually uses a DB.
-  # postgres:
-  #   image: postgres:16.6-alpine
-  #   container_name: antiscam-postgres
-  #   restart: unless-stopped
-  #   environment:
-  #     POSTGRES_DB: ${POSTGRES_DB:-antiscam}
-  #     POSTGRES_USER: ${POSTGRES_USER:-antiscam}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 10
-  #     start_period: 10s
-  #   networks:
-  #     - antiscam
-  #   # Do not publish 5432 publicly unless required for local debugging.
+  # Frontend and API share one origin: nginx serves the built client and
+  # proxies /api, /healthz and /readyz to the backend container. The anonymous
+  # profile cookie therefore stays same-site and needs no CORS.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: antiscam-frontend:local
+    container_name: antiscam-frontend
+    init: true
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/index.html"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - antiscam
 
-  # --- Future: frontend (React/Vite static + nginx) ---------------------------
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "${FRONTEND_PORT:-3000}:80"
-  #   depends_on:
-  #     backend:
-  #       condition: service_healthy
-  #   networks:
-  #     - antiscam
+  tunnel:
+    image: pinggy/pinggy:latest
+    container_name: antiscam-tunnel
+    restart: unless-stopped
+    command: -p 443 -R0:frontend:8080 free.pinggy.io
+    stdin_open: true
+    tty: true
+    depends_on:
+      frontend:
+        condition: service_healthy
+    networks:
+      - antiscam
 
 networks:
   antiscam:
     driver: bridge
 
-# volumes:
-#   postgres_data:
+volumes:
+  postgres_data:

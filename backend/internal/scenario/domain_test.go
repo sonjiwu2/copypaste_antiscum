@@ -92,3 +92,73 @@ func TestNodeChoiceLookup(t *testing.T) {
 		t.Error("несуществующий вариант выбора не должен находиться")
 	}
 }
+
+// TestScenarioMaxDecisionsCountsLongestBranch проверяет знаменатель шкалы
+// прохождения: короткая ветка не должна занижать его для длинной.
+func TestScenarioMaxDecisionsCountsLongestBranch(t *testing.T) {
+	single, err := scenario.New(validBuyerDraft())
+	if err != nil {
+		t.Fatalf("неожиданная ошибка: %v", err)
+	}
+
+	if got := single.MaxDecisions(); got != 1 {
+		t.Errorf("MaxDecisions() = %d, ожидалось 1", got)
+	}
+
+	branching, err := scenario.New(branchingBuyerDraft())
+	if err != nil {
+		t.Fatalf("неожиданная ошибка: %v", err)
+	}
+
+	if got := branching.MaxDecisions(); got != 2 {
+		t.Errorf("MaxDecisions() = %d, ожидалось 2", got)
+	}
+}
+
+// branchingBuyerDraft возвращает сценарий с ветками разной длины:
+// один выбор завершает сценарий сразу, другой ведёт ко второму решению.
+func branchingBuyerDraft() scenario.Draft {
+	draft := validBuyerDraft()
+
+	// Опасная ветка получает второе решение вместо прямого перехода в финал.
+	draft.Nodes = append(draft.Nodes, scenario.Node{
+		ID:             "payment-decision",
+		Type:           scenario.NodeTypeDecision,
+		DecisionPrompt: "Продавец прислал ссылку на оплату. Что вы сделаете?",
+		Choices: []scenario.Choice{
+			{
+				ID:          "refuse-link",
+				Label:       "Отказаться от оплаты по ссылке",
+				PlayerReply: "По вашей ссылке я платить не буду.",
+				NextNodeID:  "safe-ending",
+				Criticality: scenario.CriticalityLow,
+				Consequence: scenario.Consequence{
+					Severity:    scenario.SeveritySafe,
+					Title:       "Оплата осталась в площадке",
+					Explanation: "Сторонняя ссылка не даёт защиты при споре.",
+				},
+			},
+			{
+				ID:          "pay-by-link",
+				Label:       "Оплатить по ссылке",
+				PlayerReply: "Открыл ссылку, оплачиваю.",
+				NextNodeID:  "unsafe-ending",
+				SafetyScore: -30,
+				Criticality: scenario.CriticalityHigh,
+				Consequence: scenario.Consequence{
+					Severity:    scenario.SeverityDangerous,
+					Title:       "Деньги ушли мимо площадки",
+					Explanation: "Вернуть перевод по сторонней ссылке невозможно.",
+				},
+			},
+		},
+	})
+
+	for i, node := range draft.Nodes {
+		if node.ID == "pressure-message" {
+			draft.Nodes[i].NextNodeID = "payment-decision"
+		}
+	}
+
+	return draft
+}

@@ -15,12 +15,27 @@ import (
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/config"
 )
 
-func TestRunShutsDownOnContextCancel(t *testing.T) {
+// memoryConfig собирает приложение без базы данных.
+//
+// Хранилище в памяти выбирается явно: рабочий режим требует PostgreSQL,
+// а модульные тесты не должны зависеть от внешней системы.
+func memoryConfig() config.Config {
 	cfg := config.Default()
+	cfg.StorageDriver = config.StorageMemory
+
+	return cfg
+}
+
+func discardLogger() *slog.Logger {
+	return slog.New(slog.NewJSONHandler(io.Discard, nil))
+}
+
+func TestRunShutsDownOnContextCancel(t *testing.T) {
+	cfg := memoryConfig()
 	cfg.HTTPAddr = freeAddr(t)
 	cfg.ShutdownTimeout = 2 * time.Second
 
-	application, err := app.New(cfg, slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	application, err := app.New(context.Background(), cfg, discardLogger())
 	if err != nil {
 		t.Fatalf("не удалось собрать приложение: %v", err)
 	}
@@ -48,10 +63,12 @@ func TestRunShutsDownOnContextCancel(t *testing.T) {
 // Приложение обязано подняться с рабочим каталогом сценариев:
 // проверка фикстур на старте — часть контракта запуска.
 func TestNewServesScenarioCatalog(t *testing.T) {
-	application, err := app.New(config.Default(), slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	application, err := app.New(context.Background(), memoryConfig(), discardLogger())
 	if err != nil {
 		t.Fatalf("не удалось собрать приложение: %v", err)
 	}
+
+	defer application.Close()
 
 	recorder := httptest.NewRecorder()
 	application.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/scenarios", nil))
@@ -83,10 +100,10 @@ func TestRunFailsOnBusyAddress(t *testing.T) {
 
 	defer func() { _ = listener.Close() }()
 
-	cfg := config.Default()
+	cfg := memoryConfig()
 	cfg.HTTPAddr = listener.Addr().String()
 
-	application, err := app.New(cfg, slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	application, err := app.New(context.Background(), cfg, discardLogger())
 	if err != nil {
 		t.Fatalf("не удалось собрать приложение: %v", err)
 	}

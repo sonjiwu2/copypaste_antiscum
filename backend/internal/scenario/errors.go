@@ -14,6 +14,10 @@ var (
 
 	// ErrUnsupportedRole сообщает о запросе с неизвестной ролью.
 	ErrUnsupportedRole = errors.New("роль не поддерживается")
+
+	// ErrVersionCorrupt означает, что сохранённый JSON версии не соответствует
+	// своему ключу или отпечатку и небезопасен для продолжения попытки.
+	ErrVersionCorrupt = errors.New("сохранённая версия сценария повреждена")
 )
 
 // ValidationRule — нарушенное правило описания сценария.
@@ -33,9 +37,11 @@ const (
 	RuleNodeTypeUnsupported           ValidationRule = "node_type_unsupported"
 	RuleMessageNodeWithoutNext        ValidationRule = "message_node_without_next"
 	RuleMessageNodeWithChoices        ValidationRule = "message_node_with_choices"
+	RuleMessageSenderInvalid          ValidationRule = "message_sender_invalid"
 	RuleDecisionNodeTooFewChoices     ValidationRule = "decision_node_too_few_choices"
 	RuleDuplicateChoiceID             ValidationRule = "duplicate_choice_id"
 	RuleChoiceLabelRequired           ValidationRule = "choice_label_required"
+	RuleChoiceReplyRequired           ValidationRule = "choice_reply_required"
 	RuleTransitionTargetMissing       ValidationRule = "transition_target_missing"
 	RuleTerminalNodeWithNext          ValidationRule = "terminal_node_with_next"
 	RuleTerminalNodeWithChoices       ValidationRule = "terminal_node_with_choices"

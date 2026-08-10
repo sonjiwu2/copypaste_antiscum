@@ -1,6 +1,6 @@
 {
   "id": "seller-gpu-return-swap",
-  "version": 1,
+  "version": 2,
   "slug": "seller-gpu-return-swap",
   "role": "seller",
   "title": "Подмена видеокарты при возврате",
@@ -39,6 +39,7 @@
         {
           "id": "ship-without-recording",
           "label": "Сразу упаковать и отправить",
+          "playerReply": "Хорошо, собираю посылку и сегодня же отправляю.",
           "nextNodeId": "shipping-completed-system",
           "safetyScore": -25,
           "criticality": "high",
@@ -54,6 +55,7 @@
         {
           "id": "photograph-exterior-only",
           "label": "Сфотографировать только внешний вид",
+          "playerReply": "Перед отправкой сфотографирую видеокарту, чтобы было видно её состояние.",
           "nextNodeId": "shipping-completed-system",
           "safetyScore": -15,
           "criticality": "medium",
@@ -69,6 +71,7 @@
         {
           "id": "record-test-serial-packing",
           "label": "Записать работу, серийный номер и упаковку",
+          "playerReply": "Перед отправкой сниму на видео запуск, тест, серийный номер и саму упаковку.",
           "nextNodeId": "full-proof-system",
           "safetyScore": 0,
           "criticality": "low",
@@ -112,6 +115,7 @@
         {
           "id": "accept-return-immediately",
           "label": "Сразу согласиться на возврат",
+          "playerReply": "Понял, хорошо. Оформляйте возврат.",
           "nextNodeId": "buyer-packs-return",
           "safetyScore": -15,
           "criticality": "medium",
@@ -127,6 +131,7 @@
         {
           "id": "request-defect-and-serial",
           "label": "Попросить видео неисправности и серийный номер",
+          "playerReply": "Пришлите, пожалуйста, видео с артефактами и фотографию серийного номера на наклейке.",
           "nextNodeId": "buyer-refuses-proof",
           "safetyScore": 0,
           "criticality": "low",
@@ -142,6 +147,7 @@
         {
           "id": "deny-return-immediately",
           "label": "Сразу отказать, потому что товар работал",
+          "playerReply": "Видеокарта работала, я это проверял перед отправкой. Возврат принимать не буду.",
           "nextNodeId": "buyer-threatens-review",
           "safetyScore": -20,
           "criticality": "medium",
@@ -185,6 +191,7 @@
         {
           "id": "wait-and-check-home",
           "label": "Дождаться возврата и проверить видеокарту дома",
+          "playerReply": "Хорошо, дождусь посылку и проверю видеокарту дома.",
           "nextNodeId": "home-unboxing-system",
           "safetyScore": -40,
           "criticality": "high",
@@ -200,6 +207,7 @@
         {
           "id": "notify-support-before-return",
           "label": "Заранее сообщить поддержке о риске подмены",
+          "playerReply": "Серийный номер вы так и не показали, поэтому до получения посылки я сообщаю о риске подмены в поддержку.",
           "nextNodeId": "support-registers-risk",
           "safetyScore": 0,
           "criticality": "low",
@@ -215,6 +223,7 @@
         {
           "id": "demand-cancel-return",
           "label": "Потребовать отменить возврат",
+          "playerReply": "Отменяйте возврат, я его не принимаю.",
           "nextNodeId": "buyer-return-already-approved",
           "safetyScore": -25,
           "criticality": "medium",
@@ -265,6 +274,7 @@
         {
           "id": "open-return-at-home",
           "label": "Забрать коробку и открыть её дома",
+          "playerReply": "Заберу коробку и вскрою её дома, потом отпишусь.",
           "nextNodeId": "home-unboxing-system",
           "safetyScore": -40,
           "criticality": "high",
@@ -280,6 +290,7 @@
         {
           "id": "record-continuous-unboxing",
           "label": "Непрерывно снять получение, вскрытие и серийный номер",
+          "playerReply": "Возврат буду забирать и вскрывать прямо в пункте выдачи под непрерывную видеозапись.",
           "nextNodeId": "serial-mismatch-system",
           "safetyScore": 0,
           "criticality": "low",
@@ -295,6 +306,7 @@
         {
           "id": "ask-employee-confirmation",
           "label": "Попросить сотрудника устно подтвердить содержимое",
+          "playerReply": "Попрошу сотрудника пункта выдачи подтвердить, что лежит в коробке.",
           "nextNodeId": "employee-confirmation-system",
           "safetyScore": -40,
           "criticality": "high",
@@ -331,6 +343,7 @@
         {
           "id": "refund-and-abandon-dispute",
           "label": "Вернуть деньги и отказаться от спора",
+          "playerReply": "Ладно, возвращаю вам деньги. Спорить не буду.",
           "nextNodeId": "unsafe-lost-gpu-ending",
           "safetyScore": -20,
           "criticality": "high",
@@ -346,6 +359,7 @@
         {
           "id": "contact-support-with-materials",
           "label": "Обратиться в поддержку с имеющимися материалами",
+          "playerReply": "Вернулась не та видеокарта. Обращаюсь в поддержку и передаю все материалы, которые у меня есть.",
           "nextNodeId": "unsafe-weak-evidence-ending",
           "safetyScore": 0,
           "criticality": "medium",
@@ -361,6 +375,7 @@
         {
           "id": "threaten-buyer",
           "label": "Потребовать доплату и пригрозить публикацией данных",
+          "playerReply": "Или доплачиваете разницу, или я выложу ваши данные и переписку.",
           "nextNodeId": "unsafe-threat-ending",
           "safetyScore": -20,
           "criticality": "high",
@@ -383,6 +398,7 @@
         {
           "id": "accuse-buyer-first",
           "label": "Сначала обвинить покупателя и пригрозить публикацией",
+          "playerReply": "Вы подменили видеокарту. Верните мою, иначе выложу вашу переписку и данные.",
           "nextNodeId": "safe-accusation-ending",
           "safetyScore": -20,
           "criticality": "medium",
@@ -398,6 +414,7 @@
         {
           "id": "preserve-originals-and-report",
           "label": "Сохранить оригиналы и обратиться в поддержку",
+          "playerReply": "Оригиналы записей я сохраняю и передаю их в поддержку площадки вместе с номером заказа.",
           "nextNodeId": "safe-full-ending",
           "safetyScore": 0,
           "criticality": "low",
@@ -413,6 +430,7 @@
         {
           "id": "edit-video-before-report",
           "label": "Обрезать видео и оставить только другой серийный номер",
+          "playerReply": "Отправлю в поддержку короткий фрагмент записи, где виден другой серийный номер.",
           "nextNodeId": "safe-edited-video-ending",
           "safetyScore": -25,
           "criticality": "medium",

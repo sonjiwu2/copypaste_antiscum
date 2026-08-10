@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/profile"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
 )
 
@@ -15,6 +16,7 @@ import (
 // Следующий узел, изменение результата и эффекты сюда не входят намеренно.
 type SubmitChoiceCommand struct {
 	AttemptID      ID
+	ProfileID      profile.ID
 	NodeID         scenario.NodeID
 	ChoiceID       scenario.ChoiceID
 	IdempotencyKey IdempotencyKey
@@ -24,6 +26,8 @@ func (c SubmitChoiceCommand) validate() error {
 	switch {
 	case c.AttemptID == "":
 		return ErrEmptyAttemptID
+	case c.ProfileID == "":
+		return ErrEmptyProfileID
 	case c.NodeID == "" || c.ChoiceID == "":
 		return ErrChoiceNotFound
 	case c.IdempotencyKey == "":
@@ -42,6 +46,10 @@ func (s *Service) SubmitChoice(ctx context.Context, command SubmitChoiceCommand)
 	current, err := s.attempts.Get(ctx, command.AttemptID)
 	if err != nil {
 		return Transition{}, fmt.Errorf("получить попытку: %w", err)
+	}
+
+	if err := current.EnsureOwnedBy(command.ProfileID); err != nil {
+		return Transition{}, err
 	}
 
 	definition, err := s.scenarioOfAttempt(ctx, current)
@@ -163,6 +171,10 @@ func (s *Service) resolveConflict(ctx context.Context, command SubmitChoiceComma
 	current, err := s.attempts.Get(ctx, command.AttemptID)
 	if err != nil {
 		return Transition{}, fmt.Errorf("перечитать попытку: %w", err)
+	}
+
+	if err := current.EnsureOwnedBy(command.ProfileID); err != nil {
+		return Transition{}, err
 	}
 
 	definition, err := s.scenarioOfAttempt(ctx, current)

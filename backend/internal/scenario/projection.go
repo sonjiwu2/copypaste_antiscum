@@ -13,6 +13,10 @@ type Metadata struct {
 	Description      string
 	Difficulty       Difficulty
 	EstimatedMinutes int
+
+	// MaxDecisions — длина самой длинной ветки в решениях.
+	// Клиент строит по ней шкалу прохождения.
+	MaxDecisions int
 }
 
 // MetadataOf строит публичное описание сценария.
@@ -26,5 +30,6 @@ func MetadataOf(scenario Scenario) Metadata {
 		Description:      scenario.Description,
 		Difficulty:       scenario.Difficulty,
 		EstimatedMinutes: scenario.EstimatedMinutes,
+		MaxDecisions:     scenario.MaxDecisions(),
 	}
 }

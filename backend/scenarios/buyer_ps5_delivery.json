@@ -1,6 +1,6 @@
 {
   "id": "buyer-ps5-delivery",
-  "version": 2,
+  "version": 3,
   "slug": "buyer-ps5-delivery",
   "role": "buyer",
   "title": "Продавец сам оформляет доставку",
@@ -53,7 +53,8 @@
         {
           "id": "leave-deal-early",
           "label": "Отказаться от сделки",
-          "nextNodeId": "early-exit-message",
+          "playerReply": "Без оформления заказа внутри Авито я не готов продолжать сделку. Поищу другой вариант.",
+          "nextNodeId": "seller-accepts-early-exit",
           "safetyScore": -20,
           "criticality": "low",
           "riskTags": ["manual_delivery", "off_platform"],
@@ -68,6 +69,7 @@
         {
           "id": "wait-for-platform",
           "label": "Предложить подождать, пока кнопка доставки появится",
+          "playerReply": "Давайте подождём, пока кнопка доставки снова появится в объявлении. Тогда и оформим.",
           "nextNodeId": "seller-urgency",
           "safetyScore": 0,
           "criticality": "low",
@@ -83,6 +85,7 @@
         {
           "id": "share-city",
           "label": "Написать город и продолжить оформление",
+          "playerReply": "Нижний Новгород. Посмотрите, какие есть пункты выдачи.",
           "nextNodeId": "seller-pvz-options",
           "safetyScore": -20,
           "criticality": "medium",
@@ -96,13 +99,6 @@
           }
         }
       ]
-    },
-    {
-      "id": "early-exit-message",
-      "type": "message",
-      "sender": "buyer",
-      "text": "Без оформления заказа внутри Авито я не готов продолжать сделку. Поищу другой вариант.",
-      "nextNodeId": "seller-accepts-early-exit"
     },
     {
       "id": "seller-accepts-early-exit",
@@ -133,6 +129,7 @@
         {
           "id": "insist-platform-only",
           "label": "Настоять на оформлении только внутри приложения",
+          "playerReply": "Я оформляю сделку только через приложение Авито. Другие варианты не рассматриваю.",
           "nextNodeId": "seller-support-form",
           "safetyScore": 0,
           "criticality": "low",
@@ -148,6 +145,7 @@
         {
           "id": "yield-to-manual",
           "label": "Согласиться на ручное оформление",
+          "playerReply": "Ладно, оформляйте со своей стороны, я подтвержу.",
           "nextNodeId": "seller-pvz-options",
           "safetyScore": -20,
           "criticality": "medium",
@@ -163,7 +161,8 @@
         {
           "id": "leave-after-pressure",
           "label": "Отказаться от сделки из-за давления",
-          "nextNodeId": "pressure-exit-message",
+          "playerReply": "Я не готов принимать решение под давлением. Без заказа внутри приложения продолжать сделку не буду.",
+          "nextNodeId": "seller-pressure-exit",
           "safetyScore": -10,
           "criticality": "low",
           "riskTags": ["urgency"],
@@ -176,13 +175,6 @@
           }
         }
       ]
-    },
-    {
-      "id": "pressure-exit-message",
-      "type": "message",
-      "sender": "buyer",
-      "text": "Я не готов принимать решение под давлением. Без заказа внутри приложения продолжать сделку не буду.",
-      "nextNodeId": "seller-pressure-exit"
     },
     {
       "id": "seller-pressure-exit",
@@ -227,6 +219,7 @@
         {
           "id": "open-and-pay",
           "label": "Открыть ссылку и оплатить заказ",
+          "playerReply": "Ссылку открыл, оплачиваю заказ.",
           "nextNodeId": "fake-payment-system",
           "safetyScore": -40,
           "criticality": "high",
@@ -242,6 +235,7 @@
         {
           "id": "refuse-external-link",
           "label": "Отказаться от внешней ссылки",
+          "playerReply": "По внешним ссылкам я не плачу. Оформляйте доставку в приложении.",
           "nextNodeId": "seller-link-defense",
           "safetyScore": 0,
           "criticality": "low",
@@ -257,6 +251,7 @@
         {
           "id": "check-order-in-app",
           "label": "Сначала проверить наличие заказа в приложении",
+          "playerReply": "Секунду, посмотрю в приложении, появился ли заказ.",
           "nextNodeId": "order-missing-system",
           "safetyScore": -5,
           "criticality": "low",
@@ -293,6 +288,7 @@
         {
           "id": "believe-and-pay",
           "label": "Поверить объяснению и оплатить по ссылке",
+          "playerReply": "Ладно, раз такой порядок — оплачиваю по вашей ссылке.",
           "nextNodeId": "fake-payment-system",
           "safetyScore": -35,
           "criticality": "high",
@@ -308,6 +304,7 @@
         {
           "id": "refuse-after-check",
           "label": "Отказаться от оплаты вне приложения",
+          "playerReply": "Заказа в приложении нет — значит, и оплаты не будет.",
           "nextNodeId": "seller-link-defense",
           "safetyScore": 0,
           "criticality": "low",
@@ -337,6 +334,7 @@
         {
           "id": "block-and-report",
           "label": "Заблокировать продавца и отправить жалобу",
+          "playerReply": "Больше не пишите. Вашу ссылку и профиль я отправляю в поддержку Авито.",
           "nextNodeId": "safe-full-ending",
           "safetyScore": 0,
           "criticality": "low",
@@ -352,6 +350,7 @@
         {
           "id": "just-leave-quietly",
           "label": "Просто завершить разговор",
+          "playerReply": "Спасибо, я передумал покупать.",
           "nextNodeId": "safe-quiet-ending",
           "safetyScore": -10,
           "criticality": "low",
@@ -388,6 +387,7 @@
         {
           "id": "refund-on-fake-page",
           "label": "Оформить возврат через присланную страницу",
+          "playerReply": "Нажимаю на той странице «Получить возврат».",
           "nextNodeId": "unsafe-double-loss-ending",
           "safetyScore": -25,
           "criticality": "high",
@@ -403,6 +403,7 @@
         {
           "id": "contact-bank-and-platform",
           "label": "Закрыть страницу и обратиться в банк и поддержку Авито",
+          "playerReply": "Страницу я закрыл. Дальше разбираюсь через банк и поддержку Авито.",
           "nextNodeId": "unsafe-first-loss-ending",
           "safetyScore": -10,
           "criticality": "medium",

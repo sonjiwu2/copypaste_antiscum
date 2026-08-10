@@ -1,6 +1,6 @@
 {
   "id": "buyer-fake-delivery",
-  "version": 1,
+  "version": 2,
   "slug": "buyer-fake-delivery",
   "role": "buyer",
   "title": "Ссылка на доставку",
@@ -25,6 +25,7 @@
         {
           "id": "stay-on-platform",
           "label": "Остаться в чате площадки",
+          "playerReply": "Давайте общаться здесь, в чате объявления. Мне так удобнее.",
           "nextNodeId": "delivery-message",
           "safetyScore": 0,
           "criticality": "low",
@@ -40,6 +41,7 @@
         {
           "id": "move-to-messenger",
           "label": "Перейти в мессенджер",
+          "playerReply": "Хорошо, напишите мне в мессенджер, там и продолжим.",
           "nextNodeId": "delivery-message",
           "safetyScore": -20,
           "criticality": "high",
@@ -69,6 +71,7 @@
         {
           "id": "check-in-app",
           "label": "Проверить заказ в приложении площадки",
+          "playerReply": "Ссылку открывать не буду. Сейчас посмотрю доставку в самом приложении.",
           "nextNodeId": "prepay-message",
           "safetyScore": 0,
           "criticality": "low",
@@ -84,6 +87,7 @@
         {
           "id": "open-payment-link",
           "label": "Открыть ссылку и ввести данные карты",
+          "playerReply": "Открыл вашу ссылку, ввожу данные карты.",
           "nextNodeId": "prepay-message",
           "safetyScore": -25,
           "criticality": "high",
@@ -113,6 +117,7 @@
         {
           "id": "refuse-prepay",
           "label": "Отказаться и платить через площадку",
+          "playerReply": "Предоплату переводить не буду. Оплачу через безопасную сделку на площадке.",
           "nextNodeId": "safe-ending",
           "safetyScore": 0,
           "criticality": "low",
@@ -128,6 +133,7 @@
         {
           "id": "send-prepay",
           "label": "Перевести предоплату на карту",
+          "playerReply": "Хорошо, скидывайте номер карты — переведу предоплату.",
           "nextNodeId": "unsafe-ending",
           "safetyScore": -35,
           "criticality": "high",

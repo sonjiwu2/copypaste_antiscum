@@ -6,8 +6,38 @@ info:
   description: |
     Публичный API интерактивного антискам-тренажёра.
 
-    Реализованная часть: проверка живости, каталог учебных сценариев, запуск
-    попытки, восстановление её состояния и отправка выбора.
+    Реализованная часть: проверка живости и готовности, каталог учебных
+    сценариев, запуск попытки, восстановление её состояния, отправка выбора
+    прогресс пользователя и еженедельный тест, создаваемый через Groq или Grok.
+
+    ### Анонимный профиль
+
+    Учётных записей нет. При первом обращении к `/api/v1/**` сервер выдаёт
+    cookie `ast_profile` с анонимным идентификатором профиля:
+
+    - `HttpOnly`, `SameSite=Lax` (настраивается), `Path=/`, длительный `Max-Age`;
+    - `Secure` включается в публичном развёртывании по HTTPS;
+    - при отсутствии или неверном формате cookie сервер выдаёт новый случайный
+      идентификатор; валидная cookie является bearer-секретом доступа к истории;
+    - к профилю привязываются попытки, поэтому браузер обязан отправлять
+      cookie обратно: браузерный клиент выполняет каждый запрос с
+      `credentials: "include"`.
+
+    Попытка принадлежит выдавшему её профилю. Обращение к чужой попытке
+    возвращает `403 ATTEMPT_FORBIDDEN`, даже если идентификатор известен.
+    Потеря cookie означает потерю доступа к истории: восстановления нет.
+
+    ### Доступ из браузера
+
+    Рекомендуемая схема — общий origin: фронтенд и API отдаются одним адресом
+    (в Compose это nginx фронтенда, проксирующий `/api`), тогда cookie
+    остаётся same-site и межсайтовый доступ не нужен.
+
+    Для фронтенда на другом сайте origin перечисляются явно в
+    `CORS_ALLOWED_ORIGINS`, а cookie требует `COOKIE_SAME_SITE=none` вместе с
+    `COOKIE_SECURE=true`. Ответ всегда называет конкретный origin: маска `*`
+    запрещена, потому что ответы привязаны к cookie профиля. Предварительный
+    `OPTIONS` обслуживается до выдачи профиля и его не создаёт.
 
     Скрытие будущего хода сценария — часть контракта:
 
@@ -21,8 +51,9 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
-# Пустой список означает, что аутентификация не требуется намеренно:
-# в MVP тренажёр не хранит персональные данные и не имеет учётных записей.
+# Аутентификации нет намеренно: тренажёр не хранит персональные данные.
+# Анонимный профиль выдаётся сервером автоматически, поэтому клиенту не нужно
+# ничего передавать — cookie достаточно вернуть обратно.
 security: []
 
 servers:
@@ -36,6 +67,10 @@ tags:
     description: Каталог учебных сценариев
   - name: attempts
     description: Прохождение сценария
+  - name: progress
+    description: Прогресс анонимного профиля
+  - name: weekly-tests
+    description: Еженедельный антискам-тест
 
 paths:
   /healthz:
@@ -55,6 +90,39 @@ paths:
                 $ref: "#/components/schemas/HealthResponse"
               example:
                 status: ok
+
+  /readyz:
+    get:
+      tags: [health]
+      summary: Проверка готовности
+      description: |
+        Подтверждает, что приложение способно обслуживать запросы: база данных
+        отвечает, а каталог сценариев готов.
+
+        В отличие от `/healthz` проверка затрагивает внешние зависимости,
+        поэтому именно её использует healthcheck контейнера. Причина
+        недоступности в ответ не попадает: устройство сервиса наружу не
+        публикуется.
+
+        Профиль этот endpoint не создаёт.
+      operationId: getReadiness
+      responses:
+        "200":
+          description: Приложение готово обслуживать запросы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+              example:
+                status: ready
+        "503":
+          description: Приложение не готово, например недоступна база данных
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+              example:
+                status: unavailable
 
   /api/v1/scenarios:
     get:
@@ -88,6 +156,7 @@ paths:
                     description: "Покупка товара с доставкой: продавец предлагает оплату по ссылке."
                     difficulty: medium
                     estimatedMinutes: 4
+                    maxDecisions: 3
         "400":
           description: Указана неподдерживаемая роль
           content:
@@ -136,6 +205,7 @@ paths:
                 description: "Продажа товара: покупатель уверяет, что деньги уже перевёл."
                 difficulty: hard
                 estimatedMinutes: 5
+                maxDecisions: 3
         "404":
           description: Сценарий не найден
           content:
@@ -161,8 +231,9 @@ paths:
         решения или на финале. Подряд идущие сообщения возвращаются одной
         пачкой, поэтому фронтенду не нужен запрос на каждую реплику диалога.
 
-        Версия сценария фиксируется за попыткой: последующая правка содержимого
-        не изменит уже идущее прохождение.
+        Версия сценария фиксируется за попыткой и читается из неизменяемого
+        архива: последующая правка содержимого, deploy или restart не изменят
+        уже начатое прохождение.
       operationId: startAttempt
       requestBody:
         required: true
@@ -217,8 +288,8 @@ paths:
         Этого достаточно, чтобы полностью восстановить экран после перезагрузки
         страницы — отдельного endpoint для продолжения не требуется.
 
-        Аутентификации нет, поэтому идентификатор попытки одновременно служит
-        секретом доступа к ней.
+        Попытка доступна только выдавшему её анонимному профилю: запрос без
+        cookie `ast_profile` или с чужой cookie получит `403`.
       operationId: getAttempt
       parameters:
         - name: attemptId
@@ -234,6 +305,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Attempt"
+        "403":
+          $ref: "#/components/responses/AttemptForbidden"
         "404":
           description: Попытка не найдена
           content:
@@ -309,6 +382,8 @@ paths:
                   code: INVALID_REQUEST
                   message: Поле idempotencyKey обязательно.
                   requestId: 7b2c1a9e4f
+        "403":
+          $ref: "#/components/responses/AttemptForbidden"
         "404":
           description: Попытка не найдена
           content:
@@ -359,8 +434,238 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /api/v1/progress:
+    get:
+      tags: [progress]
+      summary: Прогресс пользователя
+      description: |
+        Возвращает статистику текущего анонимного профиля.
+
+        Считается по уже сохранённым завершённым прохождениям: результат
+        попытки не пересчитывается, поэтому экран прогресса и экран результата
+        не могут разойтись.
+
+        ### Правила
+
+        - в статистику входят только завершённые прохождения;
+        - незавершённые показываются отдельно в `activeAttempts`;
+        - повторные прохождения не затирают предыдущие;
+        - `bestScore` — максимум среди завершённых, `latestScore` — результат
+          последнего по времени завершения;
+        - `previousScore` и `improvement` появляются со второго прохождения
+          сценария: сравнивать первый результат не с чем;
+        - `averageScore` округляется по правилу «половина вверх»;
+        - `skills` отсортированы от самого слабого навыка;
+        - `weakRiskTags` — схемы, на которых пользователь ошибался, от самой
+          опасной; `weightedSeverity` учитывает вес уже сделанных ошибок;
+        - рекомендации используют только публичные метаданные каталога и не
+          раскрывают устройство непройденных сценариев;
+        - новый профиль получает `200` с нулевой сводкой и пустыми списками;
+        - повтор запроса с тем же `idempotencyKey` не удваивает статистику.
+      operationId: getProgress
+      responses:
+        "200":
+          description: Прогресс профиля
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Progress"
+              example:
+                summary:
+                  completedAttempts: 2
+                  completedScenarios: 1
+                  averageScore: 60
+                  bestScore: 100
+                  latestScore: 100
+                activeAttempts: []
+                scenarioProgress:
+                  - scenarioId: buyer-fake-delivery
+                    role: buyer
+                    title: Ссылка на доставку
+                    attempts: 2
+                    lastScore: 100
+                    bestScore: 100
+                    previousScore: 20
+                    improvement: 80
+                    lastCompletedAt: "2026-08-05T09:00:00Z"
+                skills:
+                  - code: payment_safety
+                    value: 0
+                    positive: 1
+                    negative: 1
+                    decisions: 2
+                weakRiskTags:
+                  - code: phishing_link
+                    mistakes: 1
+                    weightedSeverity: 3
+                    lastOccurredAt: "2026-08-05T08:30:00Z"
+                recentAttempts:
+                  - attemptId: att_2
+                    scenarioId: buyer-fake-delivery
+                    role: buyer
+                    title: Ссылка на доставку
+                    score: 100
+                    outcome: safe
+                    startedAt: "2026-08-05T08:55:00Z"
+                    completedAt: "2026-08-05T09:00:00Z"
+                    decisions: 3
+                recommendedScenarios:
+                  - scenarioId: seller-payment-already-sent
+                    role: seller
+                    title: Оплата уже отправлена
+                    difficulty: hard
+                    estimatedMinutes: 5
+                    reason: not_completed
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/profile:
+    delete:
+      tags: [progress]
+      summary: Полностью сбросить анонимный профиль
+      description: |
+        Удаляет попытки, недельные тесты и профиль текущей HttpOnly cookie.
+        Cookie аннулируется; следующий API-запрос создаст новый профиль.
+      operationId: resetProfile
+      responses:
+        "200":
+          description: Данные удалены
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/weekly-tests/current:
+    post:
+      tags: [weekly-tests]
+      summary: Получить тест текущей недели
+      description: |
+        Возвращает уже сохранённый тест профиля либо создаёт его один раз.
+        При настроенном `GROQ_API_KEY` вопросы генерирует Groq Cloud через
+        строгую JSON-схему. Если ключ Groq отсутствует, поддерживается
+        необязательный `XAI_API_KEY`. Cookie, история и прогресс пользователя
+        во внешний API не передаются. При сбое ИИ возвращается проверенный
+        резервный тест.
+
+        Экзамен содержит 20 вопросов, длится 10 минут и даёт три жизни.
+        Новый тест становится доступен ровно через 7 суток после завершения,
+        поэтому обновление страницы не расходует лимит повторно. До итоговой
+        отправки правильные индексы и объяснения отсутствуют.
+      operationId: getCurrentWeeklyTest
+      responses:
+        "200":
+          description: Тест текущей недели
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyTest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/weekly-tests/{testId}/answer:
+    post:
+      tags: [weekly-tests]
+      summary: Проверить один ответ
+      description: |
+        Возвращает только признак правильности выбранного варианта. Индекс
+        правильного ответа и объяснение до завершения экзамена не раскрываются.
+      operationId: checkWeeklyTestAnswer
+      parameters:
+        - name: testId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeeklyTestAnswer"
+      responses:
+        "200":
+          description: Результат проверки варианта
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [correct]
+                properties:
+                  correct:
+                    type: boolean
+        "409":
+          description: Экзамен уже завершён
+        "422":
+          description: Недопустимый вопрос или вариант
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/weekly-tests/{testId}/submit:
+    post:
+      tags: [weekly-tests]
+      summary: Проверить еженедельный тест
+      description: |
+        Принимает выбранные варианты. Неотвеченные вопросы считаются ошибками,
+        что позволяет завершить экзамен при третьей потерянной жизни или по
+        таймеру. Награда 100 XP начисляется только за 18 или больше правильных
+        ответов до истечения времени. Повторная отправка идемпотентна.
+      operationId: submitWeeklyTest
+      parameters:
+        - name: testId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitWeeklyTestRequest"
+      responses:
+        "200":
+          description: Проверенный тест с разбором
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyTest"
+        "403":
+          description: Тест принадлежит другому профилю
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Тест не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Неполный, повторяющийся или недопустимый набор ответов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
   responses:
+    AttemptForbidden:
+      description: |
+        Попытка принадлежит другому анонимному профилю.
+
+        Обычная причина — потерянная или незаданная cookie `ast_profile`:
+        браузер обратился к попытке от имени нового профиля.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: ATTEMPT_FORBIDDEN
+              message: Попытка принадлежит другому пользователю.
+              requestId: 7b2c1a9e4f
+
     PayloadTooLarge:
       description: Тело запроса превышает допустимый размер
       content:
@@ -394,6 +699,17 @@ components:
           type: string
           enum: [ok]
 
+    ReadinessResponse:
+      type: object
+      description: |
+        Состояние готовности. Подробности отказа намеренно не раскрываются —
+        они уходят в лог сервиса.
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ready, unavailable]
+
     ScenarioRole:
       type: string
       description: Роль, в которой пользователь проходит сценарий.
@@ -410,7 +726,17 @@ components:
         Метаданные сценария. Содержимое графа сюда не входит по соображениям
         безопасности: иначе клиент увидел бы правильные ответы заранее.
       required:
-        [id, version, slug, role, title, description, difficulty, estimatedMinutes]
+        [
+          id,
+          version,
+          slug,
+          role,
+          title,
+          description,
+          difficulty,
+          estimatedMinutes,
+          maxDecisions,
+        ]
       properties:
         id:
           type: string
@@ -444,6 +770,15 @@ components:
           minimum: 1
           description: Ожидаемая длительность прохождения в минутах.
           example: 4
+        maxDecisions:
+          type: integer
+          format: int32
+          minimum: 1
+          description: |
+            Число решений в самой длинной ветке сценария. Клиент строит по нему
+            шкалу прохождения. Значение раскрывает только длину ветки, но не её
+            содержимое и не правильные ответы.
+          example: 3
 
     ScenarioListResponse:
       type: object
@@ -527,7 +862,12 @@ components:
           $ref: "#/components/schemas/NodeType"
         sender:
           type: string
-          description: Кто прислал сообщение. Только для узлов типа `message`.
+          enum: [buyer, seller, system]
+          description: |
+            Кто прислал сообщение. Только для узлов типа `message`.
+            Роль игрока здесь не встречается: его слова приходят полем
+            `playerReply` сделанного решения. `system` — не участник сделки,
+            а факт обстановки, поэтому в ленте переписки ему не место.
           example: seller
         text:
           type: string
@@ -563,7 +903,7 @@ components:
     AttemptDecision:
       type: object
       description: Ранее сделанный выбор вместе с показанным объяснением.
-      required: [nodeId, choiceId, label, consequence]
+      required: [nodeId, choiceId, label, playerReply, consequence]
       properties:
         nodeId:
           type: string
@@ -571,6 +911,14 @@ components:
           type: string
         label:
           type: string
+          description: Название действия — то же, что было на кнопке.
+        playerReply:
+          type: string
+          description: |
+            Закреплённая за действием реплика игрока. Именно её нужно показывать
+            в ленте переписки: `label` называет действие, а не то, что человек
+            сказал бы собеседнику.
+          example: Задаток переводить не буду. Давайте просто договоримся о встрече.
         consequence:
           $ref: "#/components/schemas/AttemptConsequence"
 
@@ -603,8 +951,8 @@ components:
         attemptId:
           type: string
           description: |
-            Идентификатор попытки. Аутентификации нет, поэтому он же служит
-            секретом доступа — не публикуйте его.
+            Идентификатор попытки. Доступ к ней имеет только выдавший её
+            анонимный профиль, но идентификатор всё равно не стоит публиковать.
         scenario:
           $ref: "#/components/schemas/AttemptScenarioRef"
         status:
@@ -673,7 +1021,7 @@ components:
     AcceptedChoice:
       type: object
       description: Выбор, который сервер принял и применил.
-      required: [nodeId, choiceId, label]
+      required: [nodeId, choiceId, label, playerReply]
       properties:
         nodeId:
           type: string
@@ -681,6 +1029,9 @@ components:
           type: string
         label:
           type: string
+        playerReply:
+          type: string
+          description: Реплика игрока, которая добавляется в ленту переписки.
 
     Transition:
       type: object
@@ -720,6 +1071,353 @@ components:
           format: date-time
           description: Заполняется, когда шаг довёл попытку до финала.
 
+    ProgressSummary:
+      type: object
+      description: Сводка по завершённым прохождениям.
+      required:
+        [completedAttempts, completedScenarios, averageScore, bestScore, latestScore]
+      properties:
+        completedAttempts:
+          type: integer
+          format: int32
+          minimum: 0
+        completedScenarios:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Число сценариев, пройденных хотя бы раз.
+        averageScore:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+        bestScore:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+        latestScore:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+
+    ProgressActiveAttempt:
+      type: object
+      description: Незавершённое прохождение. В статистику не входит.
+      required: [attemptId, scenarioId, updatedAt]
+      properties:
+        attemptId:
+          type: string
+        scenarioId:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProgressScenario:
+      type: object
+      description: Прогресс по одному сценарию.
+      required: [scenarioId, attempts, lastScore, bestScore]
+      properties:
+        scenarioId:
+          type: string
+        role:
+          $ref: "#/components/schemas/ScenarioRole"
+        title:
+          type: string
+        attempts:
+          type: integer
+          format: int32
+          description: Количество завершённых прохождений этого сценария.
+        lastScore:
+          type: integer
+          format: int32
+        bestScore:
+          type: integer
+          format: int32
+        previousScore:
+          type: integer
+          format: int32
+          description: Результат предыдущего завершённого прохождения.
+        improvement:
+          type: integer
+          format: int32
+          description: |
+            Разница с предыдущим результатом. Отсутствует, если сценарий
+            пройден только один раз.
+        lastCompletedAt:
+          type: string
+          format: date-time
+        activeAttemptId:
+          type: string
+          description: Незавершённое прохождение этого сценария, если есть.
+
+    ProgressSkill:
+      type: object
+      description: |
+        Накопленное состояние навыка безопасности. Значения агрегированы по
+        уже сделанным выборам и не раскрывают веса непройденных веток.
+      required: [code, value, positive, negative, decisions]
+      properties:
+        code:
+          type: string
+          example: payment_safety
+        value:
+          type: integer
+          format: int32
+          description: Сумма изменений навыка.
+        positive:
+          type: integer
+          format: int32
+        negative:
+          type: integer
+          format: int32
+        decisions:
+          type: integer
+          format: int32
+
+    ProgressWeakRiskTag:
+      type: object
+      description: Мошенническая схема, на которой пользователь ошибался.
+      required: [code, mistakes, weightedSeverity, lastOccurredAt]
+      properties:
+        code:
+          type: string
+          example: phishing_link
+        mistakes:
+          type: integer
+          format: int32
+        weightedSeverity:
+          type: integer
+          format: int32
+          description: Суммарный вес уже допущенных ошибок.
+        lastOccurredAt:
+          type: string
+          format: date-time
+
+    ProgressHistoryEntry:
+      type: object
+      description: Завершённое прохождение в истории.
+      required: [attemptId, scenarioId, score, startedAt, completedAt, decisions]
+      properties:
+        attemptId:
+          type: string
+        scenarioId:
+          type: string
+        role:
+          $ref: "#/components/schemas/ScenarioRole"
+        title:
+          type: string
+        score:
+          type: integer
+          format: int32
+        outcome:
+          $ref: "#/components/schemas/OutcomeType"
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        decisions:
+          type: integer
+          format: int32
+
+    ProgressRecommendation:
+      type: object
+      description: |
+        Предложение следующего сценария. Содержит только публичные метаданные
+        каталога: подсказка не должна раскрывать правильные действия.
+      required: [scenarioId, role, title, difficulty, estimatedMinutes, reason]
+      properties:
+        scenarioId:
+          type: string
+        role:
+          $ref: "#/components/schemas/ScenarioRole"
+        title:
+          type: string
+        difficulty:
+          $ref: "#/components/schemas/ScenarioDifficulty"
+        estimatedMinutes:
+          type: integer
+          format: int32
+        reason:
+          type: string
+          description: |
+            `not_completed` — сценарий ещё не пройден до конца;
+            `improve_score` — пройден, но результат можно улучшить.
+          enum: [not_completed, improve_score]
+
+    Progress:
+      type: object
+      description: |
+        Прогресс анонимного профиля. Пустой профиль получает нулевую сводку
+        и пустые массивы.
+      required:
+        [summary, activeAttempts, scenarioProgress, skills, weakRiskTags, recentAttempts, recommendedScenarios]
+      properties:
+        summary:
+          $ref: "#/components/schemas/ProgressSummary"
+        activeAttempts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgressActiveAttempt"
+        scenarioProgress:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgressScenario"
+        skills:
+          type: array
+          description: Навыки, от самого слабого.
+          items:
+            $ref: "#/components/schemas/ProgressSkill"
+        weakRiskTags:
+          type: array
+          description: Слабые места, от самого опасного.
+          items:
+            $ref: "#/components/schemas/ProgressWeakRiskTag"
+        recentAttempts:
+          type: array
+          description: Последние завершённые прохождения, свежие первыми.
+          items:
+            $ref: "#/components/schemas/ProgressHistoryEntry"
+        recommendedScenarios:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgressRecommendation"
+
+    WeeklyTestQuestion:
+      type: object
+      required: [id, prompt, options, riskTag, difficulty]
+      properties:
+        id:
+          type: string
+        prompt:
+          type: string
+        options:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items:
+            type: string
+        riskTag:
+          type: string
+        difficulty:
+          $ref: "#/components/schemas/ScenarioDifficulty"
+
+    WeeklyTestReview:
+      type: object
+      required: [questionId, selectedIndex, correctIndex, correct, explanation]
+      properties:
+        questionId:
+          type: string
+        selectedIndex:
+          type: integer
+          minimum: -1
+          maximum: 3
+        correctIndex:
+          type: integer
+          minimum: 0
+          maximum: 3
+        correct:
+          type: boolean
+        explanation:
+          type: string
+
+    WeeklyTestResult:
+      type: object
+      required: [correct, total, score, passed, timedOut, livesLeft, earnedXp, completedAt, review]
+      properties:
+        correct:
+          type: integer
+          minimum: 0
+          maximum: 20
+        total:
+          type: integer
+          enum: [20]
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        passed:
+          type: boolean
+        timedOut:
+          type: boolean
+        livesLeft:
+          type: integer
+          minimum: 0
+          maximum: 3
+        earnedXp:
+          type: integer
+          minimum: 0
+          maximum: 100
+        completedAt:
+          type: string
+          format: date-time
+        review:
+          type: array
+          minItems: 20
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/WeeklyTestReview"
+
+    WeeklyTest:
+      type: object
+      required: [testId, weekStart, title, intro, source, completed, expiresAt, rules, questions]
+      properties:
+        testId:
+          type: string
+        weekStart:
+          type: string
+          format: date
+        title:
+          type: string
+        intro:
+          type: string
+        source:
+          type: string
+          enum: [groq, grok, fallback]
+        completed:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+        nextAvailableAt:
+          type: string
+          format: date-time
+        rules:
+          $ref: "#/components/schemas/WeeklyTestRules"
+        questions:
+          type: array
+          minItems: 20
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/WeeklyTestQuestion"
+        result:
+          $ref: "#/components/schemas/WeeklyTestResult"
+
+    WeeklyTestAnswer:
+      type: object
+      required: [questionId, optionIndex]
+      properties:
+        questionId:
+          type: string
+        optionIndex:
+          type: integer
+          minimum: 0
+          maximum: 3
+
+    SubmitWeeklyTestRequest:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/WeeklyTestAnswer"
+
     ErrorResponse:
       type: object
       description: Единый формат ошибки для всех endpoint.
@@ -741,12 +1439,17 @@ components:
                 - SCENARIO_NOT_FOUND
                 - UNSUPPORTED_ROLE
                 - ATTEMPT_NOT_FOUND
+                - ATTEMPT_FORBIDDEN
                 - ATTEMPT_ALREADY_COMPLETED
                 - STALE_NODE
                 - IDEMPOTENCY_KEY_CONFLICT
                 - CONCURRENT_TRANSITION
                 - NODE_NOT_DECISION
                 - CHOICE_NOT_FOUND
+                - WEEKLY_TEST_NOT_FOUND
+                - WEEKLY_TEST_FORBIDDEN
+                - WEEKLY_TEST_INVALID_ANSWERS
+                - WEEKLY_TEST_ALREADY_COMPLETED
                 - INTERNAL_ERROR
             message:
               type: string
@@ -756,3 +1459,22 @@ components:
               description: |
                 Идентификатор запроса, совпадает с заголовком `X-Request-ID`.
                 Используется для поиска записи в логах.
+    WeeklyTestRules:
+      type: object
+      required: [questionCount, maxLives, passingCorrect, rewardXp, durationSeconds]
+      properties:
+        questionCount:
+          type: integer
+          enum: [20]
+        maxLives:
+          type: integer
+          enum: [3]
+        passingCorrect:
+          type: integer
+          enum: [18]
+        rewardXp:
+          type: integer
+          enum: [100]
+        durationSeconds:
+          type: integer
+          enum: [600]

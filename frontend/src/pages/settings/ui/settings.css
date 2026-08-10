@@ -1,0 +1,548 @@
+/*
+ * Страница настроек: три колонки карточек и закреплённый низ с действиями.
+ * Карточки одинаковой ширины, поэтому сетка задана долями, а не пикселями.
+ */
+
+.settings-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  min-height: calc(100vh - 82px);
+  padding: 18px 20px 24px;
+  background: var(--c-bg-blue-s1);
+}
+
+/*
+ * Карточки одного размера: строки тянутся по самой высокой, а карточка
+ * занимает всю ячейку. Разная высота блоков рядом читается как сбой вёрстки.
+ */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 16px;
+}
+
+/* --- Карточка --------------------------------------------------------- */
+
+.settings-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgb(23 35 60 / 5%);
+}
+
+.settings-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--c-bd-neutral-s2);
+}
+
+.settings-card__heading h2 {
+  margin: 0;
+  font-family: 'Monocraft', monospace;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+.settings-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 14px;
+}
+
+/*
+ * Пояснение и предупреждение прижаты к низу карточки: тогда у всех блоков
+ * подписи стоят на одной линии, а свободное место собирается над ними.
+ */
+.settings-card__body > .settings-note,
+.settings-card__body > .settings-warning {
+  margin-top: auto;
+}
+
+/* Цвет рамки и заголовка подсказывает назначение блока. */
+.settings-card--blue {
+  border-color: var(--c-bd-blue-b1);
+}
+.settings-card--blue .settings-card__heading h2 {
+  color: var(--c-fg-blue-t1);
+}
+.settings-card--purple {
+  border-color: var(--c-bd-purple-b1);
+}
+.settings-card--purple .settings-card__heading h2 {
+  color: var(--c-fg-purple-a2);
+}
+.settings-card--orange {
+  border-color: var(--c-bd-orange-b2);
+}
+.settings-card--orange .settings-card__heading h2 {
+  color: var(--c-fg-orange-t1);
+}
+.settings-card--green {
+  border-color: var(--c-bd-green-b2);
+}
+.settings-card--green .settings-card__heading h2 {
+  color: var(--c-fg-green-t1);
+}
+.settings-card--red {
+  border-color: var(--c-bd-red-b1);
+}
+.settings-card--red .settings-card__heading h2 {
+  color: var(--c-fg-red-a2);
+}
+
+/* --- Выпадающий список ------------------------------------------------ */
+
+.select-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.select-row select {
+  width: 158px;
+  height: 32px;
+  padding: 0 10px;
+  color: var(--c-fg-neutral-t1);
+  font-size: 12px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 6px;
+}
+
+/* --- Настройка, которой пока нет --------------------------------------- */
+
+.pending-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.pending-row__copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+/* Приглушённая подпись отделяет недоступную настройку от рабочих. */
+.pending-row__copy strong {
+  color: var(--c-fg-neutral-a1);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pending-row__copy small {
+  color: var(--c-fg-neutral-a1);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.pending-row__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 6px;
+  background: var(--c-bg-neutral-s2);
+  color: var(--c-fg-neutral-a1);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* --- Переключатель ---------------------------------------------------- */
+
+.toggle-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.toggle-row__copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.toggle-row__copy strong {
+  color: var(--c-fg-neutral-t1);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.toggle-row__copy small {
+  color: var(--c-fg-neutral-a1);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+/* Чекбокс скрыт визуально, но остаётся доступным с клавиатуры. */
+.toggle-row__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.toggle-row__switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background: var(--c-bg-neutral-b1);
+  border-radius: 999px;
+  transition: background var(--duration-fast) var(--ease-ui);
+}
+
+.toggle-row__switch::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: var(--c-bg-neutral-s1);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(23 35 60 / 25%);
+  transition: transform var(--duration-fast) var(--ease-ui);
+  content: '';
+}
+
+.toggle-row__input:checked ~ .toggle-row__switch {
+  background: var(--c-bg-blue-a2);
+}
+
+.toggle-row__input:checked ~ .toggle-row__switch::after {
+  transform: translateX(18px);
+}
+
+.toggle-row__input:focus-visible ~ .toggle-row__switch {
+  outline: 3px solid rgb(22 134 232 / 30%);
+  outline-offset: 2px;
+}
+
+.toggle-row--disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* --- Ползунок --------------------------------------------------------- */
+
+.slider-row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-row__icon {
+  width: 24px;
+  height: 24px;
+}
+
+.slider-row__control {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.slider-row__control span {
+  color: var(--c-fg-neutral-t1);
+  font-size: 12px;
+}
+
+.slider-row__control input {
+  width: 100%;
+  height: 6px;
+  margin: 0;
+  accent-color: var(--c-bg-blue-a2);
+}
+
+.slider-row__value {
+  color: var(--c-fg-neutral-a2);
+  font-size: 11px;
+  text-align: right;
+}
+
+.slider-row--disabled {
+  opacity: 0.55;
+}
+
+/* --- Чекбокс ---------------------------------------------------------- */
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  color: var(--c-fg-neutral-t1);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.checkbox-row input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--c-bg-blue-a2);
+}
+
+/* --- Заметка и предупреждение ----------------------------------------- */
+
+.settings-note,
+.settings-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 9px 10px;
+  font-size: 10px;
+  line-height: 1.4;
+  border: 1px solid;
+  border-radius: 7px;
+}
+
+.settings-note {
+  color: var(--c-fg-neutral-t1);
+  background: var(--c-bg-blue-s1);
+  border-color: var(--c-bd-blue-b1);
+}
+
+.settings-warning {
+  color: var(--c-fg-orange-t1);
+  background: var(--c-bg-orange-s1);
+  border-color: var(--c-bd-orange-b2);
+}
+
+/* --- Аккаунт ---------------------------------------------------------- */
+
+.account-row {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.account-row__avatar {
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  background: var(--c-bg-blue-s1);
+  border: 1px solid var(--c-bd-blue-b1);
+  border-radius: 9px;
+}
+
+.account-row__info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.account-row__info strong {
+  color: var(--c-fg-neutral-t2);
+  font-size: 14px;
+}
+
+.account-row__info > span {
+  color: var(--c-fg-neutral-a2);
+  font-size: 11px;
+}
+
+.account-row__rename input {
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  color: var(--c-fg-neutral-t2);
+  font-size: 13px;
+  border: 1px solid var(--c-bd-blue-a2);
+  border-radius: 6px;
+}
+
+.account-row__registered {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-fg-neutral-a1);
+  font-size: 10px;
+}
+
+.account-row__registered img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+.account-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.account-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 8px;
+  color: var(--c-fg-green-t1);
+  font-size: 11px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-green-b2);
+  border-radius: 6px;
+}
+
+.account-actions button:hover {
+  background: var(--c-bg-green-s1);
+  border-color: var(--c-bd-green-a2);
+}
+
+/* --- Данные ----------------------------------------------------------- */
+
+.data-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  color: var(--c-fg-blue-t1);
+  font-size: 12px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-blue-b2);
+  border-radius: 7px;
+}
+
+.data-button:hover {
+  background: var(--c-bg-blue-s1);
+  border-color: var(--c-bd-blue-a2);
+}
+
+.data-button--danger {
+  color: var(--c-fg-red-a2);
+  border-color: var(--c-bd-red-b2);
+}
+
+.data-button--danger:hover {
+  background: var(--c-bg-red-s1);
+  border-color: var(--c-bd-red-a1);
+}
+
+.data-hint {
+  margin: -4px 0 4px;
+  color: var(--c-fg-neutral-a1);
+  font-size: 10px;
+  text-align: center;
+}
+
+/* --- Нижняя панель действий ------------------------------------------- */
+
+.settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 14px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 10px;
+}
+
+.settings-footer button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 22px;
+  font-size: 13px;
+  border-radius: 7px;
+}
+
+.settings-footer__reset,
+.settings-footer__cancel {
+  color: var(--c-fg-neutral-t1);
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+}
+
+.settings-footer__reset:hover:not(:disabled),
+.settings-footer__cancel:hover:not(:disabled) {
+  border-color: var(--c-bd-blue-a2);
+}
+
+.settings-footer__save {
+  min-width: 190px;
+  color: var(--c-fg-neutral-s1);
+  background: linear-gradient(180deg, var(--c-bg-blue-a2), var(--c-bg-blue-a2));
+  border: 0;
+}
+
+.settings-footer__save:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--c-bg-blue-a1), var(--c-bg-blue-a2));
+}
+
+.settings-footer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.settings-footer__hint {
+  margin: 0;
+  color: var(--c-fg-neutral-a1);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+/* --- Адаптив ---------------------------------------------------------- */
+
+@media (max-width: 1180px) {
+  .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .settings-layout {
+    padding: 12px 12px 18px;
+  }
+
+  /*
+   * В одну колонку выравнивать высоту не по чему: каждая карточка занимает
+   * свою строку, и общая высота растянула бы короткие блоки на пустоту.
+   */
+  .settings-grid {
+    grid-auto-rows: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* На узком экране кнопки идут в столбец, а подсказка уходит под них. */
+  .settings-footer {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .settings-footer button {
+    flex: 1 1 140px;
+  }
+
+  .settings-footer__hint {
+    flex-basis: 100%;
+    text-align: center;
+  }
+}

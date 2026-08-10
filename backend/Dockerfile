@@ -5,9 +5,9 @@
 #
 #   docker build -f backend/Dockerfile -t antiscam-backend:test ./backend
 
-ARG GO_VERSION=1.25.0
-ARG GO_IMAGE_VARIANT=alpine3.21
-ARG ALPINE_VERSION=3.21.3
+ARG GO_VERSION=1.25.12
+ARG GO_IMAGE_VARIANT=alpine3.23
+ARG ALPINE_VERSION=3.23.5
 
 # -----------------------------------------------------------------------------
 # Builder
@@ -19,21 +19,29 @@ WORKDIR /src
 RUN apk add --no-cache ca-certificates
 
 # Dependency layer first for better cache hits when only source changes.
-# go.sum may be absent while the module has no third-party deps.
-COPY go.mod go.sum* ./
+# The dependency manifests are copied first so source-only changes reuse the
+# module-download layer.
+COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod \
 	go mod download
 
 COPY . .
 
-# Static binary: no CGO, stripped symbols, reproducible-friendly flags.
+# Static binaries: no CGO, stripped symbols, reproducible-friendly flags.
+# `migrate` embeds backend/migrations/*.sql, so the schema always ships with
+# the code that expects it — no separate migration layer to forget.
 RUN --mount=type=cache,target=/go/pkg/mod \
 	--mount=type=cache,target=/root/.cache/go-build \
 	CGO_ENABLED=0 GOOS=linux go build \
 		-trimpath \
 		-ldflags="-s -w" \
 		-o /out/api \
-		./cmd/api
+		./cmd/api \
+	&& CGO_ENABLED=0 GOOS=linux go build \
+		-trimpath \
+		-ldflags="-s -w" \
+		-o /out/migrate \
+		./cmd/migrate
 
 # -----------------------------------------------------------------------------
 # Runtime
@@ -50,6 +58,7 @@ RUN apk add --no-cache ca-certificates wget \
 	&& adduser -D -H -u 65532 -g app app
 
 COPY --from=builder /out/api /usr/local/bin/api
+COPY --from=builder /out/migrate /usr/local/bin/migrate
 
 USER app:app
 

@@ -236,6 +236,9 @@ func TestMetadataExposesOnlyCatalogFields(t *testing.T) {
 	allowed := map[string]struct{}{
 		"ID": {}, "Version": {}, "Slug": {}, "Role": {},
 		"Title": {}, "Description": {}, "Difficulty": {}, "EstimatedMinutes": {},
+		// MaxDecisions — единственная числовая характеристика графа в каталоге:
+		// длина ветки без её содержимого.
+		"MaxDecisions": {},
 	}
 
 	metadataType := reflect.TypeOf(scenario.Metadata{})

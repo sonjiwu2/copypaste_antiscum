@@ -7,6 +7,7 @@ package memory
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
@@ -17,22 +18,43 @@ import (
 // Каталог заполняется один раз при старте и дальше только читается, поэтому
 // RWMutex защищает от гонок при параллельных HTTP-запросах и остаётся дешёвым.
 type ScenarioRepository struct {
-	mu        sync.RWMutex
-	scenarios map[scenario.ID]scenario.Scenario
+	mu       sync.RWMutex
+	versions map[scenario.ID]map[scenario.Version]scenario.Scenario
+	current  map[scenario.ID]scenario.Version
 }
 
 // NewScenarioRepository наполняет каталог загруженными сценариями.
 func NewScenarioRepository(scenarios []scenario.Scenario) (*ScenarioRepository, error) {
 	repository := &ScenarioRepository{
-		scenarios: make(map[scenario.ID]scenario.Scenario, len(scenarios)),
+		versions: make(map[scenario.ID]map[scenario.Version]scenario.Scenario, len(scenarios)),
+		current:  make(map[scenario.ID]scenario.Version, len(scenarios)),
 	}
 
 	for _, loaded := range scenarios {
-		if _, exists := repository.scenarios[loaded.ID]; exists {
-			return nil, fmt.Errorf("идентификатор сценария %q повторяется в каталоге", loaded.ID)
+		byVersion := repository.versions[loaded.ID]
+		if byVersion == nil {
+			byVersion = make(map[scenario.Version]scenario.Scenario)
+			repository.versions[loaded.ID] = byVersion
 		}
 
-		repository.scenarios[loaded.ID] = loaded
+		if _, exists := byVersion[loaded.Version]; exists {
+			return nil, fmt.Errorf("сценарий %q версии %d повторяется в каталоге", loaded.ID, loaded.Version)
+		}
+
+		if currentVersion, exists := repository.current[loaded.ID]; exists {
+			current := byVersion[currentVersion]
+			if loaded.IsActive && current.IsActive {
+				return nil, fmt.Errorf("сценарий %q имеет несколько активных версий", loaded.ID)
+			}
+
+			if loaded.IsActive || (!current.IsActive && loaded.Version > currentVersion) {
+				repository.current[loaded.ID] = loaded.Version
+			}
+		} else {
+			repository.current[loaded.ID] = loaded.Version
+		}
+
+		byVersion[loaded.Version] = loaded
 	}
 
 	return repository, nil
@@ -47,9 +69,10 @@ func (r *ScenarioRepository) List(ctx context.Context, filter scenario.Filter) (
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	found := make([]scenario.Scenario, 0, len(r.scenarios))
+	found := make([]scenario.Scenario, 0, len(r.current))
 
-	for _, stored := range r.scenarios {
+	for id, version := range r.current {
+		stored := r.versions[id][version]
 		if filter.OnlyActive && !stored.IsActive {
 			continue
 		}
@@ -60,6 +83,14 @@ func (r *ScenarioRepository) List(ctx context.Context, filter scenario.Filter) (
 
 		found = append(found, stored)
 	}
+
+	sort.Slice(found, func(i, j int) bool {
+		if found[i].ID == found[j].ID {
+			return found[i].Version < found[j].Version
+		}
+
+		return found[i].ID < found[j].ID
+	})
 
 	return found, nil
 }
@@ -73,7 +104,29 @@ func (r *ScenarioRepository) Get(ctx context.Context, id scenario.ID) (scenario.
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	stored, found := r.scenarios[id]
+	version, found := r.current[id]
+	if !found {
+		return scenario.Scenario{}, scenario.ErrNotFound
+	}
+
+	return r.versions[id][version], nil
+}
+
+// GetVersion возвращает точную версию, включая историческую неактивную.
+func (r *ScenarioRepository) GetVersion(
+	ctx context.Context,
+	id scenario.ID,
+	version scenario.Version,
+) (scenario.Scenario, error) {
+	if err := ctx.Err(); err != nil {
+		return scenario.Scenario{}, err
+	}
+
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	byVersion := r.versions[id]
+	stored, found := byVersion[version]
 	if !found {
 		return scenario.Scenario{}, scenario.ErrNotFound
 	}

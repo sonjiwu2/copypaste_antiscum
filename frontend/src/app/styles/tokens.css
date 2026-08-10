@@ -1,0 +1,313 @@
+/* Шрифт, переменные темы и сброс браузерных стилей. */
+
+@font-face {
+  font-family: 'Monocraft';
+  src: url('/fonts/Monocraft.otf') format('opentype'),
+       url('/fonts/Monocraft.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Палитра приложения.
+ *
+ * Имя токена читается как «роль-семейство-ступень»: bg/bd/fg/sh — где цвет
+ * применяется, дальше тон и светлота. Тёмная тема переопределяет те же
+ * токены, поэтому правила страниц о теме ничего не знают.
+ */
+:root {
+  /* Каналы для полупрозрачных фонов: alpha задаётся на месте применения. */
+  --c-surface-rgb: 255 255 255;
+  --c-tint-blue-rgb: 232 247 255;
+  --c-accent-reward: #ffad18;
+  --c-bd-blue-a1: #55a2e9;
+  --c-bd-blue-a2: #1686e8;
+  --c-bd-blue-b1: #cfe2f2;
+  --c-bd-blue-b2: #b9d8f2;
+  --c-bd-green-a1: #71bf83;
+  --c-bd-green-a2: #59ba7b;
+  --c-bd-green-b1: #bbf7d0;
+  --c-bd-green-b2: #bfe4d2;
+  --c-bd-green-t1: #08a86d;
+  --c-bd-neutral-a1: #8ea0b2;
+  --c-bd-neutral-b1: #d7e0eb;
+  --c-bd-neutral-b2: #aac1d7;
+  --c-bd-neutral-s2: #edf1f5;
+  --c-bd-neutral-t2: #182235;
+  --c-bd-orange-a1: #e59d45;
+  --c-bd-orange-a2: #f3a317;
+  --c-bd-orange-b2: #f1d9ad;
+  --c-bd-purple-a1: #a77ce8;
+  --c-bd-purple-a2: #5a39ab;
+  --c-bd-purple-b1: #d9cff2;
+  --c-bd-purple-s2: #eee9fb;
+  --c-bd-red-a1: #dc5870;
+  --c-bd-red-b1: #f0c9c7;
+  --c-bd-red-b2: #f0b9b7;
+  --c-bg-blue-a1: #38a4f5;
+  --c-bg-blue-a2: #1686e8;
+  --c-bg-blue-b2: #bed6eb;
+  --c-bg-blue-s1: #fbfdff;
+  --c-bg-blue-s2: #e8f7ff;
+  --c-bg-blue-t1: #0c65bd;
+  --c-bg-blue-t2: #16345a;
+  --c-bg-green-a2: #34a853;
+  --c-bg-green-b2: #86efac;
+  --c-bg-green-s1: #effcf6;
+  --c-bg-green-s2: #dcfce7;
+  --c-bg-green-t1: #0c9c63;
+  --c-bg-neutral-a1: #8390a6;
+  --c-bg-neutral-b1: #cfd8e3;
+  --c-bg-neutral-b2: #aab5c1;
+  --c-bg-neutral-s1: #ffffff;
+  --c-bg-neutral-s2: #e7ebf0;
+  --c-bg-neutral-t1: #53617a;
+  --c-bg-neutral-t2: #17233c;
+  --c-bg-orange-a1: #f3b52b;
+  --c-bg-orange-a2: #f17a00;
+  --c-bg-orange-b1: #fef9c3;
+  --c-bg-orange-s1: #fff9ec;
+  --c-bg-orange-s2: #fff0d8;
+  --c-bg-purple-a1: #7652ce;
+  --c-bg-purple-a2: #6d4bc6;
+  --c-bg-purple-s1: #fcfaff;
+  --c-bg-purple-s2: #f0eaff;
+  --c-bg-red-a1: #ef4238;
+  --c-bg-red-s1: #fff0ef;
+  --c-bg-red-s2: #fee2e2;
+  --c-fg-blue-a2: #1686e8;
+  --c-fg-blue-t1: #174b89;
+  --c-fg-blue-t2: #16243d;
+  --c-fg-green-a1: #55d4a3;
+  --c-fg-green-t1: #0a895c;
+  --c-fg-green-t2: #14532d;
+  --c-fg-neutral-a1: #8390a6;
+  --c-fg-neutral-a2: #66758c;
+  --c-fg-neutral-s1: #ffffff;
+  --c-fg-neutral-t1: #40516b;
+  --c-fg-neutral-t2: #24344d;
+  --c-fg-orange-a2: #ed9012;
+  --c-fg-orange-t1: #b85b00;
+  --c-fg-purple-a1: #8255dd;
+  --c-fg-purple-a2: #6840be;
+  --c-fg-purple-b1: #d7d2e3;
+  --c-fg-purple-t1: #4d318f;
+  --c-fg-red-a1: #ef5350;
+  --c-fg-red-a2: #ca3939;
+  --c-fg-red-t1: #b91c1c;
+  --c-sh-purple-a2: #633d9d;
+  --c-sh-purple-b2: #c9b7ee;
+  --c-sh-purple-s1: #f7f2ff;
+  --c-sh-purple-t1: #432b79;
+}
+
+:root[data-theme='dark'] {
+  --c-surface-rgb: 26 31 40;
+  --c-tint-blue-rgb: 35 53 62;
+  --c-accent-reward: #ffbe4a;
+  --c-bd-blue-a1: #4398e7;
+  --c-bd-blue-a2: #147bd5;
+  --c-bd-blue-b1: #364e63;
+  --c-bd-blue-b2: #364f63;
+  --c-bd-green-a1: #63b977;
+  --c-bd-green-a2: #4bb470;
+  --c-bd-green-b1: #366346;
+  --c-bd-green-b2: #36634d;
+  --c-bd-green-t1: #09b978;
+  --c-bd-neutral-a1: #44526a;
+  --c-bd-neutral-b1: #353f50;
+  --c-bd-neutral-b2: #353f50;
+  --c-bd-neutral-s2: #353f50;
+  --c-bd-neutral-t2: #44526a;
+  --c-bd-orange-a1: #e29433;
+  --c-bd-orange-a2: #ea990c;
+  --c-bd-orange-b2: #635336;
+  --c-bd-purple-a1: #9b6be5;
+  --c-bd-purple-a2: #52349c;
+  --c-bd-purple-b1: #433663;
+  --c-bd-purple-s2: #423663;
+  --c-bd-red-a1: #d84762;
+  --c-bd-red-b1: #633836;
+  --c-bd-red-b2: #633736;
+  --c-bg-blue-a1: #38a4f5;
+  --c-bg-blue-a2: #1686e8;
+  --c-bg-blue-b2: #2c3e4e;
+  --c-bg-blue-s1: #1c2630;
+  --c-bg-blue-s2: #23353e;
+  --c-bg-blue-t1: #0c65bd;
+  --c-bg-blue-t2: #16345a;
+  --c-bg-green-a2: #34a853;
+  --c-bg-green-b2: #2c4e38;
+  --c-bg-green-s1: #1c3027;
+  --c-bg-green-s2: #233e2c;
+  --c-bg-green-t1: #0c9c63;
+  --c-bg-neutral-a1: #8390a6;
+  --c-bg-neutral-b1: #2d3543;
+  --c-bg-neutral-b2: #2d3543;
+  --c-bg-neutral-s1: #1a1f28;
+  --c-bg-neutral-s2: #222935;
+  --c-bg-neutral-t1: #53617a;
+  --c-bg-neutral-t2: #17233c;
+  --c-bg-orange-a1: #f3b52b;
+  --c-bg-orange-a2: #f17a00;
+  --c-bg-orange-b1: #4e4b2c;
+  --c-bg-orange-s1: #302a1c;
+  --c-bg-orange-s2: #3e3423;
+  --c-bg-purple-a1: #7652ce;
+  --c-bg-purple-a2: #6d4bc6;
+  --c-bg-purple-s1: #241c30;
+  --c-bg-purple-s2: #2b233e;
+  --c-bg-red-a1: #ef4238;
+  --c-bg-red-s1: #301e1c;
+  --c-bg-red-s2: #3e2323;
+  --c-fg-blue-a2: #94bfe6;
+  --c-fg-blue-t1: #94b9e6;
+  --c-fg-blue-t2: #9eb4dc;
+  --c-fg-green-a1: #95e4c6;
+  --c-fg-green-t1: #94e6c9;
+  --c-fg-green-t2: #94e5b4;
+  --c-fg-neutral-a1: #9aa5b6;
+  --c-fg-neutral-a2: #9aa5b6;
+  --c-fg-neutral-s1: #f2f4f7;
+  --c-fg-neutral-t1: #c8cfda;
+  --c-fg-neutral-t2: #dadfe7;
+  --c-fg-orange-a2: #e6c394;
+  --c-fg-orange-t1: #e6bc94;
+  --c-fg-purple-a1: #af94e6;
+  --c-fg-purple-a2: #b19cde;
+  --c-fg-purple-b1: #f4f2f8;
+  --c-fg-purple-t1: #b09cdd;
+  --c-fg-red-a1: #e69594;
+  --c-fg-red-a2: #e39696;
+  --c-fg-red-t1: #e69494;
+  --c-sh-purple-a2: #090e15;
+  --c-sh-purple-b2: #090e15;
+  --c-sh-purple-s1: #090e15;
+  --c-sh-purple-t1: #090e15;
+}
+
+:root {
+  color-scheme: light;
+  font-family: 'Monocraft', monospace;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+  --page-bg: var(--c-bg-blue-s1);
+  --surface: var(--c-bg-neutral-s1);
+  --surface-blue: var(--c-bg-blue-s1);
+  --surface-green: var(--c-bg-green-s1);
+  --surface-orange: var(--c-bg-orange-s1);
+  --surface-purple: var(--c-bg-purple-s1);
+  --text-primary: var(--c-fg-neutral-t2);
+  --text-secondary: var(--c-fg-neutral-t1);
+  --text-muted: var(--c-fg-neutral-a1);
+  --border: var(--c-bd-neutral-b1);
+  --primary: var(--c-bg-blue-a2);
+  --primary-dark: var(--c-bg-blue-t1);
+  --buyer: var(--c-bg-green-t1);
+  --seller: var(--c-bg-orange-a2);
+  --reward: var(--c-accent-reward);
+  --danger: var(--c-bg-red-a1);
+  --purple: var(--c-bg-purple-a1);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-card: 0 4px 14px rgb(23 35 60 / 8%);
+  --shadow-hover: 0 8px 24px rgb(23 35 60 / 12%);
+  --duration-fast: 140ms;
+  --duration-normal: 220ms;
+  --ease-ui: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+
+/* Тёмная тема: системные элементы браузера и тени под тёмный фон. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --shadow-card: 0 4px 14px rgb(0 0 0 / 45%);
+  --shadow-hover: 0 8px 24px rgb(0 0 0 / 55%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  color: var(--text-primary);
+  background: var(--page-bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active {
+  filter: brightness(0.96);
+  transform: translateY(1px) scale(0.985);
+}
+
+button:focus-visible {
+  outline: 3px solid rgb(22 134 232 / 30%);
+  outline-offset: 2px;
+}
+
+.pixel-art {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Общий класс для иконок набора (PNG) и служебных знаков (SVG). */
+.pixel-icon {
+  display: block;
+  flex: 0 0 auto;
+  overflow: visible;
+  object-fit: contain;
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+
+.pixel-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--duration-fast) var(--ease-ui),
+    box-shadow var(--duration-fast) var(--ease-ui);
+}
+
+.pixel-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+/* --- Настройки внешнего вида ------------------------------------------- */
+
+/* Скрыто визуально, но доступно читалке экрана. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+

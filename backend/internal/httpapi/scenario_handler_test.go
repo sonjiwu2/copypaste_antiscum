@@ -38,12 +38,20 @@ func TestListScenarios(t *testing.T) {
 			target:     "/api/v1/scenarios",
 			wantStatus: http.StatusOK,
 			wantIDs: []string{
+				"buyer-airpods-counterfeit",
 				"buyer-fake-delivery",
+				"buyer-gpu-hidden-repair",
 				"buyer-iphone-deposit",
+				"buyer-macbook-corporate-lock",
 				"buyer-ps5-delivery",
+				"buyer-switch-prepayment",
+				"seller-fake-payment-email",
 				"seller-gpu-return-swap",
 				"seller-laptop-courier",
 				"seller-payment-already-sent",
+				"seller-qr-payment-trap",
+				"seller-sms-code-payment",
+				"seller-third-party-overpayment",
 			},
 		},
 		{
@@ -51,9 +59,13 @@ func TestListScenarios(t *testing.T) {
 			target:     "/api/v1/scenarios?role=buyer",
 			wantStatus: http.StatusOK,
 			wantIDs: []string{
+				"buyer-airpods-counterfeit",
 				"buyer-fake-delivery",
+				"buyer-gpu-hidden-repair",
 				"buyer-iphone-deposit",
+				"buyer-macbook-corporate-lock",
 				"buyer-ps5-delivery",
+				"buyer-switch-prepayment",
 			},
 		},
 		{
@@ -61,9 +73,13 @@ func TestListScenarios(t *testing.T) {
 			target:     "/api/v1/scenarios?role=seller",
 			wantStatus: http.StatusOK,
 			wantIDs: []string{
+				"seller-fake-payment-email",
 				"seller-gpu-return-swap",
 				"seller-laptop-courier",
 				"seller-payment-already-sent",
+				"seller-qr-payment-trap",
+				"seller-sms-code-payment",
+				"seller-third-party-overpayment",
 			},
 		},
 		{

@@ -83,7 +83,7 @@ func validateNodes(scenario Scenario, violations *violationCollector) {
 
 		switch node.Type {
 		case NodeTypeMessage:
-			validateMessageNode(node, violations)
+			validateMessageNode(scenario.Role, node, violations)
 		case NodeTypeDecision:
 			validateDecisionNode(node, violations)
 		case NodeTypeTerminal:
@@ -94,7 +94,7 @@ func validateNodes(scenario Scenario, violations *violationCollector) {
 	}
 }
 
-func validateMessageNode(node Node, violations *violationCollector) {
+func validateMessageNode(role Role, node Node, violations *violationCollector) {
 	if node.NextNodeID == "" {
 		violations.add(ValidationError{
 			NodeID: node.ID,
@@ -108,6 +108,40 @@ func validateMessageNode(node Node, violations *violationCollector) {
 			NodeID: node.ID,
 			Rule:   RuleMessageNodeWithChoices,
 			Detail: "узел-сообщение не может содержать варианты выбора",
+		})
+	}
+
+	validateMessageSender(role, node, violations)
+}
+
+// validateMessageSender не даёт перепутать стороны сделки.
+//
+// Узел-сообщение описывает слова собеседника или обстановку. Реплики самого
+// игрока задаются полем playerReply у выбора, поэтому отправитель, совпадающий
+// с ролью сценария, означает ошибку автора контента.
+func validateMessageSender(role Role, node Node, violations *violationCollector) {
+	if node.Sender == SenderSystem {
+		return
+	}
+
+	sender := Role(node.Sender)
+
+	if !sender.Valid() {
+		violations.add(ValidationError{
+			NodeID: node.ID,
+			Rule:   RuleMessageSenderInvalid,
+			Detail: fmt.Sprintf("отправитель %q не поддерживается", node.Sender),
+		})
+
+		return
+	}
+
+	if sender == role {
+		violations.add(ValidationError{
+			NodeID: node.ID,
+			Rule:   RuleMessageSenderInvalid,
+			Detail: fmt.Sprintf("роль игрока %q не может быть отправителем реплики: "+
+				"его слова задаются полем playerReply у выбора", role),
 		})
 	}
 }
@@ -142,6 +176,17 @@ func validateDecisionNode(node Node, violations *violationCollector) {
 				ChoiceID: choice.ID,
 				Rule:     RuleChoiceLabelRequired,
 				Detail:   "у варианта выбора должна быть подпись",
+			})
+		}
+
+		// Без реплики выбранное действие не во что превратить в переписке,
+		// и лента диалога осталась бы с пропуском на месте хода игрока.
+		if choice.PlayerReply == "" {
+			violations.add(ValidationError{
+				NodeID:   node.ID,
+				ChoiceID: choice.ID,
+				Rule:     RuleChoiceReplyRequired,
+				Detail:   "у варианта выбора должна быть закреплённая реплика игрока",
 			})
 		}
 

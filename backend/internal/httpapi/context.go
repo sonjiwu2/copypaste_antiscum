@@ -3,6 +3,8 @@ package httpapi
 import (
 	"context"
 	"log/slog"
+
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/profile"
 )
 
 type contextKey int
@@ -10,7 +12,19 @@ type contextKey int
 const (
 	requestIDKey contextKey = iota
 	loggerKey
+	profileIDKey
 )
+
+// ProfileIDFrom возвращает профиль запроса или пустое значение.
+func ProfileIDFrom(ctx context.Context) profile.ID {
+	profileID, _ := ctx.Value(profileIDKey).(profile.ID)
+
+	return profileID
+}
+
+func withProfileID(ctx context.Context, profileID profile.ID) context.Context {
+	return context.WithValue(ctx, profileIDKey, profileID)
+}
 
 // RequestIDFrom возвращает идентификатор запроса или пустую строку.
 func RequestIDFrom(ctx context.Context) string {

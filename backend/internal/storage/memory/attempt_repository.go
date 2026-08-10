@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/attempt"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/profile"
 )
 
 // AttemptRepository хранит попытки в оперативной памяти.
@@ -80,4 +81,25 @@ func (r *AttemptRepository) Update(ctx context.Context, updated attempt.Attempt)
 	r.attempts[updated.ID] = next
 
 	return next.Clone(), nil
+}
+
+// ownedBy возвращает копии попыток профиля.
+//
+// Метод нужен хранилищу прогресса в том же пакете: наружу изменяемое
+// состояние по-прежнему не выходит.
+func (r *AttemptRepository) ownedBy(owner profile.ID) []attempt.Attempt {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	owned := make([]attempt.Attempt, 0, len(r.attempts))
+
+	for _, stored := range r.attempts {
+		if stored.ProfileID != owner {
+			continue
+		}
+
+		owned = append(owned, stored.Clone())
+	}
+
+	return owned
 }

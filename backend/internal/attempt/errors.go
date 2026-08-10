@@ -34,11 +34,15 @@ var (
 
 	// ErrChoiceNotFound — выбор не принадлежит текущему узлу попытки.
 	ErrChoiceNotFound = errors.New("вариант выбора недоступен на текущем узле")
+
+	// ErrForbidden — попытка принадлежит другому профилю.
+	ErrForbidden = errors.New("попытка принадлежит другому профилю")
 )
 
 // Ошибки некорректных исходных данных попытки.
 var (
 	ErrEmptyAttemptID         = errors.New("идентификатор попытки обязателен")
+	ErrEmptyProfileID         = errors.New("идентификатор профиля обязателен")
 	ErrEmptyScenarioID        = errors.New("идентификатор сценария обязателен")
 	ErrInvalidScenarioVersion = errors.New("версия сценария должна быть положительной")
 	ErrEmptyNode              = errors.New("узел попытки обязателен")

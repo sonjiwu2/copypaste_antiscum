@@ -3,7 +3,9 @@ package scenario
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"sort"
 )
@@ -42,6 +44,7 @@ type fixtureNode struct {
 type fixtureChoice struct {
 	ID           string               `json:"id"`
 	Label        string               `json:"label"`
+	PlayerReply  string               `json:"playerReply"`
 	NextNodeID   string               `json:"nextNodeId"`
 	SafetyScore  int                  `json:"safetyScore"`
 	Criticality  string               `json:"criticality"`
@@ -106,6 +109,19 @@ func loadFile(fsys fs.FS, name string) (Scenario, error) {
 		return Scenario{}, fmt.Errorf("прочитать файл сценария %q: %w", name, err)
 	}
 
+	built, err := DecodeJSON(raw)
+	if err != nil {
+		return Scenario{}, fmt.Errorf("файл сценария %q не прошёл проверку: %w", name, err)
+	}
+
+	return built, nil
+}
+
+// DecodeJSON разбирает один сценарий из JSON и проверяет его доменные правила.
+//
+// Тот же путь используется для встроенных файлов и для сохранённых версий:
+// архив не должен получить более слабый или отдельный декодер графа.
+func DecodeJSON(raw []byte) (Scenario, error) {
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	// Неизвестное поле почти всегда означает опечатку в фикстуре,
 	// поэтому такой файл отклоняется, а не читается частично.
@@ -113,12 +129,23 @@ func loadFile(fsys fs.FS, name string) (Scenario, error) {
 
 	var file fixtureScenario
 	if err := decoder.Decode(&file); err != nil {
-		return Scenario{}, fmt.Errorf("разобрать файл сценария %q: %w", name, err)
+		return Scenario{}, fmt.Errorf("разобрать файл сценария: %w", err)
+	}
+
+	// После одного JSON-объекта допустим только пробельный хвост. Иначе
+	// повреждённая архивная запись могла бы быть прочитана частично.
+	var trailing any
+	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
+		if err == nil {
+			return Scenario{}, errors.New("после сценария найдено лишнее JSON-значение")
+		}
+
+		return Scenario{}, fmt.Errorf("проверить конец JSON сценария: %w", err)
 	}
 
 	built, err := New(file.draft())
 	if err != nil {
-		return Scenario{}, fmt.Errorf("файл сценария %q не прошёл проверку: %w", name, err)
+		return Scenario{}, err
 	}
 
 	return built, nil
@@ -177,6 +204,7 @@ func (c fixtureChoice) domainChoice() Choice {
 	choice := Choice{
 		ID:          ChoiceID(c.ID),
 		Label:       c.Label,
+		PlayerReply: c.PlayerReply,
 		NextNodeID:  NodeID(c.NextNodeID),
 		SafetyScore: c.SafetyScore,
 		Criticality: Criticality(c.Criticality),

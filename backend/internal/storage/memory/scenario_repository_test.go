@@ -48,10 +48,10 @@ func TestScenarioRepositoryList(t *testing.T) {
 		filter scenario.Filter
 		want   int
 	}{
-		{name: "без фильтра", filter: scenario.Filter{}, want: 6},
-		{name: "только активные", filter: scenario.Filter{OnlyActive: true}, want: 6},
-		{name: "роль покупателя", filter: scenario.Filter{Role: scenario.RoleBuyer}, want: 3},
-		{name: "роль продавца", filter: scenario.Filter{Role: scenario.RoleSeller}, want: 3},
+		{name: "без фильтра", filter: scenario.Filter{}, want: 14},
+		{name: "только активные", filter: scenario.Filter{OnlyActive: true}, want: 14},
+		{name: "роль покупателя", filter: scenario.Filter{Role: scenario.RoleBuyer}, want: 7},
+		{name: "роль продавца", filter: scenario.Filter{Role: scenario.RoleSeller}, want: 7},
 		{name: "неизвестная роль", filter: scenario.Filter{Role: "courier"}, want: 0},
 	}
 
@@ -88,6 +88,68 @@ func TestScenarioRepositoryGet(t *testing.T) {
 	}
 }
 
+func TestScenarioRepositoryKeepsExactHistoricalVersions(t *testing.T) {
+	version1 := repositoryScenario(t, "versioned", 1, false)
+	version2 := repositoryScenario(t, "versioned", 2, true)
+
+	repository, err := memory.NewScenarioRepository([]scenario.Scenario{version2, version1})
+	if err != nil {
+		t.Fatalf("не удалось собрать каталог: %v", err)
+	}
+
+	current, err := repository.Get(context.Background(), version1.ID)
+	if err != nil {
+		t.Fatalf("не удалось получить текущую версию: %v", err)
+	}
+
+	if current.Version != 2 {
+		t.Errorf("текущая версия = %d, ожидалась 2", current.Version)
+	}
+
+	historical, err := repository.GetVersion(context.Background(), version1.ID, 1)
+	if err != nil {
+		t.Fatalf("не удалось получить историческую версию: %v", err)
+	}
+
+	if historical.Version != 1 || historical.IsActive {
+		t.Errorf("историческая версия = %d/active=%v, ожидалась 1/false",
+			historical.Version, historical.IsActive)
+	}
+
+	if _, err := repository.GetVersion(context.Background(), version1.ID, 3); !errors.Is(err, scenario.ErrNotFound) {
+		t.Errorf("ошибка = %v, ожидалась ErrNotFound", err)
+	}
+}
+
+func TestScenarioRepositoryRejectsMultipleActiveVersions(t *testing.T) {
+	_, err := memory.NewScenarioRepository([]scenario.Scenario{
+		repositoryScenario(t, "versioned", 1, true),
+		repositoryScenario(t, "versioned", 2, true),
+	})
+	if err == nil {
+		t.Fatal("несколько активных версий должны отклоняться")
+	}
+}
+
+func TestScenarioRepositoryListIsDeterministic(t *testing.T) {
+	repository, err := memory.NewScenarioRepository([]scenario.Scenario{
+		repositoryScenario(t, "z-scenario", 1, true),
+		repositoryScenario(t, "a-scenario", 1, true),
+	})
+	if err != nil {
+		t.Fatalf("не удалось собрать каталог: %v", err)
+	}
+
+	found, err := repository.List(context.Background(), scenario.Filter{})
+	if err != nil {
+		t.Fatalf("не удалось получить список: %v", err)
+	}
+
+	if len(found) != 2 || found[0].ID != "a-scenario" || found[1].ID != "z-scenario" {
+		t.Errorf("порядок = %v, ожидался a-scenario, z-scenario", []scenario.ID{found[0].ID, found[1].ID})
+	}
+}
+
 func TestScenarioRepositoryRespectsCanceledContext(t *testing.T) {
 	repository := newRepository(t)
 
@@ -101,6 +163,42 @@ func TestScenarioRepositoryRespectsCanceledContext(t *testing.T) {
 	if _, err := repository.Get(ctx, "buyer-fake-delivery"); !errors.Is(err, context.Canceled) {
 		t.Errorf("Get: ошибка = %v, ожидалась context.Canceled", err)
 	}
+
+	if _, err := repository.GetVersion(ctx, "buyer-fake-delivery", 1); !errors.Is(err, context.Canceled) {
+		t.Errorf("GetVersion: ошибка = %v, ожидалась context.Canceled", err)
+	}
+}
+
+func repositoryScenario(t *testing.T, id scenario.ID, version scenario.Version, active bool) scenario.Scenario {
+	t.Helper()
+
+	built, err := scenario.New(scenario.Draft{
+		ID: id, Version: version, Slug: string(id), Role: scenario.RoleBuyer,
+		Title: "Версионный сценарий", Difficulty: scenario.DifficultyEasy,
+		EstimatedMinutes: 1, StartNodeID: "decision", IsActive: active,
+		Nodes: []scenario.Node{
+			{
+				ID: "decision", Type: scenario.NodeTypeDecision,
+				Choices: []scenario.Choice{
+					{ID: "safe", Label: "Безопасно", PlayerReply: "Так делать не буду.",
+						NextNodeID: "safe", Criticality: scenario.CriticalityLow,
+						Consequence: scenario.Consequence{Severity: scenario.SeveritySafe, Title: "Верно", Explanation: "Безопасно"}},
+					{ID: "unsafe", Label: "Опасно", PlayerReply: "Хорошо, согласен.",
+						NextNodeID: "unsafe", Criticality: scenario.CriticalityHigh,
+						Consequence: scenario.Consequence{Severity: scenario.SeverityDangerous, Title: "Опасно", Explanation: "Риск"}},
+				},
+			},
+			{ID: "safe", Type: scenario.NodeTypeTerminal,
+				TerminalOutcome: &scenario.Outcome{Type: scenario.OutcomeSafe, Title: "Безопасно", Explanation: "Конец"}},
+			{ID: "unsafe", Type: scenario.NodeTypeTerminal,
+				TerminalOutcome: &scenario.Outcome{Type: scenario.OutcomeUnsafe, Title: "Опасно", Explanation: "Конец"}},
+		},
+	})
+	if err != nil {
+		t.Fatalf("не удалось собрать сценарий: %v", err)
+	}
+
+	return built
 }
 
 // Изменение полученного сценария не должно доходить до хранилища.

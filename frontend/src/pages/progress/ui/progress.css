@@ -1,0 +1,406 @@
+.app-shell.app-shell--progress {
+  display: block;
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+  background: var(--c-bg-blue-s1);
+}
+
+.app-shell--progress .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.progress-page-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  color: var(--c-fg-neutral-t2);
+}
+
+.progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(23, 35, 60, 0.05);
+}
+
+.progress-header__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-header__title h1 {
+  margin: 0;
+  font-family: 'Monocraft', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--c-fg-blue-t1);
+}
+
+.progress-header__title p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--c-fg-neutral-a2);
+}
+
+.progress-header__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--c-fg-neutral-s1);
+  background: var(--c-bg-blue-a2);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 150ms ease, transform 100ms ease;
+}
+
+.btn-primary:hover {
+  background: var(--c-bg-blue-a2);
+  transform: translateY(-1px);
+}
+
+.progress-dashboard {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .progress-dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+.progress-card {
+  padding: 20px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(23, 35, 60, 0.04);
+}
+
+.progress-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-family: 'Monocraft', monospace;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--c-fg-blue-t1);
+}
+
+.level-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.level-banner__info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.level-banner__badge {
+  font-family: 'Monocraft', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--c-fg-blue-a2);
+}
+
+.level-banner__rank {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-fg-blue-t1);
+  background: var(--c-bg-blue-s2);
+  border-radius: 6px;
+}
+
+.level-banner__next {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-fg-neutral-a2);
+}
+
+.progress-page-track {
+  position: relative;
+  height: 28px;
+  overflow: hidden;
+  background: var(--c-bg-neutral-s2);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 14px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.progress-page-track__fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--c-bg-blue-a2) 0%, var(--c-bg-blue-a2) 50%, var(--c-bg-green-a2) 100%);
+  border-radius: inherit;
+  transition: width 350ms ease-in-out;
+}
+
+.progress-page-track__text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Monocraft', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-fg-blue-t2);
+  text-shadow: 0 0 4px rgb(var(--c-surface-rgb) / 90%);
+  pointer-events: none;
+}
+
+.level-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.level-detail-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 8px;
+}
+
+.level-detail-item small {
+  font-size: 11px;
+  color: var(--c-fg-neutral-a2);
+}
+
+.level-detail-item strong {
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--c-fg-neutral-t2);
+}
+
+.level-reward-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--c-bg-orange-s1);
+  border: 1px dashed var(--c-bd-orange-b2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--c-fg-orange-t1);
+}
+
+.stats-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 12px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.stat-box__icon {
+  margin-bottom: 6px;
+}
+
+.stat-box__icon--gold { color: var(--c-fg-orange-a2); }
+.stat-box__icon--blue { color: var(--c-fg-blue-a2); }
+.stat-box__icon--red { color: var(--c-fg-red-a1); }
+.stat-box__icon--orange { color: var(--c-fg-orange-a2); }
+
+.stat-box strong {
+  font-size: 22px;
+  line-height: 1.1;
+  color: var(--c-fg-neutral-t2);
+}
+
+.stat-box span {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--c-fg-neutral-a2);
+}
+
+.achievements-section {
+  padding: 20px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 12px;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.achievement-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 10px;
+  transition: border-color 150ms ease;
+}
+
+.achievement-card--unlocked {
+  background: var(--c-bg-green-s1);
+  border-color: var(--c-bd-green-b1);
+}
+
+.achievement-card__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: var(--c-bg-neutral-b1);
+  color: var(--c-fg-neutral-a1);
+  flex-shrink: 0;
+}
+
+.achievement-card--unlocked .achievement-card__icon {
+  background: var(--c-bg-green-s2);
+  color: var(--c-fg-green-t1);
+}
+
+.achievement-card__info h4 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--c-fg-neutral-t2);
+}
+
+.achievement-card__info p {
+  margin: 4px 0 6px;
+  font-size: 12px;
+  color: var(--c-fg-neutral-a2);
+}
+
+.achievement-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  background: var(--c-bg-neutral-b2);
+  color: var(--c-fg-neutral-t1);
+}
+
+.achievement-badge--unlocked {
+  background: var(--c-bg-green-b2);
+  color: var(--c-fg-green-t2);
+}
+
+.missions-table-section {
+  padding: 20px;
+  background: var(--c-bg-neutral-s1);
+  border: 1px solid var(--c-bd-neutral-b1);
+  border-radius: 12px;
+}
+
+.progress-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.progress-table th,
+.progress-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--c-bd-neutral-b1);
+}
+
+.progress-table th {
+  font-family: 'Monocraft', monospace;
+  font-size: 12px;
+  color: var(--c-fg-neutral-a2);
+  text-transform: uppercase;
+  background: var(--c-bg-neutral-s1);
+}
+
+.progress-table td {
+  font-size: 14px;
+  color: var(--c-fg-neutral-t2);
+}
+
+.progress-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.score-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  font-weight: 600;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.score-pill--high {
+  background: var(--c-bg-green-s2);
+  color: var(--c-fg-green-t1);
+}
+
+.score-pill--medium {
+  background: var(--c-bg-orange-b1);
+  color: var(--c-fg-orange-t1);
+}
+
+.score-pill--low {
+  background: var(--c-bg-red-s2);
+  color: var(--c-fg-red-t1);
+}
+
+.empty-progress-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--c-fg-neutral-a2);
+}
+
+.empty-progress-state p {
+  margin: 10px 0 16px;
+  font-size: 15px;
+}

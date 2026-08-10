@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vite/
+*.log
+.agents/
+*.md
+.pnpm-store/
+ui reference/
+reference/
+docs/
+standalone.html
+*.tsbuildinfo

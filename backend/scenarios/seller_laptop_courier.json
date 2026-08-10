@@ -1,6 +1,6 @@
 {
   "id": "seller-laptop-courier",
-  "version": 2,
+  "version": 3,
   "slug": "seller-laptop-courier",
   "role": "seller",
   "title": "Покупатель присылает курьера",
@@ -39,6 +39,7 @@
         {
           "id": "accept-courier-with-condition",
           "label": "Согласиться, но передать товар только после зачисления",
+          "playerReply": "Курьер — не проблема. Но ноутбук отдам только после того, как деньги придут мне на счёт.",
           "nextNodeId": "buyer-asks-address",
           "safetyScore": -10,
           "criticality": "medium",
@@ -54,6 +55,7 @@
         {
           "id": "insist-personal-meeting",
           "label": "Предложить встретиться лично на следующий день",
+          "playerReply": "Давайте лучше встретимся лично завтра. Через курьера отдавать ноутбук не хочу.",
           "nextNodeId": "buyer-refuses-meeting",
           "safetyScore": -15,
           "criticality": "low",
@@ -69,6 +71,7 @@
         {
           "id": "offer-platform-payment",
           "label": "Предложить безопасную оплату внутри площадки",
+          "playerReply": "Давайте оформим безопасную сделку через площадку — там статус оплаты виден нам обоим.",
           "nextNodeId": "buyer-rejects-platform",
           "safetyScore": -15,
           "criticality": "low",
@@ -140,6 +143,7 @@
         {
           "id": "hand-over-on-check",
           "label": "Передать ноутбук, потому что чек выглядит настоящим",
+          "playerReply": "Чек выглядит настоящим. Хорошо, отдаю ноутбук курьеру.",
           "nextNodeId": "unsafe-fake-check-ending",
           "safetyScore": -40,
           "criticality": "high",
@@ -155,6 +159,7 @@
         {
           "id": "ask-courier-order",
           "label": "Попросить курьера показать данные заказа",
+          "playerReply": "Попрошу курьера показать данные заказа в приложении — так и проверю сделку.",
           "nextNodeId": "courier-order-system",
           "safetyScore": -45,
           "criticality": "high",
@@ -170,6 +175,7 @@
         {
           "id": "wait-for-funds",
           "label": "Не передавать ноутбук до фактического поступления денег",
+          "playerReply": "Пока деньги не поступят мне на счёт, ноутбук я не передам.",
           "nextNodeId": "buyer-waiting-pressure",
           "safetyScore": 5,
           "criticality": "low",
@@ -185,6 +191,7 @@
         {
           "id": "verify-in-bank-app",
           "label": "Самостоятельно проверить банковское приложение",
+          "playerReply": "Секунду, открою приложение банка и посмотрю поступление сам.",
           "nextNodeId": "bank-check-system",
           "safetyScore": 0,
           "criticality": "low",
@@ -242,6 +249,7 @@
         {
           "id": "hand-over-under-pressure",
           "label": "Передать ноутбук под давлением покупателя",
+          "playerReply": "Ладно, не буду вас задерживать. Передаю ноутбук курьеру.",
           "nextNodeId": "unsafe-pressure-ending",
           "safetyScore": -40,
           "criticality": "high",
@@ -257,6 +265,7 @@
         {
           "id": "cancel-handover",
           "label": "Отменить передачу и отпустить курьера",
+          "playerReply": "Передачу отменяю, курьера отпускаю. Вернёмся к сделке, когда деньги придут на счёт.",
           "nextNodeId": "buyer-demands-compensation",
           "safetyScore": 0,
           "criticality": "low",
@@ -272,6 +281,7 @@
         {
           "id": "wait-with-courier",
           "label": "Предложить дождаться поступления денег вместе с курьером",
+          "playerReply": "Пусть курьер подождёт здесь, пока деньги дойдут до моего счёта.",
           "nextNodeId": "courier-cannot-wait",
           "safetyScore": -5,
           "criticality": "medium",
@@ -308,6 +318,7 @@
         {
           "id": "finish-without-report",
           "label": "Завершить разговор и ничего больше не делать",
+          "playerReply": "Обсуждать больше нечего. Всего доброго.",
           "nextNodeId": "safe-quiet-ending",
           "safetyScore": -5,
           "criticality": "low",
@@ -323,6 +334,7 @@
         {
           "id": "document-block-report",
           "label": "Сохранить переписку, заблокировать покупателя и отправить жалобу",
+          "playerReply": "Переписку и ваш чек я сохранил и передаю в поддержку площадки.",
           "nextNodeId": "safe-full-ending",
           "safetyScore": 5,
           "criticality": "low",
@@ -338,6 +350,7 @@
         {
           "id": "compensate-courier",
           "label": "Компенсировать покупателю стоимость вызова курьера",
+          "playerReply": "Хорошо, скиньте реквизиты — компенсирую вам поездку курьера.",
           "nextNodeId": "unsafe-small-loss-ending",
           "safetyScore": -35,
           "criticality": "high",

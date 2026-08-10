@@ -1,0 +1,280 @@
+{
+  "id": "buyer-airpods-counterfeit",
+  "version": 1,
+  "slug": "buyer-airpods-counterfeit",
+  "role": "buyer",
+  "title": "Поддельные AirPods в запечатанной коробке",
+  "description": "Покупка AirPods Pro 2 при личной встрече: продавец использует упаковку, серийный номер и системную анимацию, чтобы выдать копию за оригинал.",
+  "difficulty": "easy",
+  "estimatedMinutes": 4,
+  "startNodeId": "seller-greeting",
+  "isActive": true,
+  "nodes": [
+    {
+      "id": "seller-greeting",
+      "type": "message",
+      "sender": "seller",
+      "text": "Здравствуйте! AirPods Pro 2 ещё продаются. Новые, коробка запечатана. Подарили вторые такие же, поэтому отдаю за 12 000 ₽.",
+      "nextNodeId": "seller-serial-proof"
+    },
+    {
+      "id": "seller-serial-proof",
+      "type": "message",
+      "sender": "seller",
+      "text": "Серийный номер на сайте Apple определяется, чек тоже есть. На встрече сможете посмотреть коробку, но вскрывать её до оплаты не хочу — тогда товар уже не будет новым.",
+      "nextNodeId": "sealed-box-decision"
+    },
+    {
+      "id": "sealed-box-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец разрешает проверить только упаковку и серийный номер. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "buy-sealed-box",
+          "label": "Купить запечатанную коробку без вскрытия",
+          "playerReply": "Хорошо, беру запечатанной. Коробка целая, мне этого достаточно.",
+          "nextNodeId": "unsafe-counterfeit-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["sealed_box_pressure", "counterfeit_goods"],
+          "skillEffects": [{"skill": "device_verification", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Упаковка принята за доказательство",
+            "explanation": "Плёнку, наклейки, коробку и серийный номер можно воспроизвести или скопировать с оригинального устройства.",
+            "realWorldRule": "Не оплачивайте дорогую электронику, которую продавец запрещает проверить."
+          }
+        },
+        {
+          "id": "require-opening-and-pairing",
+          "label": "Попросить вскрыть коробку и подключить наушники",
+          "playerReply": "Давайте при встрече вскроем коробку и подключим наушники к телефону. Без этого оплачивать не буду.",
+          "nextNodeId": "seller-opening-pressure",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["counterfeit_goods"],
+          "skillEffects": [{"skill": "device_verification", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Запрошена проверка самого товара",
+            "explanation": "Покупатель должен проверять устройство, а не только внешний вид упаковки.",
+            "realWorldRule": "При личной покупке проверяйте товар до передачи денег."
+          }
+        },
+        {
+          "id": "trust-serial-only",
+          "label": "Проверить серийный номер и после этого купить",
+          "playerReply": "Тогда пробью серийный номер на сайте Apple. Определится — беру не вскрывая.",
+          "nextNodeId": "unsafe-counterfeit-ending",
+          "safetyScore": -30,
+          "criticality": "high",
+          "riskTags": ["copied_serial", "counterfeit_goods"],
+          "skillEffects": [{"skill": "device_verification", "delta": -1}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Серийный номер переоценён",
+            "explanation": "Определяющийся номер подтверждает существование такого номера, но не оригинальность конкретного комплекта.",
+            "realWorldRule": "Серийный номер — только одна из проверок, а не окончательное доказательство оригинальности."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seller-opening-pressure",
+      "type": "message",
+      "sender": "seller",
+      "text": "Хорошо, но если вскрываем, вы должны купить. Другой человек готов забрать их запечатанными прямо сейчас.",
+      "nextNodeId": "opening-decision"
+    },
+    {
+      "id": "opening-decision",
+      "type": "decision",
+      "decisionPrompt": "Продавец требует заранее пообещать покупку. Что вы ответите?",
+      "choices": [
+        {
+          "id": "promise-to-buy",
+          "label": "Согласиться купить после вскрытия в любом случае",
+          "playerReply": "Договорились: вскрываем, и я забираю их в любом случае.",
+          "nextNodeId": "pairing-system",
+          "safetyScore": -15,
+          "criticality": "medium",
+          "riskTags": ["commitment_pressure"],
+          "skillEffects": [{"skill": "pressure_resistance", "delta": -1}],
+          "consequence": {
+            "severity": "warning",
+            "title": "Решение принято до проверки",
+            "explanation": "Предварительное обещание заставляет игнорировать найденные недостатки, хотя юридически и фактически проверка ещё не закончена.",
+            "realWorldRule": "Не обещайте купить товар до завершения всех проверок."
+          }
+        },
+        {
+          "id": "open-without-obligation",
+          "label": "Проверять только без обязательства покупки",
+          "playerReply": "Вскрываем, но покупку подтвержу только после проверки. Заранее обещать не буду.",
+          "nextNodeId": "pairing-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["commitment_pressure"],
+          "skillEffects": [{"skill": "pressure_resistance", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Право отказаться сохранено",
+            "explanation": "Вы заранее обозначили, что оплата возможна только после успешной проверки.",
+            "realWorldRule": "До оплаты покупатель может отказаться от товара, который не прошёл проверку."
+          }
+        },
+        {
+          "id": "leave-sealed-deal",
+          "label": "Отказаться от сделки",
+          "playerReply": "Тогда не будем тратить время друг друга. Я отказываюсь от сделки.",
+          "nextNodeId": "safe-early-ending",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["sealed_box_pressure"],
+          "skillEffects": [{"skill": "pressure_resistance", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Риск исключён",
+            "explanation": "Вы сохранили деньги, но не проверили товар и не отправили объявление на модерацию.",
+            "realWorldRule": "Отказ в проверке — достаточная причина завершить сделку."
+          }
+        }
+      ]
+    },
+    {
+      "id": "pairing-system",
+      "type": "message",
+      "sender": "system",
+      "text": "На iPhone появляется анимация подключения AirPods. Однако шумоподавление почти не меняет звук, а модельные номера в настройках и на наушниках не совпадают.",
+      "nextNodeId": "function-check-decision"
+    },
+    {
+      "id": "function-check-decision",
+      "type": "decision",
+      "decisionPrompt": "Системная анимация появилась, но функции и модельные номера вызывают сомнение. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "trust-ios-animation",
+          "label": "Считать анимацию доказательством оригинальности",
+          "playerReply": "Раз телефон сам показал окно подключения, значит наушники оригинальные. Беру.",
+          "nextNodeId": "unsafe-counterfeit-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["counterfeit_goods", "interface_imitation"],
+          "skillEffects": [{"skill": "device_verification", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Имитация интерфейса принята за проверку",
+            "explanation": "Копии могут воспроизводить знакомое окно подключения, поэтому нужно проверять номера и работу функций.",
+            "realWorldRule": "Красивое системное окно не заменяет проверку характеристик устройства."
+          }
+        },
+        {
+          "id": "compare-models-and-functions",
+          "label": "Сравнить модельные номера и проверить функции",
+          "playerReply": "Сверю модельные номера в настройках и на самих наушниках и ещё раз проверю шумоподавление.",
+          "nextNodeId": "mismatch-system",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["model_mismatch", "counterfeit_goods"],
+          "skillEffects": [{"skill": "device_verification", "delta": 2}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Проверены признаки самого устройства",
+            "explanation": "Модельные номера можно сверить с официальным перечнем, а заявленные функции должны работать на практике.",
+            "realWorldRule": "Сверяйте модельные номера устройства и проверяйте ключевые функции до оплаты."
+          }
+        },
+        {
+          "id": "refuse-after-suspicion",
+          "label": "Отказаться от покупки и пожаловаться",
+          "playerReply": "Шумоподавление почти не работает, меня это не устраивает. Покупать не буду, объявление отправлю на проверку.",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": -5,
+          "criticality": "low",
+          "riskTags": ["counterfeit_goods"],
+          "skillEffects": [{"skill": "reporting_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Покупка остановлена",
+            "explanation": "Вы не рискуете деньгами, хотя не завершили точное сравнение моделей.",
+            "realWorldRule": "Необъяснимые несоответствия — причина не покупать товар."
+          }
+        }
+      ]
+    },
+    {
+      "id": "mismatch-system",
+      "type": "message",
+      "sender": "system",
+      "text": "Официальный список Apple показывает, что номера не относятся к заявленному комплекту AirPods Pro 2. Продавец предлагает скидку до 9 000 ₽ и говорит, что это «другая партия».",
+      "nextNodeId": "final-counterfeit-decision"
+    },
+    {
+      "id": "final-counterfeit-decision",
+      "type": "decision",
+      "decisionPrompt": "Несоответствие подтверждено, но продавец предлагает скидку. Что вы сделаете?",
+      "choices": [
+        {
+          "id": "buy-discounted-copy",
+          "label": "Купить со скидкой, надеясь на оригинальность",
+          "playerReply": "Ладно, за 9 000 ₽ рискну. Забираю.",
+          "nextNodeId": "unsafe-counterfeit-ending",
+          "safetyScore": -40,
+          "criticality": "high",
+          "riskTags": ["counterfeit_goods", "price_over_safety"],
+          "skillEffects": [{"skill": "risk_resistance", "delta": -2}],
+          "consequence": {
+            "severity": "dangerous",
+            "title": "Скидка не устранила подделку",
+            "explanation": "Цена изменилась, но происхождение товара и несоответствие номеров остались прежними.",
+            "realWorldRule": "Скидка не превращает товар с признаками подделки в оригинальный."
+          }
+        },
+        {
+          "id": "refuse-block-report",
+          "label": "Отказаться, заблокировать продавца и пожаловаться",
+          "playerReply": "Модельные номера не совпадают с оригиналом, и скидка этого не меняет. Сделку отменяю и жалуюсь на объявление.",
+          "nextNodeId": "safe-reported-ending",
+          "safetyScore": 0,
+          "criticality": "low",
+          "riskTags": ["counterfeit_goods", "misrepresentation"],
+          "skillEffects": [{"skill": "reporting_discipline", "delta": 1}],
+          "consequence": {
+            "severity": "safe",
+            "title": "Подделка не куплена",
+            "explanation": "Вы сохранили деньги и сообщили площадке о товаре с признаками контрафакта.",
+            "realWorldRule": "При подтверждённых признаках подделки прекращайте сделку и отправляйте жалобу."
+          }
+        }
+      ]
+    },
+    {
+      "id": "safe-early-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Покупка отменена до вскрытия",
+        "explanation": "Вы отказались покупать устройство без проверки и сохранили деньги."
+      }
+    },
+    {
+      "id": "safe-reported-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "safe",
+        "title": "Признаки подделки обнаружены",
+        "explanation": "Вы не купили наушники с несовпадающими модельными номерами и отправили объявление на проверку."
+      }
+    },
+    {
+      "id": "unsafe-counterfeit-ending",
+      "type": "terminal",
+      "outcome": {
+        "type": "unsafe",
+        "title": "Куплена подделка",
+        "explanation": "После покупки выяснилось, что шумоподавление и другие функции работают некорректно, а устройство не соответствует оригинальным AirPods Pro 2."
+      }
+    }
+  ]
+}

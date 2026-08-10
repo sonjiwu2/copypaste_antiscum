@@ -29,12 +29,12 @@ const minimalFixture = `{
       "decisionPrompt": "Что делать?",
       "choices": [
         {
-          "id": "safe", "label": "Безопасно", "nextNodeId": "good",
+          "id": "safe", "label": "Безопасно", "playerReply": "Так делать не буду.", "nextNodeId": "good",
           "safetyScore": 0, "criticality": "low",
           "consequence": { "severity": "safe", "title": "Верно", "explanation": "Так безопаснее.", "realWorldRule": "Правило." }
         },
         {
-          "id": "risky", "label": "Опасно", "nextNodeId": "bad",
+          "id": "risky", "label": "Опасно", "playerReply": "Хорошо, согласен.", "nextNodeId": "bad",
           "safetyScore": -10, "criticality": "high",
           "consequence": { "severity": "dangerous", "title": "Ошибка", "explanation": "Так делать нельзя.", "realWorldRule": "Правило." }
         }

@@ -37,6 +37,7 @@ func validBuyerDraft() scenario.Draft {
 					{
 						ID:          "stay-on-platform",
 						Label:       "Продолжить в приложении",
+						PlayerReply: "Давайте общаться здесь, в чате объявления.",
 						NextNodeID:  "safe-ending",
 						SafetyScore: 0,
 						Criticality: scenario.CriticalityLow,
@@ -54,6 +55,7 @@ func validBuyerDraft() scenario.Draft {
 					{
 						ID:          "move-to-messenger",
 						Label:       "Перейти в мессенджер",
+						PlayerReply: "Хорошо, напишите мне в мессенджер.",
 						NextNodeID:  "pressure-message",
 						SafetyScore: -20,
 						Criticality: scenario.CriticalityHigh,
@@ -125,6 +127,7 @@ func validSellerDraft() scenario.Draft {
 					{
 						ID:          "refuse-code",
 						Label:       "Отказаться называть код",
+						PlayerReply: "Код из СМС я диктовать не буду.",
 						NextNodeID:  "safe-ending",
 						SafetyScore: 0,
 						Criticality: scenario.CriticalityLow,
@@ -138,6 +141,7 @@ func validSellerDraft() scenario.Draft {
 					{
 						ID:          "send-code",
 						Label:       "Отправить код",
+						PlayerReply: "Хорошо, диктую код из СМС.",
 						NextNodeID:  "unsafe-ending",
 						SafetyScore: -40,
 						Criticality: scenario.CriticalityHigh,
@@ -295,6 +299,21 @@ func TestNewRejectsInvalidScenarios(t *testing.T) {
 			wantRule: scenario.RuleChoiceLabelRequired,
 		},
 		{
+			name:     "выбор без реплики игрока",
+			mutate:   func(d *scenario.Draft) { d.Nodes[1].Choices[0].PlayerReply = "" },
+			wantRule: scenario.RuleChoiceReplyRequired,
+		},
+		{
+			name:     "реплика от лица игрока",
+			mutate:   func(d *scenario.Draft) { d.Nodes[0].Sender = "buyer" },
+			wantRule: scenario.RuleMessageSenderInvalid,
+		},
+		{
+			name:     "неизвестный отправитель реплики",
+			mutate:   func(d *scenario.Draft) { d.Nodes[0].Sender = "moderator" },
+			wantRule: scenario.RuleMessageSenderInvalid,
+		},
+		{
 			name:     "выбор ведёт в несуществующий узел",
 			mutate:   func(d *scenario.Draft) { d.Nodes[1].Choices[0].NextNodeID = "ghost-node" },
 			wantRule: scenario.RuleTransitionTargetMissing,
@@ -388,6 +407,17 @@ func TestNewRejectsInvalidScenarios(t *testing.T) {
 				t.Errorf("правило %q не сработало, найдены: %v", testCase.wantRule, violations.Rules())
 			}
 		})
+	}
+}
+
+// Система не участвует в сделке, поэтому её реплика допустима в сценарии любой
+// роли и не считается попыткой говорить за игрока.
+func TestSystemSenderIsAllowedInAnyRole(t *testing.T) {
+	draft := validBuyerDraft()
+	draft.Nodes[0].Sender = scenario.SenderSystem
+
+	if _, err := scenario.New(draft); err != nil {
+		t.Fatalf("узел системы должен приниматься: %v", err)
 	}
 }
 

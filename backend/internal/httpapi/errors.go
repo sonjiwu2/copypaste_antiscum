@@ -7,7 +7,9 @@ import (
 	"net/http"
 
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/attempt"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/profile"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/weeklytest"
 )
 
 // Коды публичных ошибок API. Клиент опирается на код, а не на текст сообщения.
@@ -18,15 +20,20 @@ const (
 	CodeScenarioNotFound = "SCENARIO_NOT_FOUND"
 	CodeUnsupportedRole  = "UNSUPPORTED_ROLE"
 	CodeAttemptNotFound  = "ATTEMPT_NOT_FOUND"
+	CodeAttemptForbidden = "ATTEMPT_FORBIDDEN"
 
 	CodePayloadTooLarge = "PAYLOAD_TOO_LARGE"
 
-	CodeAttemptAlreadyCompleted = "ATTEMPT_ALREADY_COMPLETED"
-	CodeStaleNode               = "STALE_NODE"
-	CodeIdempotencyKeyConflict  = "IDEMPOTENCY_KEY_CONFLICT"
-	CodeConcurrentTransition    = "CONCURRENT_TRANSITION"
-	CodeNodeNotDecision         = "NODE_NOT_DECISION"
-	CodeChoiceNotFound          = "CHOICE_NOT_FOUND"
+	CodeAttemptAlreadyCompleted  = "ATTEMPT_ALREADY_COMPLETED"
+	CodeStaleNode                = "STALE_NODE"
+	CodeIdempotencyKeyConflict   = "IDEMPOTENCY_KEY_CONFLICT"
+	CodeConcurrentTransition     = "CONCURRENT_TRANSITION"
+	CodeNodeNotDecision          = "NODE_NOT_DECISION"
+	CodeChoiceNotFound           = "CHOICE_NOT_FOUND"
+	CodeWeeklyTestNotFound       = "WEEKLY_TEST_NOT_FOUND"
+	CodeWeeklyTestForbidden      = "WEEKLY_TEST_FORBIDDEN"
+	CodeWeeklyTestInvalidAnswers = "WEEKLY_TEST_INVALID_ANSWERS"
+	CodeWeeklyTestCompleted      = "WEEKLY_TEST_ALREADY_COMPLETED"
 )
 
 // errorEnvelope — единый формат ошибки для всех endpoint.
@@ -89,12 +96,21 @@ func writeDecodeError(w http.ResponseWriter, r *http.Request, err error) {
 // по handler'ам, а внутренние подробности не доходят до клиента.
 func writeDomainError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
+	case errors.Is(err, profile.ErrEmptyID):
+		// Профиль присваивает middleware, поэтому его отсутствие — дефект
+		// сборки приложения, а не ошибка клиента.
+		loggerFrom(r.Context()).ErrorContext(r.Context(), "запрос дошёл до обработчика без профиля")
+
+		writeError(w, r, http.StatusInternalServerError, CodeInternalError, "Внутренняя ошибка сервера.")
 	case errors.Is(err, scenario.ErrNotFound):
 		writeError(w, r, http.StatusNotFound, CodeScenarioNotFound, "Сценарий не найден.")
 	case errors.Is(err, scenario.ErrUnsupportedRole):
 		writeError(w, r, http.StatusBadRequest, CodeUnsupportedRole, "Указана неподдерживаемая роль.")
 	case errors.Is(err, attempt.ErrNotFound):
 		writeError(w, r, http.StatusNotFound, CodeAttemptNotFound, "Попытка не найдена.")
+	case errors.Is(err, attempt.ErrForbidden):
+		writeError(w, r, http.StatusForbidden, CodeAttemptForbidden,
+			"Попытка принадлежит другому пользователю.")
 	case errors.Is(err, attempt.ErrAlreadyCompleted):
 		writeError(w, r, http.StatusConflict, CodeAttemptAlreadyCompleted,
 			"Попытка уже завершена.")
@@ -113,6 +129,18 @@ func writeDomainError(w http.ResponseWriter, r *http.Request, err error) {
 	case errors.Is(err, attempt.ErrChoiceNotFound):
 		writeError(w, r, http.StatusUnprocessableEntity, CodeChoiceNotFound,
 			"Такой вариант выбора недоступен на текущем узле.")
+	case errors.Is(err, weeklytest.ErrNotFound):
+		writeError(w, r, http.StatusNotFound, CodeWeeklyTestNotFound,
+			"Еженедельный тест не найден.")
+	case errors.Is(err, weeklytest.ErrForbidden):
+		writeError(w, r, http.StatusForbidden, CodeWeeklyTestForbidden,
+			"Еженедельный тест принадлежит другому пользователю.")
+	case errors.Is(err, weeklytest.ErrInvalidAnswers):
+		writeError(w, r, http.StatusUnprocessableEntity, CodeWeeklyTestInvalidAnswers,
+			"Переданы некорректные ответы на тест.")
+	case errors.Is(err, weeklytest.ErrAlreadyCompleted):
+		writeError(w, r, http.StatusConflict, CodeWeeklyTestCompleted,
+			"Еженедельный тест уже завершён.")
 	default:
 		// Неожиданная ошибка логируется один раз, на границе HTTP.
 		loggerFrom(r.Context()).ErrorContext(r.Context(), "необработанная ошибка запроса",

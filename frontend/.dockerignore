@@ -1,0 +1,21 @@
+# Build context for frontend/Dockerfile.
+# Everything the image does not need is kept out: a smaller context builds
+# faster and cannot leak local state into the image.
+
+node_modules
+dist
+.pnpm-store
+*.tsbuildinfo
+
+# Local tooling and editor state
+.git
+.vscode
+.idea
+.DS_Store
+
+# Design sources and references: not part of the shipped client
+reference
+ui reference
+docs
+scripts
+standalone.html

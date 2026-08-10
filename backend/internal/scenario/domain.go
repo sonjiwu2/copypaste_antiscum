@@ -42,6 +42,13 @@ func (d Difficulty) Valid() bool {
 	return d == DifficultyEasy || d == DifficultyMedium || d == DifficultyHard
 }
 
+// SenderSystem — голос площадки, банка и логистики.
+//
+// Это не участник сделки: система только описывает обстановку, поэтому её
+// текст не является репликой переписки. Остальные допустимые отправители
+// совпадают с ролями сделки.
+const SenderSystem = "system"
+
 // NodeID — идентификатор узла внутри сценария.
 type NodeID string
 
@@ -141,8 +148,17 @@ type Outcome struct {
 // SafetyScore, Criticality, RiskTags и SkillEffects — серверные данные:
 // они участвуют в подсчёте результата и не публикуются до выбора.
 type Choice struct {
-	ID           ChoiceID
-	Label        string
+	ID ChoiceID
+
+	// Label — подпись кнопки: коротко названное действие игрока.
+	Label string
+
+	// PlayerReply — закреплённая за действием реплика игрока в переписке.
+	//
+	// Игрок не пишет текст сам, но собеседник должен увидеть живую фразу,
+	// а не название действия. Поэтому в ленту диалога уходит именно PlayerReply.
+	PlayerReply string
+
 	NextNodeID   NodeID
 	SafetyScore  int
 	Criticality  Criticality
@@ -257,6 +273,47 @@ func (s Scenario) Node(id NodeID) (Node, bool) {
 // NodeCount возвращает количество узлов сценария.
 func (s Scenario) NodeCount() int {
 	return len(s.nodes)
+}
+
+// MaxDecisions возвращает наибольшее число решений на пути от стартового узла.
+//
+// Значение нужно клиенту как знаменатель шкалы прохождения: ни одна ветка не
+// потребует больше решений. Наружу уходит только длина самой длинной ветки —
+// ни переходов, ни правильных ответов по ней восстановить нельзя.
+func (s Scenario) MaxDecisions() int {
+	// Граф проверен на отсутствие циклов, поэтому обход в глубину
+	// с запоминанием уже посчитанных узлов завершается всегда.
+	counted := make(map[NodeID]int, len(s.nodes))
+
+	var decisionsAhead func(NodeID) int
+
+	decisionsAhead = func(nodeID NodeID) int {
+		if cached, found := counted[nodeID]; found {
+			return cached
+		}
+
+		node, found := s.nodes[nodeID]
+		if !found {
+			return 0
+		}
+
+		longest := 0
+		for _, target := range node.transitions() {
+			if depth := decisionsAhead(target); depth > longest {
+				longest = depth
+			}
+		}
+
+		if node.Type == NodeTypeDecision {
+			longest++
+		}
+
+		counted[nodeID] = longest
+
+		return longest
+	}
+
+	return decisionsAhead(s.StartNodeID)
 }
 
 // Choice возвращает вариант выбора указанного узла решения.

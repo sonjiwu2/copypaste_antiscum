@@ -30,7 +30,7 @@ func (h *attemptHandler) start(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	view, err := h.attempts.Start(r.Context(), scenario.ID(request.ScenarioID))
+	view, err := h.attempts.Start(r.Context(), ProfileIDFrom(r.Context()), scenario.ID(request.ScenarioID))
 	if err != nil {
 		writeDomainError(w, r, err)
 
@@ -45,7 +45,7 @@ func (h *attemptHandler) start(w http.ResponseWriter, r *http.Request) {
 func (h *attemptHandler) get(w http.ResponseWriter, r *http.Request) {
 	attemptID := attempt.ID(r.PathValue("attemptId"))
 
-	view, err := h.attempts.Get(r.Context(), attemptID)
+	view, err := h.attempts.Get(r.Context(), ProfileIDFrom(r.Context()), attemptID)
 	if err != nil {
 		writeDomainError(w, r, err)
 
@@ -74,6 +74,7 @@ func (h *attemptHandler) submitChoice(w http.ResponseWriter, r *http.Request) {
 
 	transition, err := h.attempts.SubmitChoice(r.Context(), attempt.SubmitChoiceCommand{
 		AttemptID:      attempt.ID(r.PathValue("attemptId")),
+		ProfileID:      ProfileIDFrom(r.Context()),
 		NodeID:         scenario.NodeID(request.NodeID),
 		ChoiceID:       scenario.ChoiceID(request.ChoiceID),
 		IdempotencyKey: attempt.IdempotencyKey(request.IdempotencyKey),

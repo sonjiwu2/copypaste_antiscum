@@ -1,6 +1,6 @@
 {
   "id": "buyer-iphone-deposit",
-  "version": 1,
+  "version": 2,
   "slug": "buyer-iphone-deposit",
   "role": "buyer",
   "title": "Задаток владельцу старого аккаунта",
@@ -39,6 +39,7 @@
         {
           "id": "agree-deposit",
           "label": "Согласиться на задаток, чтобы не упустить телефон",
+          "playerReply": "Хорошо, давайте бронь. Скидывайте реквизиты, переведу 3000 ₽.",
           "nextNodeId": "third-party-card-system",
           "safetyScore": -30,
           "criticality": "high",
@@ -54,6 +55,7 @@
         {
           "id": "request-live-video",
           "label": "Попросить видеозвонок и показать телефон",
+          "playerReply": "Прежде чем что-то переводить, давайте созвонимся по видео и вы покажете телефон вживую.",
           "nextNodeId": "seller-recorded-video",
           "safetyScore": 0,
           "criticality": "low",
@@ -69,6 +71,7 @@
         {
           "id": "refuse-deposit",
           "label": "Отказаться от задатка и договориться только о встрече",
+          "playerReply": "Задаток вперёд переводить не буду. Давайте просто договоримся о встрече и я посмотрю телефон.",
           "nextNodeId": "seller-no-reservation",
           "safetyScore": -15,
           "criticality": "low",
@@ -105,6 +108,7 @@
         {
           "id": "trust-recorded-video",
           "label": "Считать видео достаточным и перейти к задатку",
+          "playerReply": "Ладно, видео убедительное. Куда переводить задаток?",
           "nextNodeId": "third-party-card-system",
           "safetyScore": -20,
           "criticality": "medium",
@@ -120,6 +124,7 @@
         {
           "id": "request-random-action",
           "label": "Попросить выполнить случайное действие в видеозвонке",
+          "playerReply": "Запись мне ни о чём не говорит. Включите видеозвонок и покажите телефон с текущим временем на экране.",
           "nextNodeId": "seller-refuses-live-check",
           "safetyScore": 0,
           "criticality": "low",
@@ -135,6 +140,7 @@
         {
           "id": "refuse-prepayment-after-video",
           "label": "Отказаться от предоплаты до личной проверки",
+          "playerReply": "Пока не посмотрю телефон лично, ничего переводить не буду.",
           "nextNodeId": "seller-trust-pressure",
           "safetyScore": -10,
           "criticality": "low",
@@ -171,6 +177,7 @@
         {
           "id": "leave-without-check",
           "label": "Завершить разговор и искать другой телефон",
+          "playerReply": "Тогда не буду вас задерживать. Поищу другой вариант.",
           "nextNodeId": "safe-early-ending",
           "safetyScore": -5,
           "criticality": "low",
@@ -186,6 +193,7 @@
         {
           "id": "offer-platform-reservation",
           "label": "Предложить резервирование внутри площадки",
+          "playerReply": "Давайте оформим бронь и оплату внутри Авито — там сделка видна нам обоим.",
           "nextNodeId": "seller-trust-pressure",
           "safetyScore": 0,
           "criticality": "low",
@@ -201,6 +209,7 @@
         {
           "id": "yield-to-deposit",
           "label": "Всё-таки согласиться на задаток",
+          "playerReply": "Не хочу упустить телефон. Ладно, вношу задаток.",
           "nextNodeId": "third-party-card-system",
           "safetyScore": -20,
           "criticality": "medium",
@@ -237,6 +246,7 @@
         {
           "id": "transfer-first-deposit",
           "label": "Перевести 3000 ₽ на указанную карту",
+          "playerReply": "Хорошо, перевожу 3000 ₽ на эту карту.",
           "nextNodeId": "first-deposit-system",
           "safetyScore": -30,
           "criticality": "high",
@@ -252,6 +262,7 @@
         {
           "id": "ask-identity-proof",
           "label": "Попросить подтвердить связь владельца карты с продавцом",
+          "playerReply": "Получатель — другой человек. Подтвердите, пожалуйста, что эта карта действительно имеет к вам отношение.",
           "nextNodeId": "seller-sends-documents",
           "safetyScore": -10,
           "criticality": "medium",
@@ -267,6 +278,7 @@
         {
           "id": "refuse-third-party-payment",
           "label": "Отказаться от перевода третьему лицу",
+          "playerReply": "На карту постороннего человека я переводить не буду.",
           "nextNodeId": "seller-sends-documents",
           "safetyScore": -5,
           "criticality": "low",
@@ -303,6 +315,7 @@
         {
           "id": "trust-profile-and-pay",
           "label": "Поверить старому профилю и перевести задаток",
+          "playerReply": "Ладно, профиль у вас старый, документы прислали. Перевожу задаток.",
           "nextNodeId": "first-deposit-system",
           "safetyScore": -35,
           "criticality": "high",
@@ -318,6 +331,7 @@
         {
           "id": "inspect-profile-history",
           "label": "Самостоятельно проверить отзывы и историю профиля",
+          "playerReply": "Секунду, посмотрю ваши отзывы и прошлые объявления.",
           "nextNodeId": "profile-history-system",
           "safetyScore": 0,
           "criticality": "low",
@@ -333,6 +347,7 @@
         {
           "id": "refuse-without-profile-check",
           "label": "Отказаться от задатка и завершить разговор",
+          "playerReply": "Задаток вносить не буду. На этом закончим, спасибо.",
           "nextNodeId": "safe-refusal-ending",
           "safetyScore": -5,
           "criticality": "low",
@@ -369,6 +384,7 @@
         {
           "id": "block-and-report",
           "label": "Сохранить переписку, заблокировать профиль и отправить жалобу",
+          "playerReply": "Дальше общаться не буду. Переписку я сохранил и передаю её в поддержку площадки.",
           "nextNodeId": "safe-full-ending",
           "safetyScore": 0,
           "criticality": "low",
@@ -384,6 +400,7 @@
         {
           "id": "just-leave",
           "label": "Просто завершить разговор",
+          "playerReply": "Всё, я передумал. До свидания.",
           "nextNodeId": "safe-quiet-ending",
           "safetyScore": -10,
           "criticality": "low",
@@ -399,6 +416,7 @@
         {
           "id": "warn-seller-first",
           "label": "Сначала написать продавцу, что схема раскрыта",
+          "playerReply": "Я всё понял: старый аккаунт, чужая карта и задаток вперёд. Схема ваша больше не сработает.",
           "nextNodeId": "safe-warning-ending",
           "safetyScore": -20,
           "criticality": "medium",
@@ -435,6 +453,7 @@
         {
           "id": "send-more-money",
           "label": "Перевести ещё 7000 ₽, чтобы не потерять первый задаток",
+          "playerReply": "Не хочу терять первые 3000 ₽. Перевожу ещё 7000 ₽.",
           "nextNodeId": "unsafe-double-deposit-ending",
           "safetyScore": -30,
           "criticality": "high",
@@ -450,6 +469,7 @@
         {
           "id": "stop-and-contact-bank",
           "label": "Отказаться и обратиться в банк",
+          "playerReply": "Больше я ничего переводить не буду. Обращаюсь в банк по первому переводу.",
           "nextNodeId": "unsafe-first-deposit-ending",
           "safetyScore": -10,
           "criticality": "medium",
@@ -465,6 +485,7 @@
         {
           "id": "demand-refund",
           "label": "Потребовать вернуть первый задаток",
+          "playerReply": "Никаких доплат. Верните мои 3000 ₽.",
           "nextNodeId": "seller-refund-link",
           "safetyScore": -10,
           "criticality": "medium",
@@ -494,6 +515,7 @@
         {
           "id": "open-refund-form",
           "label": "Открыть форму и указать реквизиты карты",
+          "playerReply": "Открыл вашу форму, вписываю данные карты.",
           "nextNodeId": "unsafe-refund-phishing-ending",
           "safetyScore": -25,
           "criticality": "high",
@@ -509,6 +531,7 @@
         {
           "id": "contact-bank-for-refund",
           "label": "Не открывать ссылку и обратиться в банк",
+          "playerReply": "Вашу ссылку я открывать не буду. Возврат перевода буду решать через свой банк.",
           "nextNodeId": "unsafe-first-deposit-ending",
           "safetyScore": 0,
           "criticality": "low",

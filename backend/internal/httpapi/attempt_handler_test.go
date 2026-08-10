@@ -53,8 +53,10 @@ func TestStartAttemptEndpoint(t *testing.T) {
 		t.Errorf("score = %d, ожидался 100", started.Score)
 	}
 
-	if started.Scenario.ID != "buyer-fake-delivery" || started.Scenario.Version != 1 {
-		t.Errorf("сценарий = %+v, ожидался buyer-fake-delivery версии 1", started.Scenario)
+	// Номер версии меняется при каждой правке контента, поэтому проверяется
+	// только то, что ответ ссылается на нужный сценарий закреплённой версией.
+	if started.Scenario.ID != "buyer-fake-delivery" || started.Scenario.Version < 1 {
+		t.Errorf("сценарий = %+v, ожидался buyer-fake-delivery с положительной версией", started.Scenario)
 	}
 
 	if len(started.RevealedNodes) < 2 {

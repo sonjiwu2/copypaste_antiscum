@@ -30,13 +30,15 @@ func run() error {
 
 	logger := logging.New(os.Stdout, cfg.LogLevel)
 
-	application, err := app.New(cfg, logger)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// Контекст сигналов передаётся в сборку: подключение к базе и
+	// синхронизация сценариев должны прерываться по SIGTERM, а не висеть.
+	application, err := app.New(ctx, cfg, logger)
 	if err != nil {
 		return err
 	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	return application.Run(ctx)
 }
