@@ -511,6 +511,70 @@
 
 /* --- Адаптив ---------------------------------------------------------- */
 
+/* На широком desktop карточки не растягиваются на всю ширину монитора, а
+ * текст сохраняет комфортный размер независимо от разрешения. */
+@media (min-width: 1400px) {
+  .settings-layout {
+    width: min(1660px, calc(100% - 40px));
+    margin: 0 auto;
+    gap: 20px;
+    padding: 22px 0 30px;
+  }
+
+  .settings-grid {
+    gap: 18px;
+  }
+
+  .settings-card__heading {
+    padding: 15px 17px;
+  }
+
+  .settings-card__heading h2 {
+    font-size: 16px;
+  }
+
+  .settings-card__body {
+    gap: 13px;
+    padding: 15px 17px 17px;
+  }
+
+  .select-row,
+  .select-row select,
+  .pending-row__copy strong,
+  .toggle-row__copy strong,
+  .slider-row__control span,
+  .checkbox-row,
+  .data-button {
+    font-size: 13.5px;
+  }
+
+  .pending-row__copy small,
+  .toggle-row__copy small,
+  .pending-row__badge,
+  .settings-note,
+  .settings-warning,
+  .account-row__registered,
+  .data-hint,
+  .settings-footer__hint {
+    font-size: 11.5px;
+  }
+
+  .slider-row__value,
+  .account-row__info > span,
+  .account-actions button {
+    font-size: 12.5px;
+  }
+
+  .account-row__info strong {
+    font-size: 16px;
+  }
+
+  .settings-footer button {
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
+
 @media (max-width: 1180px) {
   .settings-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

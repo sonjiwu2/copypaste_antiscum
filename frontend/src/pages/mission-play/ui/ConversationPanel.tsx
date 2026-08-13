@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { ROLE_LABELS, type MissionRole } from '../../../entities/mission'
 import { ART_ROOT } from '../../../shared/config/assets'
 import type { ChatMessage } from '../lib/missionPlayHelpers'
@@ -34,6 +35,14 @@ export function ConversationPanel({
   onChoose,
 }: ConversationPanelProps) {
   const opponentRole = playerRole === 'seller' ? 'buyer' : 'seller'
+  const conversationEndRef = useRef<HTMLDivElement>(null)
+
+  // После выбора сервер раскрывает сразу несколько новых узлов. Прокручиваем
+  // ленту к ним, иначе на высоком диалоге пользователь видит прежний экран и
+  // замечает только изменения в правой колонке.
+  useEffect(() => {
+    conversationEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [messages.length])
 
   return (
     <section className='conversation-panel' aria-label='Переписка по сценарию'>
@@ -48,6 +57,7 @@ export function ConversationPanel({
         {messages.map((message) => (
           <ChatRow key={message.id} message={message} />
         ))}
+        <div ref={conversationEndRef} aria-hidden='true' />
       </div>
 
       {choices.length > 0 && (

@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/attempt"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/auth"
 )
 
 // Имена ограничений схемы. Они заданы явно в миграциях, потому что различить
@@ -20,6 +21,8 @@ const (
 	ConstraintDecisionsPrimaryKey      = "attempt_decisions_pkey"
 	ConstraintAttemptProfileForeignKey = "attempts_profile_id_fkey"
 	ConstraintAttemptScenarioVersion   = "attempts_scenario_version_fkey"
+	ConstraintAccountEmail             = "accounts_email_normalized_key"
+	ConstraintAccountProfile           = "accounts_profile_id_key"
 )
 
 // Коды ошибок PostgreSQL, которые адаптер разбирает осознанно.
@@ -82,6 +85,10 @@ func mapUniqueViolation(pgErr *pgconn.PgError) error {
 		// Второй рубеж идемпотентности: параллельный запрос уже записал этот
 		// шаг. Сервис разрешит ситуацию повторным чтением попытки.
 		return attempt.ErrConcurrentUpdate
+	case ConstraintAccountEmail:
+		return auth.ErrEmailTaken
+	case ConstraintAccountProfile:
+		return auth.ErrProfileClaimed
 	default:
 		return fmt.Errorf("%w: %s", ErrIntegrityViolation, pgErr.ConstraintName)
 	}

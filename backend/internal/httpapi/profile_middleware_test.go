@@ -128,6 +128,19 @@ func TestHealthEndpointsDoNotIssueProfile(t *testing.T) {
 	}
 }
 
+func TestSessionCheckDoesNotIssueAnonymousProfile(t *testing.T) {
+	router := NewRouter(testRouterDeps(t))
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/auth/session", nil))
+
+	if recorder.Code != http.StatusUnauthorized {
+		t.Fatalf("статус = %d, ожидался 401", recorder.Code)
+	}
+	if profileCookie(t, recorder) != nil {
+		t.Error("проверка отсутствующей сессии создала пустой игровой профиль")
+	}
+}
+
 // Попытка одного пользователя недоступна другому даже при известном
 // идентификаторе: он больше не является единственной защитой.
 func TestAttemptsAreIsolatedBetweenProfiles(t *testing.T) {

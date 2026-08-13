@@ -13,6 +13,11 @@ import type {
   SubmitWeeklyTestParams,
   CheckWeeklyTestAnswerParams,
   CheckWeeklyTestAnswerResult,
+  Leaderboard,
+  ProfileIdentity,
+  AuthSession,
+  LoginPayload,
+  RegisterPayload,
 } from './types'
 
 /** Коды ошибок API. Клиент опирается на код, а не на текст сообщения. */
@@ -22,6 +27,9 @@ export const ApiErrorCode = {
   attemptAlreadyCompleted: 'ATTEMPT_ALREADY_COMPLETED',
   staleNode: 'STALE_NODE',
   concurrentTransition: 'CONCURRENT_TRANSITION',
+  authRequired: 'AUTH_REQUIRED',
+  invalidCredentials: 'INVALID_CREDENTIALS',
+  emailTaken: 'EMAIL_TAKEN',
 } as const
 
 export class ApiError extends Error {
@@ -159,6 +167,48 @@ export async function submitChoice({
 /** GET /api/v1/progress — прогресс анонимного профиля. */
 export async function fetchProgress(): Promise<Progress> {
   return request<Progress>('/api/v1/progress')
+}
+
+export async function fetchAuthSession(): Promise<AuthSession | null> {
+  try {
+    return await request<AuthSession>('/api/v1/auth/session')
+  } catch (error) {
+    if (error instanceof ApiError && error.code === ApiErrorCode.authRequired) {
+      return null
+    }
+    throw error
+  }
+}
+
+export async function login(payload: LoginPayload): Promise<AuthSession> {
+  return request<AuthSession>('/api/v1/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function register(payload: RegisterPayload): Promise<AuthSession> {
+  return request<AuthSession>('/api/v1/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function logout(): Promise<void> {
+  await request<{ status: string }>('/api/v1/auth/logout', { method: 'POST' })
+}
+
+/** Глобальный рейтинг по лучшим результатам каждого сценария. */
+export async function fetchLeaderboard(): Promise<Leaderboard> {
+  return request<Leaderboard>('/api/v1/leaderboard')
+}
+
+/** Публичные имя и аватар; секретный идентификатор профиля остаётся в cookie. */
+export async function updateProfileIdentity(identity: ProfileIdentity): Promise<ProfileIdentity> {
+  return request<ProfileIdentity>('/api/v1/profile', {
+    method: 'PUT',
+    body: JSON.stringify(identity),
+  })
 }
 
 /** Создаёт тест недели один раз или возвращает уже сохранённый. */

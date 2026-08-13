@@ -10,22 +10,25 @@ info:
     сценариев, запуск попытки, восстановление её состояния, отправка выбора
     прогресс пользователя и еженедельный тест, создаваемый через Groq или Grok.
 
-    ### Анонимный профиль
+    ### Аккаунт и игровой профиль
 
-    Учётных записей нет. При первом обращении к `/api/v1/**` сервер выдаёт
-    cookie `ast_profile` с анонимным идентификатором профиля:
+    При первом обращении сервер выдаёт временный профиль в HttpOnly-cookie.
+    Регистрация привязывает этот профиль и уже накопленный прогресс к аккаунту.
+    После входа сервер выдаёт отдельную HttpOnly-cookie сессии:
 
     - `HttpOnly`, `SameSite=Lax` (настраивается), `Path=/`, длительный `Max-Age`;
     - `Secure` включается в публичном развёртывании по HTTPS;
     - при отсутствии или неверном формате cookie сервер выдаёт новый случайный
       идентификатор; валидная cookie является bearer-секретом доступа к истории;
-    - к профилю привязываются попытки, поэтому браузер обязан отправлять
+    - пароль хранится как PBKDF2-SHA256 с индивидуальной случайной солью;
+    - в базе хранится SHA-256 токена сессии, а не сам bearer-токен;
+    - к аккаунту привязываются попытки, поэтому браузер обязан отправлять
       cookie обратно: браузерный клиент выполняет каждый запрос с
       `credentials: "include"`.
 
     Попытка принадлежит выдавшему её профилю. Обращение к чужой попытке
     возвращает `403 ATTEMPT_FORBIDDEN`, даже если идентификатор известен.
-    Потеря cookie означает потерю доступа к истории: восстановления нет.
+    Вход с другого устройства открывает тот же профиль и прогресс.
 
     ### Доступ из браузера
 
@@ -51,9 +54,6 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
-# Аутентификации нет намеренно: тренажёр не хранит персональные данные.
-# Анонимный профиль выдаётся сервером автоматически, поэтому клиенту не нужно
-# ничего передавать — cookie достаточно вернуть обратно.
 security: []
 
 servers:
@@ -68,11 +68,83 @@ tags:
   - name: attempts
     description: Прохождение сценария
   - name: progress
-    description: Прогресс анонимного профиля
+    description: Прогресс аккаунта
+  - name: auth
+    description: Регистрация, вход и серверная сессия
+  - name: leaderboard
+    description: Общий серверный рейтинг игроков
   - name: weekly-tests
     description: Еженедельный антискам-тест
 
 paths:
+  /api/v1/auth/register:
+    post:
+      tags: [auth]
+      summary: Создать аккаунт по электронной почте и привязать текущий игровой профиль
+      operationId: registerAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Аккаунт создан, cookie сессии установлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "409":
+          description: Электронная почта занята или профиль уже зарегистрирован
+        "422":
+          description: Электронная почта, имя, аватар или пароль не прошли проверку
+
+  /api/v1/auth/login:
+    post:
+      tags: [auth]
+      summary: Войти в существующий аккаунт
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Вход выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "401":
+          description: Неверная электронная почта или пароль
+
+  /api/v1/auth/session:
+    get:
+      tags: [auth]
+      summary: Восстановить текущую сессию
+      operationId: getAuthSession
+      responses:
+        "200":
+          description: Активная сессия
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "401":
+          description: Активной сессии нет
+
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      summary: Завершить текущую сессию
+      operationId: logout
+      responses:
+        "200":
+          description: Сессия завершена, cookie удалена
+
   /healthz:
     get:
       tags: [health]
@@ -520,6 +592,32 @@ paths:
           $ref: "#/components/responses/InternalError"
 
   /api/v1/profile:
+    put:
+      tags: [leaderboard]
+      summary: Обновить публичное имя и аватар
+      description: Сохраняет публичные данные текущего анонимного профиля. Секретный id cookie не публикуется.
+      operationId: updateProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileIdentity"
+      responses:
+        "200":
+          description: Публичные данные обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileIdentity"
+        "422":
+          description: Имя или аватар не прошли проверку
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
     delete:
       tags: [progress]
       summary: Полностью сбросить анонимный профиль
@@ -530,6 +628,25 @@ paths:
       responses:
         "200":
           description: Данные удалены
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/leaderboard:
+    get:
+      tags: [leaderboard]
+      summary: Общая таблица лидеров
+      description: |
+        Рейтинг равен сумме лучших результатов игрока по каждому завершённому
+        сценарию. Возвращает пять лидеров и отдельно текущего игрока, если он
+        находится ниже. Секретные идентификаторы профилей не возвращаются.
+      operationId: getLeaderboard
+      responses:
+        "200":
+          description: Глобальный рейтинг
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Leaderboard"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -691,6 +808,44 @@ components:
               requestId: 7b2c1a9e4f
 
   schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          pattern: '^(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9])[\x21-\x7E]{8,72}$'
+          description: |
+            Только печатные латинские символы без пробелов. Обязательны
+            как минимум одна латинская буква, одна цифра и один спецсимвол.
+
+    RegisterRequest:
+      allOf:
+        - $ref: "#/components/schemas/LoginRequest"
+        - $ref: "#/components/schemas/ProfileIdentity"
+
+    AuthSession:
+      allOf:
+        - $ref: "#/components/schemas/ProfileIdentity"
+        - type: object
+          required: [email, registeredAt, expiresAt]
+          properties:
+            email:
+              type: string
+              format: email
+            registeredAt:
+              type: string
+              format: date-time
+            expiresAt:
+              type: string
+              format: date-time
+
     HealthResponse:
       type: object
       required: [status]
@@ -1286,6 +1441,57 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ProgressRecommendation"
+
+    ProfileIdentity:
+      type: object
+      required: [displayName, avatar]
+      properties:
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 24
+          example: Дмитрий
+        avatar:
+          type: string
+          enum: [profile, leader-1, leader-2, leader-3]
+
+    LeaderboardEntry:
+      type: object
+      required: [rank, displayName, avatar, rating, completedScenarios, averageScore, currentPlayer]
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+        displayName:
+          type: string
+        avatar:
+          type: string
+          enum: [profile, leader-1, leader-2, leader-3]
+        rating:
+          type: integer
+          minimum: 0
+          description: Сумма лучших результатов по завершённым сценариям.
+        completedScenarios:
+          type: integer
+          minimum: 1
+        averageScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        currentPlayer:
+          type: boolean
+
+    Leaderboard:
+      type: object
+      required: [leaders]
+      properties:
+        leaders:
+          type: array
+          maxItems: 5
+          items:
+            $ref: "#/components/schemas/LeaderboardEntry"
+        current:
+          $ref: "#/components/schemas/LeaderboardEntry"
 
     WeeklyTestQuestion:
       type: object

@@ -62,6 +62,35 @@
   padding: 11px;
 }
 
+/* Новый факт или разбор выбора должен быть заметен даже когда взгляд остаётся
+ * на переписке. key секции меняется вместе со счётчиком и перезапускает pulse. */
+.play-panel--updated {
+  animation: insight-panel-pulse 600ms ease-in-out 3;
+}
+
+@keyframes insight-panel-pulse {
+  0%,
+  100% {
+    border-color: var(--c-bd-neutral-b1);
+    box-shadow: 0 2px 8px rgb(27 54 88 / 4%);
+  }
+
+  50% {
+    border-color: var(--c-bd-red-a1);
+    box-shadow:
+      0 0 0 3px rgb(242 56 77 / 20%),
+      0 0 20px rgb(242 56 77 / 22%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .play-panel--updated {
+    animation: none;
+    border-color: var(--c-bd-red-a1);
+    box-shadow: 0 0 0 3px rgb(242 56 77 / 16%);
+  }
+}
+
 .play-panel__heading {
   display: flex;
   align-items: center;

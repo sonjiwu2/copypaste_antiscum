@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/attempt"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/auth"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/clock"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/identifier"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/profile"
@@ -40,6 +41,10 @@ func testRouterDeps(t *testing.T) RouterDeps {
 
 	attempts := memory.NewAttemptRepository()
 	scenarios := scenario.NewService(repository)
+	profilesRepository := memory.NewProfileRepository()
+	profileClock := &clock.Fixed{Moment: time.Date(2026, time.August, 3, 12, 0, 0, 0, time.UTC), Step: time.Minute}
+	profiles := profile.NewService(profilesRepository, profileClock,
+		&identifier.Sequential{Prefix: "anonymous-profile"})
 
 	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
 
@@ -48,11 +53,11 @@ func testRouterDeps(t *testing.T) RouterDeps {
 		RequestIDs:      &identifier.Sequential{Prefix: "request"},
 		MaxRequestBytes: 4096,
 		Cookie:          CookieSettings{Name: testCookieName, MaxAge: 3600},
-		Profiles: profile.NewService(
-			memory.NewProfileRepository(),
-			&clock.Fixed{Moment: time.Date(2026, time.August, 3, 12, 0, 0, 0, time.UTC), Step: time.Minute},
-			&identifier.Sequential{Prefix: "anonymous-profile"},
-		),
+		SessionCookie:   CookieSettings{Name: testCookieName + "_session", MaxAge: 3600},
+		AllowAnonymous:  true,
+		Profiles:        profiles,
+		Authentication: auth.NewService(memory.NewAuthRepository(profilesRepository), profiles,
+			profileClock, &identifier.Sequential{Prefix: "auth"}, auth.PasswordHasher{Iterations: 10}, time.Hour),
 		Scenarios: scenarios,
 		Attempts: attempt.NewService(
 			repository,

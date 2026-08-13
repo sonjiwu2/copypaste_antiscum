@@ -35,7 +35,11 @@ export function InsightsSidebar({
 }: InsightsSidebarProps) {
   return (
     <aside className='play-sidebar play-sidebar--right'>
-      <section className='play-panel events-card'>
+      <section
+        className={`play-panel events-card${events.length > 0 ? ' play-panel--updated' : ''}`}
+        key={`events-${events.length}`}
+        aria-live='polite'
+      >
         <div className='play-panel__heading'>
           <PixelIcon name='events' size={18} />
           <h2>ЧТО ПРОИСХОДИТ</h2>
@@ -54,7 +58,11 @@ export function InsightsSidebar({
         )}
       </section>
 
-      <section className='play-panel signals-card'>
+      <section
+        className={`play-panel signals-card${signals.length > 0 ? ' play-panel--updated' : ''}`}
+        key={`signals-${signals.length}`}
+        aria-live='polite'
+      >
         <div className='play-panel__heading play-panel__heading--red'>
           <PixelIcon name='signals' size={18} />
           <h2>ЗАМЕЧЕННЫЕ ПРИЗНАКИ</h2>

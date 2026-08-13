@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/attempt"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/auth"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/profile"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/scenario"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/weeklytest"
@@ -22,7 +23,12 @@ const (
 	CodeAttemptNotFound  = "ATTEMPT_NOT_FOUND"
 	CodeAttemptForbidden = "ATTEMPT_FORBIDDEN"
 
-	CodePayloadTooLarge = "PAYLOAD_TOO_LARGE"
+	CodePayloadTooLarge    = "PAYLOAD_TOO_LARGE"
+	CodeInvalidProfile     = "INVALID_PROFILE"
+	CodeAuthRequired       = "AUTH_REQUIRED"
+	CodeInvalidAuthData    = "INVALID_AUTH_DATA"
+	CodeInvalidCredentials = "INVALID_CREDENTIALS"
+	CodeEmailTaken         = "EMAIL_TAKEN"
 
 	CodeAttemptAlreadyCompleted  = "ATTEMPT_ALREADY_COMPLETED"
 	CodeStaleNode                = "STALE_NODE"
@@ -96,6 +102,21 @@ func writeDecodeError(w http.ResponseWriter, r *http.Request, err error) {
 // по handler'ам, а внутренние подробности не доходят до клиента.
 func writeDomainError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
+	case errors.Is(err, auth.ErrRequired):
+		writeError(w, r, http.StatusUnauthorized, CodeAuthRequired, "Войдите в аккаунт.")
+	case errors.Is(err, auth.ErrInvalidCredentials):
+		writeError(w, r, http.StatusUnauthorized, CodeInvalidCredentials, "Неверная электронная почта или пароль.")
+	case errors.Is(err, auth.ErrEmailTaken):
+		writeError(w, r, http.StatusConflict, CodeEmailTaken, "Эта почта уже используется.")
+	case errors.Is(err, auth.ErrProfileClaimed):
+		writeError(w, r, http.StatusConflict, CodeInvalidAuthData,
+			"На этом устройстве профиль уже зарегистрирован.")
+	case errors.Is(err, auth.ErrInvalidEmail), errors.Is(err, auth.ErrWeakPassword):
+		writeError(w, r, http.StatusUnprocessableEntity, CodeInvalidAuthData,
+			"Проверьте электронную почту, имя и пароль.")
+	case errors.Is(err, profile.ErrInvalidName), errors.Is(err, profile.ErrInvalidAvatar):
+		writeError(w, r, http.StatusUnprocessableEntity, CodeInvalidProfile,
+			"Имя или аватар игрока указаны некорректно.")
 	case errors.Is(err, profile.ErrEmptyID):
 		// Профиль присваивает middleware, поэтому его отсутствие — дефект
 		// сборки приложения, а не ошибка клиента.

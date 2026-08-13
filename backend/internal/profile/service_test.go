@@ -141,6 +141,34 @@ func TestIDValid(t *testing.T) {
 	}
 }
 
+func TestNormalizeIdentity(t *testing.T) {
+	identity, err := profile.NormalizeIdentity(profile.Identity{
+		DisplayName: "  Дмитрий   Новиков  ",
+		Avatar:      profile.AvatarLeader2,
+	})
+	if err != nil {
+		t.Fatalf("неожиданная ошибка: %v", err)
+	}
+	if identity.DisplayName != "Дмитрий Новиков" {
+		t.Errorf("имя = %q", identity.DisplayName)
+	}
+	if identity.Avatar != profile.AvatarLeader2 {
+		t.Errorf("аватар = %q", identity.Avatar)
+	}
+}
+
+func TestNormalizeIdentityRejectsInvalidValues(t *testing.T) {
+	for _, identity := range []profile.Identity{
+		{DisplayName: "Я", Avatar: profile.AvatarProfile},
+		{DisplayName: "Игрок", Avatar: "foreign-avatar"},
+		{DisplayName: "Игрок\nАдмин", Avatar: profile.AvatarProfile},
+	} {
+		if _, err := profile.NormalizeIdentity(identity); err == nil {
+			t.Errorf("значение принято: %+v", identity)
+		}
+	}
+}
+
 func longID(length int) string {
 	value := make([]byte, length)
 	for i := range value {

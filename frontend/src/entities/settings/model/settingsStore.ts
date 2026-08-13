@@ -82,6 +82,16 @@ export const useSettingsStore = create<SettingsState>()(
 
       applySettings: (changes) => set({ settings: { ...get().settings, ...changes } }),
 
+      setServerProfile: (profile) =>
+        set({
+          settings: {
+            ...get().settings,
+            playerName: profile.playerName,
+            avatar: profile.avatar,
+          },
+          registeredAt: profile.registeredAt,
+        }),
+
       resetSettings: () => set({ settings: defaultSettingsForProfile(get().settings) }),
     }),
     {

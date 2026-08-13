@@ -29,7 +29,7 @@ describe('useToast custom hook', () => {
     expect(result.current.toast).toBe('Test notification')
   })
 
-  it('should automatically clear toast after 2600ms', () => {
+  it('should automatically clear toast after 6000ms', () => {
     const { result } = renderHook(() => useToast())
 
     act(() => {
@@ -39,7 +39,7 @@ describe('useToast custom hook', () => {
     expect(result.current.toast).toBe('Self-destructing toast')
 
     act(() => {
-      vi.advanceTimersByTime(2600)
+      vi.advanceTimersByTime(6000)
     })
 
     expect(result.current.toast).toBeNull()
@@ -53,7 +53,7 @@ describe('useToast custom hook', () => {
     })
 
     act(() => {
-      vi.advanceTimersByTime(2000)
+      vi.advanceTimersByTime(5000)
     })
 
     // Send second toast before first one expires
@@ -63,17 +63,17 @@ describe('useToast custom hook', () => {
 
     expect(result.current.toast).toBe('Second message')
 
-    // Advance 2000ms (total 4000ms from start, but only 2000ms since second message)
+    // Почти весь новый интервал прошёл, но второй toast ещё виден.
     act(() => {
-      vi.advanceTimersByTime(2000)
+      vi.advanceTimersByTime(5000)
     })
 
     // Toast should still be visible because timer was reset
     expect(result.current.toast).toBe('Second message')
 
-    // Advance remaining 600ms
+    // Последняя секунда закрывает уведомление.
     act(() => {
-      vi.advanceTimersByTime(600)
+      vi.advanceTimersByTime(1000)
     })
 
     expect(result.current.toast).toBeNull()

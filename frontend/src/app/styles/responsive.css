@@ -805,8 +805,8 @@ button:not(:disabled):active {
   }
 
   .utility-card__art img {
-    width: clamp(66px, 4.4vw, 84px);
-    height: clamp(66px, 4.4vw, 84px);
+    width: clamp(60px, 3.9vw, 74px);
+    height: clamp(60px, 3.9vw, 74px);
   }
 
   .utility-card h2 {
@@ -939,14 +939,36 @@ button:not(:disabled):active {
 
 @media (min-width: 1241px) and (min-height: 851px) {
   .home-layout {
-    height: calc(100vh - 124px);
-    min-height: 0;
+    height: calc(100dvh - 104px);
+    min-height: 700px;
+    max-height: 900px;
+    padding-bottom: 0;
   }
 
   .home-main {
-    grid-template-rows: minmax(0, 1.75fr) minmax(0, 1.69fr) minmax(0, 1fr);
+    grid-template-rows:
+      minmax(230px, 1.35fr)
+      minmax(240px, 1.25fr)
+      minmax(150px, 0.8fr);
     gap: 13px;
-    height: auto;
+    height: 100%;
+  }
+
+  .hero-copy {
+    padding-block: 24px;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(42px, 2.55vw, 48px);
+  }
+
+  .hero-copy p {
+    margin-top: 12px;
+    font-size: 17px;
+  }
+
+  .hero-button {
+    margin-top: 13px;
   }
 
   .role-card {
@@ -973,10 +995,26 @@ button:not(:disabled):active {
     left: 220px;
   }
 
+  /* Иконка относится к заголовку роли, поэтому на широких карточках держим
+   * её рядом с названием, а не у далёкого правого края. */
+  .role-card__icon {
+    right: auto;
+    left: min(480px, calc(100% - 58px));
+  }
+
+  /* Нижний ряд ограничен высотой экрана. Иллюстрация должна помещаться
+   * внутри средней строки карточки и не заходить на кнопку из-за округления
+   * CSS Grid на широких мониторах. */
+  .utility-card__art,
+  .utility-card__art img {
+    width: 80px;
+    height: 80px;
+  }
+
   .home-sidebar {
     display: grid;
     grid-template-rows: minmax(0, 1.71fr) minmax(0, 2fr);
-    height: auto;
+    height: 100%;
     min-height: 0;
     gap: 10px;
   }

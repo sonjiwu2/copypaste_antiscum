@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/attempt"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/auth"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/config"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/httpapi"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/clock"
@@ -40,6 +41,7 @@ type Application struct {
 // storage — собранные хранилища и проверка готовности приложения.
 type storage struct {
 	attempts         attempt.Repository
+	authentication   auth.Repository
 	profiles         profile.Repository
 	progress         progress.Repository
 	scenarioVersions scenario.VersionRepository
@@ -105,6 +107,9 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*Applicat
 		identifier.Random{},
 		logger,
 	)
+	profiles := profile.NewService(built.profiles, systemClock, identifier.Random{})
+	authentication := auth.NewService(built.authentication, profiles, systemClock,
+		identifier.Random{}, auth.NewPasswordHasher(), cfg.Cookie.MaxAge)
 
 	handler := httpapi.NewRouter(httpapi.RouterDeps{
 		Logger:          logger,
@@ -117,11 +122,16 @@ func New(ctx context.Context, cfg config.Config, logger *slog.Logger) (*Applicat
 			Secure:   cfg.Cookie.Secure,
 			SameSite: sameSiteOf(cfg.Cookie.SameSite),
 		},
-		CORS:        httpapi.CORSSettings{AllowedOrigins: cfg.CORS.AllowedOrigins},
-		Profiles:    profile.NewService(built.profiles, systemClock, identifier.Random{}),
-		Scenarios:   scenarios,
-		Progress:    userProgress,
-		WeeklyTests: weeklyTests,
+		SessionCookie: httpapi.CookieSettings{
+			Name: cfg.Cookie.Name + "_session", MaxAge: int(cfg.Cookie.MaxAge.Seconds()),
+			Secure: cfg.Cookie.Secure, SameSite: sameSiteOf(cfg.Cookie.SameSite),
+		},
+		CORS:           httpapi.CORSSettings{AllowedOrigins: cfg.CORS.AllowedOrigins},
+		Profiles:       profiles,
+		Authentication: authentication,
+		Scenarios:      scenarios,
+		Progress:       userProgress,
+		WeeklyTests:    weeklyTests,
 		Attempts: attempt.NewService(
 			scenarioRepository,
 			built.scenarioVersions,
@@ -193,9 +203,11 @@ func newStorage(
 
 		attempts := memory.NewAttemptRepository()
 
+		profiles := memory.NewProfileRepository()
 		return storage{
 			attempts:         attempts,
-			profiles:         memory.NewProfileRepository(),
+			profiles:         profiles,
+			authentication:   memory.NewAuthRepository(profiles),
 			progress:         memory.NewProgressRepository(attempts),
 			scenarioVersions: memoryVersions,
 			ready:            nil,
@@ -219,6 +231,7 @@ func newStorage(
 
 	return storage{
 		attempts:         postgres.NewAttemptRepository(pool, cfg.Database.QueryTimeout),
+		authentication:   postgres.NewAuthRepository(pool, cfg.Database.QueryTimeout),
 		profiles:         postgres.NewProfileRepository(pool, cfg.Database.QueryTimeout),
 		progress:         postgres.NewProgressRepository(pool, cfg.Database.QueryTimeout),
 		scenarioVersions: archive,

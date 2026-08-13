@@ -15,6 +15,12 @@ import {
   ensureWeeklyTest,
   checkWeeklyTestAnswer,
   submitWeeklyTest,
+  fetchLeaderboard,
+  updateProfileIdentity,
+  fetchAuthSession,
+  login,
+  register,
+  logout,
 } from './client'
 import type {
   Attempt,
@@ -27,6 +33,11 @@ import type {
   SubmitWeeklyTestParams,
   CheckWeeklyTestAnswerParams,
   CheckWeeklyTestAnswerResult,
+  Leaderboard,
+  ProfileIdentity,
+  AuthSession,
+  LoginPayload,
+  RegisterPayload,
 } from './types'
 
 export const queryKeys = {
@@ -41,6 +52,66 @@ export const queryKeys = {
     detail: (id?: string) => ['attempts', 'detail', id] as const,
   },
   weeklyTest: ['weekly-test', 'current'] as const,
+  leaderboard: ['leaderboard'] as const,
+  authSession: ['auth', 'session'] as const,
+}
+
+export function useAuthSessionQuery() {
+  return useQuery<AuthSession | null, Error>({
+    queryKey: queryKeys.authSession,
+    queryFn: fetchAuthSession,
+    staleTime: 60_000,
+    retry: false,
+  })
+}
+
+function useAuthMutation<TPayload>(mutationFn: (payload: TPayload) => Promise<AuthSession>) {
+  const queryClient = useQueryClient()
+  return useMutation<AuthSession, Error, TPayload>({
+    mutationFn,
+    onSuccess: (session) => {
+      queryClient.setQueryData(queryKeys.authSession, session)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.leaderboard })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.progress })
+    },
+  })
+}
+
+export function useLoginMutation() {
+  return useAuthMutation<LoginPayload>(login)
+}
+
+export function useRegisterMutation() {
+  return useAuthMutation<RegisterPayload>(register)
+}
+
+export function useLogoutMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<void, Error>({
+    mutationFn: logout,
+    onSuccess: () => {
+      queryClient.clear()
+      queryClient.setQueryData(queryKeys.authSession, null)
+    },
+  })
+}
+
+export function useLeaderboardQuery() {
+  return useQuery<Leaderboard, Error>({
+    queryKey: queryKeys.leaderboard,
+    queryFn: fetchLeaderboard,
+    staleTime: 4_000,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
+  })
+}
+
+export function useUpdateProfileIdentityMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<ProfileIdentity, Error, ProfileIdentity>({
+    mutationFn: updateProfileIdentity,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.leaderboard }),
+  })
 }
 
 export function useScenariosQuery(

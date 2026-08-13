@@ -9,10 +9,12 @@ import { RulesPage } from '../pages/rules'
 import { WeeklyTestPage } from '../pages/weekly-test'
 import { RewardsPage } from '../pages/rewards'
 import { PlaceholderPage } from '../pages/placeholder'
+import { AuthPage } from '../pages/auth'
 import { useToast, Toast } from '../features/toast'
 import { useBackgroundMusic, useButtonSound } from '../features/sound'
 import { useAppNotifications } from '../features/notifications'
 import { useSettingsStore } from '../entities/settings'
+import { useAuthSessionQuery, useLogoutMutation, type AuthSession } from '../shared/api'
 import { MissionPlayWrapper } from './MissionPlayWrapper'
 import { useAppNavigation } from './model/useAppNavigation'
 
@@ -31,12 +33,41 @@ const SCROLLABLE_ROUTES = [
 ] as const
 
 export function App() {
-  const { toast, dismiss } = useToast()
+  const session = useAuthSessionQuery()
+
+  if (session.isPending) {
+    return (
+      <main className='auth-page'>
+        <div className='auth-page__veil' />
+        <p className='auth-loading'>ПРОВЕРЯЕМ СЕССИЮ…</p>
+      </main>
+    )
+  }
+
+  if (!session.data) {
+    return <AuthPage serviceUnavailable={session.isError} />
+  }
+
+  return <AuthenticatedApp session={session.data} />
+}
+
+function AuthenticatedApp({ session }: { session: AuthSession }) {
+  const { toast, showToast, dismiss } = useToast()
   useButtonSound()
   useBackgroundMusic()
   useAppNotifications()
 
   const theme = useSettingsStore((state) => state.settings.theme)
+  const setServerProfile = useSettingsStore((state) => state.setServerProfile)
+  const logout = useLogoutMutation()
+
+  useEffect(() => {
+    setServerProfile({
+      playerName: session.displayName,
+      avatar: session.avatar,
+      registeredAt: session.registeredAt,
+    })
+  }, [session, setServerProfile])
 
   // Тема ставится на корневой элемент, а не на оболочку: фон страницы за
   // пределами приложения берётся из html и иначе остался бы светлым.
@@ -53,7 +84,17 @@ export function App() {
 
   return (
     <div className={appShellClass(currentRoute)}>
-      <Header onNavigate={handleNavigate} currentRoute={currentRoute} />
+      <Header
+        onNavigate={handleNavigate}
+        currentRoute={currentRoute}
+        loggingOut={logout.isPending}
+        onLogout={() =>
+          logout.mutate(undefined, {
+            onSuccess: () => window.location.replace('/'),
+            onError: () => showToast('Не удалось выйти. Проверьте соединение.'),
+          })
+        }
+      />
       <Routes>
         <Route path='/' element={<HomePage onNavigate={handleNavigate} />} />
         <Route path='/missions' element={<MissionsPage onLaunch={handleLaunchMission} />} />

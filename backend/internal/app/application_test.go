@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -70,8 +71,28 @@ func TestNewServesScenarioCatalog(t *testing.T) {
 
 	defer application.Close()
 
+	first := httptest.NewRecorder()
+	application.Handler().ServeHTTP(first, httptest.NewRequest(http.MethodGet, "/api/v1/scenarios", nil))
+	if first.Code != http.StatusUnauthorized {
+		t.Fatalf("каталог без входа: статус = %d, ожидался 401", first.Code)
+	}
+	register := httptest.NewRecorder()
+	registerRequest := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(
+		`{"email":"tester@example.com","password":"password1!","displayName":"Тестер","avatar":"profile"}`))
+	for _, cookie := range first.Result().Cookies() {
+		registerRequest.AddCookie(cookie)
+	}
+	application.Handler().ServeHTTP(register, registerRequest)
+	if register.Code != http.StatusCreated {
+		t.Fatalf("регистрация: статус = %d, тело: %s", register.Code, register.Body.String())
+	}
+
 	recorder := httptest.NewRecorder()
-	application.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/scenarios", nil))
+	catalogRequest := httptest.NewRequest(http.MethodGet, "/api/v1/scenarios", nil)
+	for _, cookie := range append(first.Result().Cookies(), register.Result().Cookies()...) {
+		catalogRequest.AddCookie(cookie)
+	}
+	application.Handler().ServeHTTP(recorder, catalogRequest)
 
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("статус = %d, ожидался 200", recorder.Code)

@@ -198,6 +198,39 @@ export interface HealthResponse {
   status: string
 }
 
+export type ProfileAvatar = 'profile' | 'leader-1' | 'leader-2' | 'leader-3'
+
+export interface ProfileIdentity {
+  displayName: string
+  avatar: ProfileAvatar
+}
+
+export interface AuthSession extends ProfileIdentity {
+  email: string
+  registeredAt: string
+  expiresAt: string
+}
+
+export interface LoginPayload {
+  email: string
+  password: string
+}
+
+export interface RegisterPayload extends LoginPayload, ProfileIdentity {}
+
+export interface LeaderboardEntry extends ProfileIdentity {
+  rank: number
+  rating: number
+  completedScenarios: number
+  averageScore: number
+  currentPlayer: boolean
+}
+
+export interface Leaderboard {
+  leaders: LeaderboardEntry[]
+  current?: LeaderboardEntry
+}
+
 export interface ApiErrorDetail {
   code: string
   message: string

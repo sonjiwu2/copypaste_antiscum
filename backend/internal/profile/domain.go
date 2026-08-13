@@ -7,7 +7,10 @@ package profile
 
 import (
 	"errors"
+	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 // ID — идентификатор анонимного профиля.
@@ -32,7 +35,66 @@ var (
 
 	// ErrInvalidID — идентификатор не мог быть выдан этим сервером.
 	ErrInvalidID = errors.New("идентификатор профиля некорректен")
+
+	ErrInvalidName = errors.New("имя игрока должно содержать от 2 до 24 символов")
+
+	ErrInvalidAvatar = errors.New("аватар игрока некорректен")
 )
+
+type Avatar string
+
+const (
+	AvatarProfile Avatar = "profile"
+	AvatarLeader1 Avatar = "leader-1"
+	AvatarLeader2 Avatar = "leader-2"
+	AvatarLeader3 Avatar = "leader-3"
+)
+
+func (avatar Avatar) Valid() bool {
+	switch avatar {
+	case AvatarProfile, AvatarLeader1, AvatarLeader2, AvatarLeader3:
+		return true
+	default:
+		return false
+	}
+}
+
+type Identity struct {
+	DisplayName string
+	Avatar      Avatar
+}
+
+func NormalizeIdentity(identity Identity) (Identity, error) {
+	for _, symbol := range identity.DisplayName {
+		if unicode.IsControl(symbol) {
+			return Identity{}, ErrInvalidName
+		}
+	}
+	identity.DisplayName = strings.Join(strings.Fields(identity.DisplayName), " ")
+	length := utf8.RuneCountInString(identity.DisplayName)
+	if length < 2 || length > 24 {
+		return Identity{}, ErrInvalidName
+	}
+	if !identity.Avatar.Valid() {
+		return Identity{}, ErrInvalidAvatar
+	}
+	return identity, nil
+}
+
+type Leader struct {
+	Rank               int
+	DisplayName        string
+	Avatar             Avatar
+	Rating             int
+	CompletedScenarios int
+	AverageScore       int
+	CurrentPlayer      bool
+}
+
+type Leaderboard struct {
+	Leaders []Leader
+	Current *Leader
+}
 
 // Valid сообщает, мог ли такой идентификатор быть выдан сервером.
 //
@@ -70,6 +132,7 @@ func isIDSymbol(symbol rune) bool {
 // Profile — анонимный владелец попыток и прогресса.
 type Profile struct {
 	ID        ID
+	Identity  Identity
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

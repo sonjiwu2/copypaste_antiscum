@@ -36,6 +36,10 @@ export interface SettingsState {
   registeredAt: string
   /** Сохраняет изменённые поля. Остальные остаются как были. */
   applySettings: (changes: Partial<AppSettings>) => void
+  /** Применяет публичную личность и дату регистрации из серверной сессии. */
+  setServerProfile: (
+    profile: Pick<AppSettings, 'playerName' | 'avatar'> & { registeredAt: string }
+  ) => void
   /** Возвращает предпочтения по умолчанию, сохраняя имя и аватар игрока. */
   resetSettings: () => void
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/attempt"
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/auth"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/identifier"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/profile"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/progress"
@@ -26,7 +27,10 @@ type RouterDeps struct {
 	MaxRequestBytes int64
 	Ready           ReadinessCheck
 	Cookie          CookieSettings
+	SessionCookie   CookieSettings
 	CORS            CORSSettings
+	AllowAnonymous  bool
+	Authentication  *auth.Service
 	Profiles        *profile.Service
 	Scenarios       *scenario.Service
 	Attempts        *attempt.Service
@@ -41,23 +45,33 @@ func NewRouter(deps RouterDeps) http.Handler {
 	readiness := &readinessHandler{check: deps.Ready}
 	userProgress := &progressHandler{progress: deps.Progress}
 	weeklyTests := &weeklyTestHandler{tests: deps.WeeklyTests}
-	profiles := &profileHandler{profiles: deps.Profiles, cookie: deps.Cookie}
+	profiles := &profileHandler{profiles: deps.Profiles, cookie: deps.Cookie, sessionCookie: deps.SessionCookie}
+	authentication := &authHandler{auth: deps.Authentication, cookie: deps.SessionCookie}
 
-	api := http.NewServeMux()
+	protected := http.NewServeMux()
 
-	api.HandleFunc("GET /api/v1/scenarios", scenarios.list)
-	api.HandleFunc("GET /api/v1/scenarios/{scenarioId}", scenarios.get)
-	api.HandleFunc("POST /api/v1/attempts", attempts.start)
-	api.HandleFunc("GET /api/v1/attempts/{attemptId}", attempts.get)
-	api.HandleFunc("POST /api/v1/attempts/{attemptId}/choices", attempts.submitChoice)
-	api.HandleFunc("GET /api/v1/progress", userProgress.get)
-	api.HandleFunc("DELETE /api/v1/profile", profiles.reset)
-	api.HandleFunc("POST /api/v1/weekly-tests/current", weeklyTests.current)
-	api.HandleFunc("POST /api/v1/weekly-tests/{testId}/answer", weeklyTests.checkAnswer)
-	api.HandleFunc("POST /api/v1/weekly-tests/{testId}/submit", weeklyTests.submit)
+	protected.HandleFunc("GET /api/v1/scenarios", scenarios.list)
+	protected.HandleFunc("GET /api/v1/scenarios/{scenarioId}", scenarios.get)
+	protected.HandleFunc("POST /api/v1/attempts", attempts.start)
+	protected.HandleFunc("GET /api/v1/attempts/{attemptId}", attempts.get)
+	protected.HandleFunc("POST /api/v1/attempts/{attemptId}/choices", attempts.submitChoice)
+	protected.HandleFunc("GET /api/v1/progress", userProgress.get)
+	protected.HandleFunc("GET /api/v1/leaderboard", profiles.leaderboard)
+	protected.HandleFunc("PUT /api/v1/profile", profiles.update)
+	protected.HandleFunc("DELETE /api/v1/profile", profiles.reset)
+	protected.HandleFunc("POST /api/v1/weekly-tests/current", weeklyTests.current)
+	protected.HandleFunc("POST /api/v1/weekly-tests/{testId}/answer", weeklyTests.checkAnswer)
+	protected.HandleFunc("POST /api/v1/weekly-tests/{testId}/submit", weeklyTests.submit)
 	// Общий маршрут перехватывает неизвестные пути, чтобы клиент всегда
 	// получал JSON-ошибку вместо стандартного текстового ответа ServeMux.
-	api.HandleFunc("/", handleNotFound)
+	protected.HandleFunc("/", handleNotFound)
+
+	api := http.NewServeMux()
+	api.HandleFunc("POST /api/v1/auth/register", authentication.register)
+	api.HandleFunc("POST /api/v1/auth/login", authentication.login)
+	api.HandleFunc("POST /api/v1/auth/logout", authentication.logout)
+	api.HandleFunc("GET /api/v1/auth/session", authentication.current)
+	api.Handle("/api/v1/", requireAccount(deps.AllowAnonymous, protected))
 
 	mux := http.NewServeMux()
 
@@ -65,7 +79,8 @@ func NewRouter(deps RouterDeps) http.Handler {
 	// постоянно и не должен создавать по профилю на каждый опрос.
 	mux.HandleFunc("GET /healthz", handleHealth)
 	mux.HandleFunc("GET /readyz", readiness.get)
-	mux.Handle("/api/v1/", withProfile(deps.Profiles, deps.Cookie, api))
+	mux.Handle("/api/v1/", withPrincipal(deps.Profiles, deps.Authentication,
+		deps.Cookie, deps.SessionCookie, api))
 	mux.HandleFunc("/", handleNotFound)
 
 	var handler http.Handler = mux

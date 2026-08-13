@@ -11,13 +11,12 @@
 
 | | |
 |---|---|
-| 🌐 **Приложение** | https://antiscum-frontend.onrender.com |
-| ⚙️ **API** | https://antiscum-backend.onrender.com |
+| 🌐 **Приложение** | https://antiscum.62-233-43-146.sslip.io |
+| ⚙️ **API** | https://antiscum.62-233-43-146.sslip.io/api/v1 |
 | 📦 **Docker Hub** | [antiscum-frontend](https://hub.docker.com/r/sonjiwu/antiscum-frontend) · [antiscum-backend](https://hub.docker.com/r/sonjiwu/antiscum-backend) |
 
-> ⏱️ **Первое открытие ссылки — 15–60 секунд.** Бесплатный тариф Render усыпляет
-> контейнер после 15 минут простоя, и просыпаются оба сервиса подряд. Это холодный
-> старт, а не ошибка. Дальше приложение отвечает мгновенно.
+Production работает на виртуальной машине Cloud.ru. Caddy завершает TLS и передаёт
+трафик в Docker Compose; frontend и API доступны с одного origin.
 
 ---
 
@@ -34,7 +33,7 @@
 [9. Конфигурация](#9-конфигурация) · 
 [10. API](#10-http-api) ·
 [11. Тесты](#11-тестирование) · 
-[12. Docker и Render](#12-docker-и-деплой-на-render) ·
+[12. Docker и Cloud.ru](#12-docker-и-деплой-на-cloudru) ·
 [13. История коммитов](#13-история-коммитов) · 
 [14. Команда](#14-команда-и-распределение-ответственности) ·
 [15. ИИ в разработке](#15-использование-ии) ·
@@ -113,9 +112,11 @@ XP, уровень, серию, бейджи.
 | ✅ Работает полностью | 🚧 В разработке |
 |---|---|
 | Каталог, фильтры, сортировка | **АНТИСКАМ SOS** — карточка на главной помечена «В РАЗРАБОТКЕ», по нажатию показывает подсказку. Пошагового плана действий пока нет |
-| Прохождение, последствия, финал | Таблица лидеров — заглушка «СКОРО», нужны аккаунты и общий сервер |
+| Прохождение, последствия, финал | Восстановление забытого пароля по email |
 | Оценка и сохранение в PostgreSQL | Магазин наград: реализована только ежедневная награда, бейджи — на странице прогресса |
 | Серверная статистика прохождений | Анимации UI, масштаб интерфейса, высокая контрастность — три строки настроек помечены «В разработке» |
+| Аккаунты: регистрация, вход, выход, сессии и перенос прогресса между устройствами | Сезоны, друзья и соревнования в реальном времени |
+| Общая таблица лидеров с обновлением каждые 5 секунд | |
 | XP, уровень, серия, 4 достижения | |
 | ИИ-экзамен на 20 вопросов | |
 | Настройки, сброс прогресса, тема, звук | |
@@ -218,8 +219,7 @@ type GenerationContext struct{}
 > - ❌ Не помещать во frontend. Переменной `VITE_GROQ_API_KEY` **не существует и не должно** —
 >   всё с префиксом `VITE_` Vite вшивает в JS-бандл и отдаёт браузеру.
 > - ❌ Не записывать в Docker-образ, `Dockerfile`, `compose.yaml` или Git.
-> - ✅ Локально — только в `.env` (исключён из Git). На Render — только в Environment
->   Variables сервиса **backend**.
+> - ✅ Локально и на Cloud.ru — только в `.env` (исключён из Git) на сервере.
 
 **Хранение теста.** При `STORAGE_DRIVER=postgres` тест переживает перезапуск и отсчёт
 7 суток работает корректно. При `STORAGE_DRIVER=memory` тест исчезнет после перезапуска,
@@ -325,7 +325,7 @@ storage   postgres (production) / memory (явные тесты и демо бе
 
 ### Инфраструктура
 
-Docker + Compose v2 · Docker Hub · Render · GitHub Actions · Pinggy (туннель для
+Docker + Compose v2 · Cloud.ru · Caddy · GitHub Actions · Pinggy (туннель для
 демонстрации локального стенда) · OpenAPI 3.0.3.
 
 ---
@@ -342,7 +342,8 @@ antiscum/
 │   │   ├── attempt/              домен попытки, переходы, идемпотентность
 │   │   ├── scenario/             домен сценария, strict-декодер, валидатор графа
 │   │   ├── scenarioarchive/      canonical SHA-256 и синхронизация версий
-│   │   ├── profile/              анонимные профили
+│   │   ├── auth/                 аккаунты, пароли и серверные сессии
+│   │   ├── profile/              игровые профили и публичная личность
 │   │   ├── progress/             агрегация прогресса и рекомендации
 │   │   ├── weeklytest/           экзамен, правила, резервный генератор
 │   │   ├── config/               чтение и валидация окружения
@@ -357,12 +358,10 @@ antiscum/
 │   ├── src/{app,pages,widgets,features,entities,shared}/
 │   ├── public/assets/            пиксельные иконки, арт, шрифт, звук
 │   ├── Dockerfile                multi-stage: npm ci → build → nginx
-│   ├── nginx.conf                локальный Compose → backend:8080
-│   └── nginx.render.conf         Render → antiscum-backend.onrender.com
+│   └── nginx.conf                Compose → backend:8080
 │
 ├── docs/openapi.yaml             публичный контракт API
 ├── docs/scenario-format.md       формат сценарного дерева
-├── deploy/render/README.md       памятка по Groq на Render
 ├── .github/workflows/            ci.yml · release.yml
 ├── compose.yaml                  postgres · migrate · backend · frontend · tunnel
 ├── .env.example                  шаблон окружения без секретов
@@ -398,7 +397,7 @@ antiscum/
 проходит сценарии, а результаты исчезают при перезапуске.
 
 **Readiness против liveness.** `/healthz` подтверждает только, что процесс жив.
-`/readyz` проверяет PostgreSQL — на него ориентируются Compose и Render, поэтому
+`/readyz` проверяет PostgreSQL — на него ориентируются Compose и production, поэтому
 недоступная база снимает backend с готовности вместо отдачи 500 пользователям.
 
 **Защита от двойной генерации теста.** Создание экзамена обёрнуто в `singleflight`
@@ -679,11 +678,11 @@ unit, race, coverage, golangci-lint) → **Frontend checks** (typecheck, ESLint,
 → **PostgreSQL integration** → **Docker Compose smoke** с teardown.
 
 `.github/workflows/release.yml` по тегу `v*` публикует backend-образ в GHCR.
-⚠️ Docker Hub, из которого живёт Render, заливается **вручную**.
+Production обновляется на виртуальной машине Cloud.ru из актуального исходного кода.
 
 ---
 
-## 12. Docker и деплой на Render
+## 12. Docker и деплой на Cloud.ru
 
 ### Образы
 
@@ -692,79 +691,32 @@ unit, race, coverage, golangci-lint) → **Frontend checks** (typecheck, ESLint,
 | **backend** | Multi-stage: Go 1.25.12-alpine → alpine 3.23.5. Бинарники `api` и `migrate`, non-root UID 65532, healthcheck `/healthz` |
 | **frontend** | Multi-stage: node 22.14-alpine (`npm ci` → build) → nginx 1.27-alpine. Порт 8080, healthcheck `/index.html` |
 
-### ⚠️ Frontend собирается в двух вариантах
-
-`frontend/Dockerfile` принимает build-arg:
-
-```dockerfile
-ARG NGINX_CONFIG=nginx.conf
-COPY ${NGINX_CONFIG} /etc/nginx/nginx.conf
-```
-
-| Вариант | Build-arg | upstream nginx | Где |
-|---|---|---|---|
-| Локальный | по умолчанию | `backend:8080` (имя сервиса Compose) | Docker Compose |
-| Render | `NGINX_CONFIG=nginx.render.conf` | `antiscum-backend.onrender.com:443` | Render |
-
-**Образы не взаимозаменяемы.** Если опубликовать на Render образ со сборкой по умолчанию,
-nginx попытается резолвить хост `backend`, которого там нет: статика откроется,
-а `/api` вернёт `502` — **приложение загрузится, но каталог миссий будет пустым.**
-При переименовании backend-сервиса на Render надо править `nginx.render.conf`
-и пересобирать образ: nginx резолвит upstream на старте, а не на каждый запрос.
-
-Сборка и публикация:
-
-```powershell
-docker build -t sonjiwu/antiscum-backend:latest ./backend
-```
-
-```powershell
-docker build --build-arg NGINX_CONFIG=nginx.render.conf -t sonjiwu/antiscum-frontend:latest ./frontend
-```
-
-```powershell
-docker login ; docker push sonjiwu/antiscum-backend:latest ; docker push sonjiwu/antiscum-frontend:latest
-```
-
 ### Как работает деплой сейчас
 
-Оба сервиса подняты на Render из **готовых образов Docker Hub**, без сборки на стороне платформы.
+Сервисы работают в Docker Compose на виртуальной машине Cloud.ru.
 
 ```text
-Пользователь ──https──→ Render: antiscum-frontend  (nginx.render.conf, :8080)
-                              │  отдаёт SPA
-                              │  /api, /healthz, /readyz  ──https(SNI)──→
-                        Render: antiscum-backend  (Go API, :8080)
-                              ├──→ PostgreSQL (managed)
-                              └──→ Groq API ↓ fallback
+Пользователь ──https──→ Caddy (:443)
+                          └──→ frontend/nginx (:8080)
+                                 ├──→ SPA
+                                 └──→ backend (:8080)
+                                        ├──→ PostgreSQL
+                                        └──→ Groq API ↓ fallback
 ```
 
-Для браузера это **один origin** — `antiscum-frontend.onrender.com`. Пользователь никогда
-не обращается к backend напрямую, поэтому cookie остаётся same-site и CORS на Render не нужен.
-Проверить всю цепочку можно одной командой: если фронтенд отвечает `{"status":"ok"}`,
-значит его nginx успешно доходит до backend.
-P.S Так как данный сервис бесплатный, то происходит некоторая задержка при обработке шаблонов запроса. Именно поэтому настоятельно рекомендую, если сценарии в разделе "МИССИИ" недоступны обновлять страницу, до тех пор пока сервис не начнет работать, обычно это работает хорошо)
+Для браузера это один origin — `antiscum.62-233-43-146.sslip.io`, поэтому cookie
+остаётся same-site и CORS не нужен. HTTP автоматически перенаправляется на HTTPS.
 
 ```powershell
-curl.exe https://antiscum-frontend.onrender.com/healthz
+curl.exe https://antiscum.62-233-43-146.sslip.io/healthz
+curl.exe https://antiscum.62-233-43-146.sslip.io/readyz
 ```
-
-**Настройки сервисов** (оба — Web Service → Deploy an existing image, порт `8080`):
-
-| | backend | frontend |
-|---|---|---|
-| Образ | `sonjiwu/antiscum-backend:latest` | `sonjiwu/antiscum-frontend:latest` |
-| Health Check Path | `/readyz` | `/index.html` |
-| Env-переменные | `DATABASE_URL` 🔐, `STORAGE_DRIVER=postgres`, `COOKIE_SECURE=true`, `GROQ_API_KEY` 🔐, `GROQ_MODEL`, `GROQ_BASE_URL`, `GROQ_REQUEST_TIMEOUT=40s`, `HTTP_WRITE_TIMEOUT=60s` | не нужны — адрес backend зашит в образ |
 
 `HTTP_WRITE_TIMEOUT=60s` обязателен: первая генерация экзамена Groq занимает до минуты.
 `CORS_ALLOWED_ORIGINS` оставлен пустым намеренно.
 
-**Миграции.** Образ backend содержит два бинарника, схема применяется отдельно от старта API:
-`/usr/local/bin/migrate up` запускается как Pre-Deploy Command или отдельным Job перед выкаткой.
-
-**Обновление публичной версии:** пересобрать образ → `docker push` → в Render
-**Manual Deploy → Deploy latest image**.
+При `docker compose up -d --build` сервис `migrate` применяет встроенные миграции до
+старта API. После обновления обязательно проверяются `/healthz` и `/readyz`.
 
 ---
 
@@ -826,7 +778,7 @@ git log --oneline main ; git branch -r ; git shortlog -sne main
 
 | Участник | Зона | Что сделано |
 |---|---|---|
-| **Backend №1**<br>Dmitrii Novikov (`sonjiwu2`) | Архитектура, публичный API, OpenAPI, движок ветвящихся сценариев | Структура Go-проекта и правило `handler → service → domain → repository`; контракт `openapi.yaml` и единый формат ошибок; домен сценария, строгий декодер и валидатор графа; API каталога и попытки; обработка выбора, переход, выдача последствия; идемпотентность и optimistic locking; тесты переходов и финальных состояний.<br><br>Дополнительно: сведение всех веток в публичный релиз, еженедельный ИИ-экзамен целиком (домен, `singleflight`, клиенты Groq/xAI, резервный генератор, страница `/weekly-test`), `nginx.render.conf` и настройка обоих сервисов на Render, кроме того активная работа на созданием frontend части сервиса|
+| **Backend №1**<br>Dmitrii Novikov (`sonjiwu2`) | Архитектура, публичный API, OpenAPI, движок ветвящихся сценариев | Структура Go-проекта и правило `handler → service → domain → repository`; контракт `openapi.yaml` и единый формат ошибок; домен сценария, строгий декодер и валидатор графа; API каталога и попытки; обработка выбора, переход, выдача последствия; идемпотентность и optimistic locking; тесты переходов и финальных состояний.<br><br>Дополнительно: сведение всех веток в публичный релиз, еженедельный ИИ-экзамен целиком (домен, `singleflight`, клиенты Groq/xAI, резервный генератор, страница `/weekly-test`), production-деплой на Cloud.ru и активная работа над frontend частью сервиса |
 | **Backend №2**<br>`naastyurasova21` | PostgreSQL, миграции, repository попыток, scoring, прогресс | Слой работы с базой в ветке `feature/backend-integration`: схема, исправления и переработка логики хранения. Эти наработки легли в основу итогового PostgreSQL-слоя — репозиториев попыток и решений, миграций и агрегации прогресса |
 | **Backend №3**<br>`Zvoook` | Сценарный контент, Docker, CI, деплой | Первый набор сценариев тренажёра · запуск через Docker и Compose · проверки в CI · настройка публикации образов · документация проекта. Обновление каталога сценариев и тестов под него в ветке `feature/backend3-scenarios-infra`, влитой через PR #1. Единственный участник, чьи коммиты попали в `main` напрямую |
 | **Frontend**<br>`nikki` (`Niki96434`) | UX/UI, экраны, состояния, интеграция с API | Страницы миссий и прогресса в ветке `front`. Эти экраны стали основой итогового интерфейса: каталог с фильтрами, карточки миссий и страница прогресса развивались из этой работы |
@@ -886,16 +838,15 @@ smoke и линтеры обеих частей. Архитектурные ре
 
 | Ограничение | Комментарий |
 |---|---|
-| Нет учётных записей | Профиль анонимный, привязан к cookie. **Потерянную cookie восстановить нельзя** |
+| Нет восстановления пароля | Email не собирается; пароль необходимо сохранить самостоятельно |
 | Нет rate limiting в приложении | Задача внешнего reverse proxy или платформы |
 | «АНТИСКАМ SOS» не реализован | Карточка есть и честно помечена «В РАЗРАБОТКЕ» |
-| Таблица лидеров — заглушка | Требует аккаунтов и общего сервера игроков |
+| Нет OAuth | Для входа используется логин и пароль; Google/VK/Яндекс пока не подключены |
 | Категория «Подмена личности» пуста | Ни один из 14 сценариев в неё не размечен — фильтр вернёт пустой список |
 | Каталог без пагинации | 14 сценариев её не требуют |
 | Бесплатный лимит Groq | При исчерпании автоматически включается резервный тест |
-| Free-тариф Render | Холодный старт 13–14 с на сервис после простоя |
-| Docker Hub заливается вручную | `release.yml` публикует только backend и только в GHCR |
-| Backup/restore PostgreSQL и TLS | Ответственность хостинг-платформы |
+| Публикация образов | `release.yml` публикует только backend в GHCR; production собирается на VM |
+| Backup PostgreSQL | Нужна отдельная серверная политика резервного копирования |
 
 ---
 
@@ -907,9 +858,8 @@ smoke и линтеры обеих частей. Архитектурные ре
 curl.exe -i http://localhost:3000/healthz
 ```
 
-`502` локально → backend не поднялся, смотрите `docker compose logs backend`.
-`502` **на Render** → образ фронтенда собран без `--build-arg NGINX_CONFIG=nginx.render.conf`
-(см. раздел 12). Пересоберите и опубликуйте заново.
+`502` → backend не поднялся или frontend не видит его в Compose-сети; смотрите
+`docker compose ps` и `docker compose logs backend frontend`.
 
 **🔴 `DATABASE_URL обязателен при STORAGE_DRIVER="postgres"`.** Это намеренная ошибка
 конфигурации — тихого отката на память в проекте нет. Задайте `$env:DATABASE_URL`.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/auth"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/profile"
 )
 
@@ -13,6 +14,7 @@ const (
 	requestIDKey contextKey = iota
 	loggerKey
 	profileIDKey
+	accountKey
 )
 
 // ProfileIDFrom возвращает профиль запроса или пустое значение.
@@ -24,6 +26,15 @@ func ProfileIDFrom(ctx context.Context) profile.ID {
 
 func withProfileID(ctx context.Context, profileID profile.ID) context.Context {
 	return context.WithValue(ctx, profileIDKey, profileID)
+}
+
+func AccountFrom(ctx context.Context) (auth.Current, bool) {
+	account, ok := ctx.Value(accountKey).(auth.Current)
+	return account, ok
+}
+
+func withAccount(ctx context.Context, account auth.Current) context.Context {
+	return context.WithValue(ctx, accountKey, account)
 }
 
 // RequestIDFrom возвращает идентификатор запроса или пустую строку.

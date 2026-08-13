@@ -11,7 +11,7 @@ import { useToastStore } from '../../../features/toast'
 import { Glyph } from '../../../shared/ui/Glyph'
 import { PixelIcon } from '../../../shared/ui/PixelIcon'
 import { ART_ROOT } from '../../../shared/config/assets'
-import { resetProfileData } from '../../../shared/api'
+import { resetProfileData, updateProfileIdentity } from '../../../shared/api'
 import { useNotificationsStore } from '../../../features/notifications'
 import { SettingsCard } from './SettingsCard'
 import { CheckboxRow, PendingRow, SliderRow, ToggleRow } from './SettingsRows'
@@ -34,6 +34,7 @@ export function SettingsPage({ onToast }: { onToast?: (message: string) => void 
   const [draft, setDraft] = useState<AppSettings>(saved)
   const [renaming, setRenaming] = useState(false)
   const [resettingProgress, setResettingProgress] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const isDirty = Object.keys(draft).some(
     (key) => draft[key as keyof AppSettings] !== saved[key as keyof AppSettings]
@@ -42,10 +43,22 @@ export function SettingsPage({ onToast }: { onToast?: (message: string) => void 
   const change = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
     setDraft((current) => ({ ...current, [key]: value }))
 
-  const handleSave = () => {
-    applySettings(draft)
-    setRenaming(false)
-    notify('Настройки сохранены.')
+  const handleSave = async () => {
+    const identityChanged =
+      draft.playerName !== saved.playerName || draft.avatar !== saved.avatar
+    setSaving(true)
+    try {
+      if (identityChanged) {
+        await updateProfileIdentity({ displayName: draft.playerName, avatar: draft.avatar })
+      }
+      applySettings(draft)
+      setRenaming(false)
+      notify('Настройки сохранены.')
+    } catch {
+      notify('Не удалось сохранить имя или аватар на сервере.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleCancel = () => {
@@ -66,7 +79,7 @@ export function SettingsPage({ onToast }: { onToast?: (message: string) => void 
 
   const handleClearProgress = async () => {
     // Действие необратимо, поэтому подтверждается отдельно.
-    if (!window.confirm('Удалить весь прогресс обучения? Действие необратимо.')) {
+    if (!window.confirm('Удалить аккаунт и весь прогресс обучения? Действие необратимо.')) {
       return
     }
 
@@ -76,7 +89,7 @@ export function SettingsPage({ onToast }: { onToast?: (message: string) => void 
       resetProgress()
       useNotificationsStore.getState().resetNotifications()
       clearWeeklyTestDrafts()
-      notify('Весь прогресс, недельный тест и отсчёт удалены.')
+      notify('Аккаунт и весь прогресс удалены.')
       window.setTimeout(() => window.location.assign('/'), 250)
     } catch {
       notify('Не удалось удалить серверный прогресс. Попробуйте ещё раз.')
@@ -119,7 +132,7 @@ export function SettingsPage({ onToast }: { onToast?: (message: string) => void 
 
           <p className='settings-note'>
             <PixelIcon name='star' size={18} />
-            Настройки хранятся в этом браузере и не передаются на сервер.
+            Оформление хранится в браузере; имя и аватар — в аккаунте на сервере.
           </p>
         </SettingsCard>
 
@@ -273,11 +286,11 @@ export function SettingsPage({ onToast }: { onToast?: (message: string) => void 
         <button
           type='button'
           className='settings-footer__save'
-          disabled={!isDirty}
-          onClick={handleSave}
+            disabled={!isDirty || saving}
+            onClick={() => void handleSave()}
         >
           <PixelIcon name='save' size={18} />
-          Сохранить
+          {saving ? 'Сохраняем…' : 'Сохранить'}
         </button>
         <button
           type='button'

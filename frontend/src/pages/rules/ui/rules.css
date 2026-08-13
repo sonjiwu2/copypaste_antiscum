@@ -357,6 +357,68 @@
   }
 }
 
+/* Комфортный desktop: на Full HD и широких мониторах базовый контейнер в
+ * 950px выглядел как уменьшенная копия страницы посреди пустого экрана. */
+@media (min-width: 1241px) {
+  .rules-page__inner {
+    gap: 16px;
+    width: min(1320px, 100%);
+  }
+
+  .rules-intro h1 {
+    font-size: 28px;
+  }
+
+  .rules-intro p {
+    font-size: 17px;
+  }
+
+  .rules-card h2 {
+    font-size: 21px;
+  }
+
+  .rules-flow {
+    padding: 18px 28px 20px;
+  }
+
+  .rules-step {
+    grid-template-rows: 92px auto 1fr;
+    padding-inline: 26px;
+  }
+
+  .rules-step__image {
+    width: 106px;
+    height: 88px;
+  }
+
+  .rules-step h3 {
+    font-size: 16px;
+  }
+
+  .rules-step p,
+  .rules-purpose__copy p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .rules-purpose,
+  .rules-safety {
+    min-height: 245px;
+    padding: 19px 23px;
+  }
+
+  .rules-purpose__tip,
+  .rules-safety li {
+    font-size: 13px;
+  }
+
+  .rules-cta {
+    width: 370px;
+    height: 52px;
+    font-size: 15px;
+  }
+}
+
 @media (max-width: 900px) {
   .rules-flow__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

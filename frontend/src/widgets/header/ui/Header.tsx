@@ -25,9 +25,13 @@ const NAV_ITEMS: Array<{ route: AppRoute; command: string; label: string; icon: 
 export function Header({
   onNavigate,
   currentRoute,
+  onLogout,
+  loggingOut = false,
 }: {
   onNavigate: (label: string) => void
   currentRoute: AppRoute
+  onLogout: () => void
+  loggingOut?: boolean
 }) {
   const { profileOpen, profileRef, toggleProfile, closeMenu } = useHeaderProfileMenu()
   const level = useUserProgressStore((state) => state.level)
@@ -111,6 +115,15 @@ export function Header({
               </button>
               <button type='button' role='menuitem' onClick={closeMenu}>
                 Закрыть меню
+              </button>
+              <button
+                type='button'
+                role='menuitem'
+                className='profile-menu__logout'
+                disabled={loggingOut}
+                onClick={onLogout}
+              >
+                {loggingOut ? 'Выходим…' : 'Выйти из аккаунта'}
               </button>
             </div>
           )}

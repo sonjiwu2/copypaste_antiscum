@@ -31,16 +31,12 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 FROM nginx:${NGINX_VERSION} AS runtime
 
-# Keep the Compose nginx config as the default, while allowing platform-
-# specific reverse-proxy configs to be selected at image build time.
-ARG NGINX_CONFIG=nginx.conf
-
 LABEL org.opencontainers.image.title="antiscam-frontend" \
 	org.opencontainers.image.description="Anti-Scam Trainer web client" \
 	org.opencontainers.image.source="https://github.com/sonjiwu2/copypaste_antiscum" \
 	org.opencontainers.image.licenses="MIT"
 
-COPY ${NGINX_CONFIG} /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/nginx.conf
 COPY --from=builder /src/dist /usr/share/nginx/html
 
 # Port 8080, not 80: compose maps the published port onto it, and the same

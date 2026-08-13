@@ -3,6 +3,7 @@ package profile
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/clock"
 	"github.com/sonjiwu2/copypaste_antiscum/backend/internal/platform/identifier"
@@ -15,6 +16,35 @@ import (
 type Repository interface {
 	Ensure(ctx context.Context, profile Profile) error
 	Reset(ctx context.Context, id ID) error
+	UpdateIdentity(ctx context.Context, id ID, identity Identity, updatedAt time.Time) error
+	Leaderboard(ctx context.Context, current ID, limit int) (Leaderboard, error)
+}
+
+const LeaderboardLimit = 5
+
+func (s *Service) UpdateIdentity(ctx context.Context, id ID, identity Identity) (Identity, error) {
+	if !id.Valid() {
+		return Identity{}, ErrInvalidID
+	}
+	normalized, err := NormalizeIdentity(identity)
+	if err != nil {
+		return Identity{}, err
+	}
+	if err := s.repository.UpdateIdentity(ctx, id, normalized, s.clock.Now()); err != nil {
+		return Identity{}, fmt.Errorf("обновить публичный профиль: %w", err)
+	}
+	return normalized, nil
+}
+
+func (s *Service) Leaderboard(ctx context.Context, current ID) (Leaderboard, error) {
+	if !current.Valid() {
+		return Leaderboard{}, ErrInvalidID
+	}
+	board, err := s.repository.Leaderboard(ctx, current, LeaderboardLimit)
+	if err != nil {
+		return Leaderboard{}, fmt.Errorf("прочитать таблицу лидеров: %w", err)
+	}
+	return board, nil
 }
 
 // Reset удаляет серверные данные анонимного профиля. После этого HTTP-слой

@@ -20,6 +20,9 @@ var expectedMigrations = []string{
 	"00005_weekly_tests.sql",
 	"00006_weekly_test_groq_source.sql",
 	"00007_weekly_test_exam.sql",
+	"00008_multiplayer_leaderboard.sql",
+	"00009_accounts_and_sessions.sql",
+	"00010_account_email.sql",
 }
 
 func TestEmbeddedMigrationsArePresent(t *testing.T) {

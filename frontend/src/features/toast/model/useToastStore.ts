@@ -32,7 +32,7 @@ export const useToastStore = create<ToastStore>((set, get) => ({
 
     const newTimeout = window.setTimeout(() => {
       set({ toast: null, timeoutId: null })
-    }, 2600)
+    }, 6000)
 
     set({ toast: message, timeoutId: newTimeout })
   },
