@@ -1,6 +1,6 @@
 {
   "id": "seller-laptop-courier",
-  "version": 3,
+  "version": 5,
   "slug": "seller-laptop-courier",
   "role": "seller",
   "title": "Покупатель присылает курьера",
@@ -15,6 +15,13 @@
       "type": "message",
       "sender": "buyer",
       "text": "Добрый день. Ноутбук ещё продаётся?",
+      "nextNodeId": "seller-describes-laptop"
+    },
+    {
+      "id": "seller-describes-laptop",
+      "type": "message",
+      "sender": "seller",
+      "text": "Добрый день! Да, ноутбук ещё продаётся. Он исправен, комплект полный, при встрече можно всё проверить.",
       "nextNodeId": "buyer-eager"
     },
     {
@@ -22,6 +29,13 @@
       "type": "message",
       "sender": "buyer",
       "text": "Всё устраивает, готов забрать сегодня. Торговаться не буду.",
+      "nextNodeId": "seller-asks-meeting-time"
+    },
+    {
+      "id": "seller-asks-meeting-time",
+      "type": "message",
+      "sender": "seller",
+      "text": "Хорошо. Когда сможете приехать и проверить ноутбук?",
       "nextNodeId": "buyer-courier-offer"
     },
     {
@@ -98,6 +112,13 @@
       "type": "message",
       "sender": "buyer",
       "text": "Не хочу переплачивать за комиссию. Я уже вызвал курьера, а деньги могу перевести напрямую. Курьер будет примерно через двадцать минут.",
+      "nextNodeId": "seller-requires-confirmed-payment"
+    },
+    {
+      "id": "seller-requires-confirmed-payment",
+      "type": "message",
+      "sender": "seller",
+      "text": "Хорошо, но ноутбук передам только после того, как увижу поступление денег в своём банковском приложении.",
       "nextNodeId": "buyer-fake-check"
     },
     {
@@ -232,6 +253,13 @@
       "type": "message",
       "sender": "buyer",
       "text": "Вы серьёзно? Деньги уже списаны, чек официальный. У курьера платное ожидание, и всё это за мой счёт.",
+      "nextNodeId": "seller-repeats-payment-rule"
+    },
+    {
+      "id": "seller-repeats-payment-rule",
+      "type": "message",
+      "sender": "seller",
+      "text": "Понимаю, но скриншот чека не заменяет поступление. Пока денег на моём счёте нет, товар я не передам.",
       "nextNodeId": "buyer-profile-pressure"
     },
     {

@@ -1,20 +1,34 @@
 {
   "id": "buyer-macbook-corporate-lock",
-  "version": 2,
+  "version": 3,
   "slug": "buyer-macbook-corporate-lock",
   "role": "buyer",
   "title": "MacBook с корпоративной блокировкой",
   "description": "Покупка MacBook Pro при личной встрече: настоящий серийный номер и рабочее устройство скрывают Activation Lock и корпоративное управление.",
   "difficulty": "medium",
   "estimatedMinutes": 8,
-  "startNodeId": "seller-greeting",
+  "startNodeId": "buyer-opening",
   "isActive": true,
   "nodes": [
+    {
+      "id": "buyer-opening",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Здравствуйте! Подскажите, MacBook ещё продаётся? Почему решили продать?",
+      "nextNodeId": "seller-greeting"
+    },
     {
       "id": "seller-greeting",
       "type": "message",
       "sender": "seller",
       "text": "Здравствуйте! Да, MacBook ещё продаётся. Покупал для работы, но перешёл на более мощную модель. Этот почти не использовал.",
+      "nextNodeId": "buyer-completeness-question"
+    },
+    {
+      "id": "buyer-completeness-question",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Что входит в комплект? Есть чек? Можно заранее проверить серийный номер и почему цена ниже рынка?",
       "nextNodeId": "seller-completeness"
     },
     {

@@ -114,12 +114,13 @@ func validateMessageNode(role Role, node Node, violations *violationCollector) {
 	validateMessageSender(role, node, violations)
 }
 
-// validateMessageSender не даёт перепутать стороны сделки.
+// validateMessageSender проверяет участника диалога.
 //
-// Узел-сообщение описывает слова собеседника или обстановку. Реплики самого
-// игрока задаются полем playerReply у выбора, поэтому отправитель, совпадающий
-// с ролью сценария, означает ошибку автора контента.
-func validateMessageSender(role Role, node Node, violations *violationCollector) {
+// Обычный message может принадлежать обеим сторонам сделки: так сценарий
+// показывает заранее подготовленные вопросы и связующие реплики игрока между
+// решениями. playerReply по-прежнему описывает только фразу, зависящую от
+// выбранного варианта решения.
+func validateMessageSender(_ Role, node Node, violations *violationCollector) {
 	if node.Sender == SenderSystem {
 		return
 	}
@@ -136,14 +137,6 @@ func validateMessageSender(role Role, node Node, violations *violationCollector)
 		return
 	}
 
-	if sender == role {
-		violations.add(ValidationError{
-			NodeID: node.ID,
-			Rule:   RuleMessageSenderInvalid,
-			Detail: fmt.Sprintf("роль игрока %q не может быть отправителем реплики: "+
-				"его слова задаются полем playerReply у выбора", role),
-		})
-	}
 }
 
 func validateDecisionNode(node Node, violations *violationCollector) {

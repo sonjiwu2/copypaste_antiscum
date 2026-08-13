@@ -1,20 +1,34 @@
 {
   "id": "buyer-switch-prepayment",
-  "version": 1,
+  "version": 2,
   "slug": "buyer-switch-prepayment",
   "role": "buyer",
   "title": "Предоплата за бронь",
   "description": "Покупка Nintendo Switch OLED: продавец торопит другими покупателями и просит перевести задаток на карту до встречи.",
   "difficulty": "easy",
   "estimatedMinutes": 4,
-  "startNodeId": "seller-greeting",
+  "startNodeId": "buyer-opening",
   "isActive": true,
   "nodes": [
+    {
+      "id": "buyer-opening",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Здравствуйте! Nintendo Switch OLED ещё продаётся? Какое состояние, комплект и цена?",
+      "nextNodeId": "seller-greeting"
+    },
     {
       "id": "seller-greeting",
       "type": "message",
       "sender": "seller",
       "text": "Здравствуйте! Nintendo Switch OLED ещё продаётся. Полный комплект, приставка почти новая, цена 18 000 ₽.",
+      "nextNodeId": "buyer-meeting-question"
+    },
+    {
+      "id": "buyer-meeting-question",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Можно сегодня посмотреть приставку, проверить её и оплатить при встрече?",
       "nextNodeId": "seller-urgency"
     },
     {

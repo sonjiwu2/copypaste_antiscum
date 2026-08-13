@@ -116,6 +116,115 @@ func TestEmbeddedScenariosHaveBothEndings(t *testing.T) {
 	}
 }
 
+// В сценариях покупателя разговор начинается с его вопроса, а не с ответа
+// продавца на невидимую реплику. В сценариях продавца первый обычный ответ на
+// приветствие покупателя также не должен оставаться за кадром.
+func TestEmbeddedScenariosKeepOpeningPlayerLines(t *testing.T) {
+	loaded, err := scenario.LoadFS(scenarios.Files())
+	if err != nil {
+		t.Fatalf("неожиданная ошибка: %v", err)
+	}
+
+	for _, found := range loaded {
+		start, ok := found.Node(found.StartNodeID)
+		if !ok {
+			t.Errorf("сценарий %q: стартовый узел не найден", found.ID)
+			continue
+		}
+
+		if found.Role == scenario.RoleBuyer {
+			if start.Type != scenario.NodeTypeMessage || start.Sender != string(found.Role) {
+				t.Errorf("сценарий %q: ожидался стартовый вопрос покупателя, получено %s:%s",
+					found.ID, start.Type, start.Sender)
+			}
+			continue
+		}
+
+		next, ok := found.Node(start.NextNodeID)
+		if ok && next.Type == scenario.NodeTypeMessage && next.Sender != string(found.Role) {
+			t.Errorf("сценарий %q: после приветствия покупателя пропущен ответ продавца", found.ID)
+		}
+	}
+}
+
+func TestMacBookOpeningContainsBothSidesOfConversation(t *testing.T) {
+	loaded, err := scenario.LoadFS(scenarios.Files())
+	if err != nil {
+		t.Fatalf("неожиданная ошибка: %v", err)
+	}
+
+	var macbook scenario.Scenario
+	for _, found := range loaded {
+		if found.ID == "buyer-macbook-corporate-lock" {
+			macbook = found
+			break
+		}
+	}
+	if macbook.ID == "" {
+		t.Fatal("сценарий MacBook не найден")
+	}
+
+	wantSenders := []string{"buyer", "seller", "buyer", "seller"}
+	current := macbook.StartNodeID
+	for index, wantSender := range wantSenders {
+		node, ok := macbook.Node(current)
+		if !ok {
+			t.Fatalf("реплика %d: узел %q не найден", index+1, current)
+		}
+		if node.Type != scenario.NodeTypeMessage || node.Sender != wantSender || strings.TrimSpace(node.Text) == "" {
+			t.Errorf("реплика %d: получено %s:%s %q, ожидался непустой message:%s",
+				index+1, node.Type, node.Sender, node.Text, wantSender)
+		}
+		current = node.NextNodeID
+	}
+}
+
+func TestEmbeddedScenariosContainScriptedBridgeLines(t *testing.T) {
+	loaded, err := scenario.LoadFS(scenarios.Files())
+	if err != nil {
+		t.Fatalf("неожиданная ошибка: %v", err)
+	}
+
+	byID := make(map[scenario.ID]scenario.Scenario, len(loaded))
+	for _, found := range loaded {
+		byID[found.ID] = found
+	}
+
+	testCases := []struct {
+		scenarioID scenario.ID
+		nodeID     scenario.NodeID
+		sender     string
+		textPart   string
+	}{
+		{"buyer-gpu-hidden-repair", "buyer-video-meeting-question", "buyer", "проверить карту"},
+		{"buyer-gpu-hidden-repair", "buyer-history-meeting-question", "buyer", "Когда можно подъехать"},
+		{"buyer-iphone-deposit", "buyer-documents-objection", "buyer", "На чужую карту"},
+		{"buyer-ps5-delivery", "buyer-support-city", "buyer", "Нижний Новгород"},
+		{"buyer-ps5-delivery", "buyer-pvz-choice", "buyer", "улице Белинского"},
+		{"seller-laptop-courier", "seller-requires-confirmed-payment", "seller", "банковском приложении"},
+		{"seller-laptop-courier", "seller-repeats-payment-rule", "seller", "товар я не передам"},
+	}
+
+	for _, testCase := range testCases {
+		built, ok := byID[testCase.scenarioID]
+		if !ok {
+			t.Errorf("сценарий %q не найден", testCase.scenarioID)
+			continue
+		}
+
+		node, ok := built.Node(testCase.nodeID)
+		if !ok {
+			t.Errorf("сценарий %q: связующая реплика %q не найдена", testCase.scenarioID, testCase.nodeID)
+			continue
+		}
+		if node.Type != scenario.NodeTypeMessage || node.Sender != testCase.sender ||
+			!strings.Contains(node.Text, testCase.textPart) {
+			t.Errorf("сценарий %q, узел %q: получено %s:%s %q",
+				testCase.scenarioID, testCase.nodeID, node.Type, node.Sender, node.Text)
+		}
+	}
+}
+
 func TestLoadFSRejectsBrokenFixtures(t *testing.T) {
 	testCases := []struct {
 		name        string

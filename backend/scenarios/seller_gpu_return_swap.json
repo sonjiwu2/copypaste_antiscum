@@ -1,6 +1,6 @@
 {
   "id": "seller-gpu-return-swap",
-  "version": 2,
+  "version": 3,
   "slug": "seller-gpu-return-swap",
   "role": "seller",
   "title": "Подмена видеокарты при возврате",
@@ -15,6 +15,13 @@
       "type": "message",
       "sender": "buyer",
       "text": "Здравствуйте. Видеокарта ещё продаётся? Она после ремонта или майнинга?",
+      "nextNodeId": "seller-confirms-condition"
+    },
+    {
+      "id": "seller-confirms-condition",
+      "type": "message",
+      "sender": "seller",
+      "text": "Здравствуйте! Да, продаётся. Карта не ремонтировалась и в майнинге не использовалась, работает исправно. Перед отправкой могу показать тест и серийный номер.",
       "nextNodeId": "buyer-ready-to-order"
     },
     {

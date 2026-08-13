@@ -1,6 +1,6 @@
 {
   "id": "seller-qr-payment-trap",
-  "version": 2,
+  "version": 3,
   "slug": "seller-qr-payment-trap",
   "role": "seller",
   "title": "QR-код для получения оплаты",
@@ -20,8 +20,8 @@
     {
       "id": "seller-confirms-item",
       "type": "message",
-      "sender": "system",
-      "text": "Вы отвечаете, что объектив ещё продаётся, и предлагаете встретиться вечером для проверки на камере. В профиле площадки вы указаны как Алексей Воронов.",
+      "sender": "seller",
+      "text": "Добрый день! Да, объектив ещё продаётся. Предлагаю встретиться вечером, чтобы вы проверили его на своей камере.",
       "nextNodeId": "buyer-courier-offer"
     },
     {

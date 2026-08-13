@@ -1,20 +1,34 @@
 {
   "id": "buyer-airpods-counterfeit",
-  "version": 1,
+  "version": 2,
   "slug": "buyer-airpods-counterfeit",
   "role": "buyer",
   "title": "Поддельные AirPods в запечатанной коробке",
   "description": "Покупка AirPods Pro 2 при личной встрече: продавец использует упаковку, серийный номер и системную анимацию, чтобы выдать копию за оригинал.",
   "difficulty": "easy",
   "estimatedMinutes": 4,
-  "startNodeId": "seller-greeting",
+  "startNodeId": "buyer-opening",
   "isActive": true,
   "nodes": [
+    {
+      "id": "buyer-opening",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Здравствуйте! Подскажите, AirPods Pro 2 ещё продаются? Почему цена ниже обычной, если коробка запечатана?",
+      "nextNodeId": "seller-greeting"
+    },
     {
       "id": "seller-greeting",
       "type": "message",
       "sender": "seller",
       "text": "Здравствуйте! AirPods Pro 2 ещё продаются. Новые, коробка запечатана. Подарили вторые такие же, поэтому отдаю за 12 000 ₽.",
+      "nextNodeId": "buyer-proof-question"
+    },
+    {
+      "id": "buyer-proof-question",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Что входит в комплект? Есть чек и можно ли проверить серийный номер до встречи?",
       "nextNodeId": "seller-serial-proof"
     },
     {

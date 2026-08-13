@@ -1,20 +1,34 @@
 {
   "id": "buyer-gpu-hidden-repair",
-  "version": 1,
+  "version": 3,
   "slug": "buyer-gpu-hidden-repair",
   "role": "buyer",
   "title": "Видеокарта после скрытого ремонта",
   "description": "Покупка RTX 4070 Ti при личной встрече: карта проходит короткий тест, но продавец скрывает нестабильность и следы ремонта.",
   "difficulty": "medium",
   "estimatedMinutes": 7,
-  "startNodeId": "seller-greeting",
+  "startNodeId": "buyer-opening",
   "isActive": true,
   "nodes": [
+    {
+      "id": "buyer-opening",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Здравствуйте! RTX 4070 Ti ещё продаётся? Что входит в комплект, использовалась ли карта в майнинге или ремонте?",
+      "nextNodeId": "seller-greeting"
+    },
     {
       "id": "seller-greeting",
       "type": "message",
       "sender": "seller",
       "text": "Здравствуйте! RTX 4070 Ti ещё продаётся. Полный комплект, коробка и чек. Карта использовалась только для игр, в майнинге не была.",
+      "nextNodeId": "buyer-price-question"
+    },
+    {
+      "id": "buyer-price-question",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Почему цена заметно ниже рынка? Можете показать тесты и температуры именно этой карты?",
       "nextNodeId": "seller-price-reason"
     },
     {
@@ -84,6 +98,13 @@
       "type": "message",
       "sender": "seller",
       "text": "Вот непрерывное видео: серийный номер в GPU-Z, затем две минуты FurMark. Температура 67 градусов, артефактов нет. Дольше гонять не хочу — тест сильно нагружает карту.",
+      "nextNodeId": "buyer-video-meeting-question"
+    },
+    {
+      "id": "buyer-video-meeting-question",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Спасибо. Видео увидел, но хочу проверить карту под нагрузкой лично. Когда можно приехать?",
       "nextNodeId": "seller-arranges-meeting"
     },
     {
@@ -91,6 +112,13 @@
       "type": "message",
       "sender": "seller",
       "text": "Не ремонтировалась и не вскрывалась. Гарантия магазина закончилась месяц назад, поэтому и цена ниже. На встрече всё проверите.",
+      "nextNodeId": "buyer-history-meeting-question"
+    },
+    {
+      "id": "buyer-history-meeting-question",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Хорошо, тогда перед покупкой проверю карту на месте. Когда можно подъехать?",
       "nextNodeId": "seller-arranges-meeting"
     },
     {

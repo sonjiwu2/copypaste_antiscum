@@ -3,6 +3,7 @@ import type { Attempt } from '../../../shared/api'
 import {
   buildEvents,
   buildMessages,
+  isAttemptVersionOutdated,
   riskGradeOf,
   riskMarkerPercent,
   toneOf,
@@ -29,7 +30,53 @@ function attemptWith(overrides: Partial<Attempt> = {}): Attempt {
   }
 }
 
+describe('isAttemptVersionOutdated', () => {
+  it('требует новую попытку только при выходе более новой версии сценария', () => {
+    const attempt = attemptWith()
+
+    expect(isAttemptVersionOutdated(attempt, 2)).toBe(true)
+    expect(isAttemptVersionOutdated(attempt, 1)).toBe(false)
+    expect(isAttemptVersionOutdated(attempt, undefined)).toBe(false)
+    expect(isAttemptVersionOutdated(undefined, 2)).toBe(false)
+    expect(isAttemptVersionOutdated(attemptWith({ status: 'completed' }), 2)).toBe(false)
+  })
+})
+
 describe('buildMessages', () => {
+  it('показывает заранее подготовленные вопросы игрока в исходном порядке', () => {
+    const attempt = attemptWith({
+      revealedNodes: [
+        {
+          id: 'buyer-opening',
+          type: 'message',
+          sender: 'buyer',
+          text: 'MacBook ещё продаётся? Почему решили продать?',
+        },
+        {
+          id: 'seller-greeting',
+          type: 'message',
+          sender: 'seller',
+          text: 'Да, ещё продаётся. Перешёл на более мощную модель.',
+        },
+        {
+          id: 'buyer-kit',
+          type: 'message',
+          sender: 'buyer',
+          text: 'Что входит в комплект? Есть чек?',
+        },
+      ],
+    })
+
+    const messages = buildMessages(attempt)
+
+    expect(messages.map((message) => message.text)).toEqual([
+      'MacBook ещё продаётся? Почему решили продать?',
+      'Да, ещё продаётся. Перешёл на более мощную модель.',
+      'Что входит в комплект? Есть чек?',
+    ])
+    expect(messages.map((message) => message.own)).toEqual([true, false, true])
+  })
+
   it('ставит в ленту закреплённую реплику игрока, а не подпись кнопки', () => {
     const attempt = attemptWith({
       revealedNodes: [
@@ -151,9 +198,7 @@ describe('buildEvents', () => {
       ],
     })
 
-    expect(buildEvents(attempt)).toEqual([
-      { id: 'no-order', text: 'В приложении заказа нет.' },
-    ])
+    expect(buildEvents(attempt)).toEqual([{ id: 'no-order', text: 'В приложении заказа нет.' }])
   })
 })
 

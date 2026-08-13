@@ -1,6 +1,6 @@
 {
   "id": "seller-fake-payment-email",
-  "version": 1,
+  "version": 2,
   "slug": "seller-fake-payment-email",
   "role": "seller",
   "title": "Письмо о якобы полученной оплате",
@@ -15,6 +15,13 @@
       "type": "message",
       "sender": "buyer",
       "text": "Здравствуйте! Монитор ещё продаётся? Цена 45 000 ₽ устраивает, оформлю доставку без торга.",
+      "nextNodeId": "seller-confirms-monitor"
+    },
+    {
+      "id": "seller-confirms-monitor",
+      "type": "message",
+      "sender": "seller",
+      "text": "Здравствуйте! Да, монитор ещё продаётся. Если оформите доставку через площадку, подготовлю его к отправке.",
       "nextNodeId": "buyer-claims-payment"
     },
     {

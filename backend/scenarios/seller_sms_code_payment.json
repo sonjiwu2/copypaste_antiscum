@@ -1,6 +1,6 @@
 {
   "id": "seller-sms-code-payment",
-  "version": 1,
+  "version": 2,
   "slug": "seller-sms-code-payment",
   "role": "seller",
   "title": "SMS-код для получения оплаты",
@@ -15,6 +15,13 @@
       "type": "message",
       "sender": "buyer",
       "text": "Здравствуйте! Смартфон ещё продаётся? Всё устраивает, готов купить за 32 000 ₽ без торга.",
+      "nextNodeId": "seller-confirms-phone"
+    },
+    {
+      "id": "seller-confirms-phone",
+      "type": "message",
+      "sender": "seller",
+      "text": "Здравствуйте! Да, смартфон ещё продаётся. Проверить и забрать можно сегодня.",
       "nextNodeId": "buyer-payment-offer"
     },
     {

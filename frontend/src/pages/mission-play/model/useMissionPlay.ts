@@ -14,6 +14,7 @@ import { useToastStore } from '../../../features/toast'
 import {
   buildEvents,
   buildMessages,
+  isAttemptVersionOutdated,
   readStoredAttemptId,
   riskGradeOf,
   riskMarkerPercent,
@@ -36,6 +37,7 @@ export function useMissionPlay(missionId: string, onToast?: (message: string) =>
 
   const { attempt, isLoading, error, isSubmitting, submitChoice, restart } = useAttemptLifecycle(
     missionId,
+    scenario?.version,
     triggerToast
   )
 
@@ -165,7 +167,11 @@ function placeholderMission(missionId: string): Mission {
  * Ведёт попытку сценария: восстанавливает начатую, начинает новую и применяет
  * выборы. Состояние живёт в кэше запроса, поэтому второй копии его нет.
  */
-function useAttemptLifecycle(missionId: string, triggerToast: (message: string) => void) {
+function useAttemptLifecycle(
+  missionId: string,
+  currentScenarioVersion: number | undefined,
+  triggerToast: (message: string) => void
+) {
   const [attemptId, setAttemptId] = useState<string | null>(() => readStoredAttemptId(missionId))
   const attemptQuery = useAttemptQuery(attemptId ?? undefined)
   const submitMutation = useSubmitChoiceMutation()
@@ -181,6 +187,28 @@ function useAttemptLifecycle(missionId: string, triggerToast: (message: string) 
   // Помнит сценарий, для которого старт уже запрошен. Без этого неудачный
   // запрос повторялся бы на каждый повторный рендер.
   const startRequestedFor = useRef<string | null>(null)
+
+  // Незавершённая попытка закреплена за старой версией JSON и намеренно не
+  // меняется на сервере. Когда каталог сообщает о новой версии, начинаем новую
+  // попытку: иначе пользователь продолжит видеть исправленный сценарий без
+  // добавленных реплик до самого финала старого прохождения.
+  useEffect(() => {
+    const restored = attemptQuery.data
+    if (
+      !isAttemptVersionOutdated(restored, currentScenarioVersion) ||
+      startMutation.isPending ||
+      startRequestedFor.current === missionId
+    ) {
+      return
+    }
+
+    startRequestedFor.current = missionId
+    writeStoredAttemptId(missionId, null)
+    setAttemptId(null)
+    startMutation.mutate(missionId, {
+      onSuccess: () => triggerToast('Сценарий обновлён и начат заново с полным диалогом.'),
+    })
+  }, [attemptQuery.data, currentScenarioVersion, missionId, startMutation, triggerToast])
 
   // Сохранённая попытка могла быть удалена на сервере или принадлежать другому
   // профилю: такая попытка не восстанавливается, сценарий начинается заново.

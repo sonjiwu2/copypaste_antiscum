@@ -304,11 +304,6 @@ func TestNewRejectsInvalidScenarios(t *testing.T) {
 			wantRule: scenario.RuleChoiceReplyRequired,
 		},
 		{
-			name:     "реплика от лица игрока",
-			mutate:   func(d *scenario.Draft) { d.Nodes[0].Sender = "buyer" },
-			wantRule: scenario.RuleMessageSenderInvalid,
-		},
-		{
 			name:     "неизвестный отправитель реплики",
 			mutate:   func(d *scenario.Draft) { d.Nodes[0].Sender = "moderator" },
 			wantRule: scenario.RuleMessageSenderInvalid,
@@ -410,8 +405,20 @@ func TestNewRejectsInvalidScenarios(t *testing.T) {
 	}
 }
 
+// Сценарий может содержать заранее подготовленную реплику игрока. В отличие
+// от playerReply она не зависит от выбора и нужна, чтобы диалог не терял
+// вопросы и связующие фразы между решениями.
+func TestPlayerSenderIsAllowedForScriptedMessages(t *testing.T) {
+	draft := validBuyerDraft()
+	draft.Nodes[0].Sender = string(scenario.RoleBuyer)
+
+	if _, err := scenario.New(draft); err != nil {
+		t.Fatalf("заранее подготовленная реплика игрока должна приниматься: %v", err)
+	}
+}
+
 // Система не участвует в сделке, поэтому её реплика допустима в сценарии любой
-// роли и не считается попыткой говорить за игрока.
+// роли.
 func TestSystemSenderIsAllowedInAnyRole(t *testing.T) {
 	draft := validBuyerDraft()
 	draft.Nodes[0].Sender = scenario.SenderSystem

@@ -1,20 +1,34 @@
 {
   "id": "buyer-iphone-deposit",
-  "version": 2,
+  "version": 4,
   "slug": "buyer-iphone-deposit",
   "role": "buyer",
   "title": "Задаток владельцу старого аккаунта",
   "description": "Покупка iPhone 16 Pro: продавец прикрывается старым профилем, присылает записанное видео и просит задаток на карту другого человека.",
   "difficulty": "hard",
   "estimatedMinutes": 7,
-  "startNodeId": "seller-greeting",
+  "startNodeId": "buyer-opening",
   "isActive": true,
   "nodes": [
+    {
+      "id": "buyer-opening",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Добрый день! iPhone 16 Pro ещё продаётся? Почему цена ниже рынка и в каком состоянии телефон?",
+      "nextNodeId": "seller-greeting"
+    },
     {
       "id": "seller-greeting",
       "type": "message",
       "sender": "seller",
       "text": "Добрый день! Да, телефон ещё продаётся.",
+      "nextNodeId": "buyer-price-question"
+    },
+    {
+      "id": "buyer-price-question",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Что входит в комплект, какой процент аккумулятора и был ли телефон в ремонте? Можно посмотреть его сегодня?",
       "nextNodeId": "seller-low-price"
     },
     {
@@ -22,6 +36,13 @@
       "type": "message",
       "sender": "seller",
       "text": "Срочно нужны деньги перед переездом, поэтому цена ниже рынка. Телефон практически новый: полный комплект, аккумулятор 98%, в ремонте не был. Посмотрите профиль — я на Авито с 2018 года, отзывы хорошие.",
+      "nextNodeId": "buyer-meeting-question"
+    },
+    {
+      "id": "buyer-meeting-question",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Хорошо, я готов подъехать вечером. Сможете придержать телефон до встречи?",
       "nextNodeId": "seller-deposit-offer"
     },
     {
@@ -298,6 +319,13 @@
       "type": "message",
       "sender": "seller",
       "text": "Вот фотография моего паспорта и свидетельства о браке. Теперь можете не переживать: карта действительно принадлежит моей жене.",
+      "nextNodeId": "buyer-documents-objection"
+    },
+    {
+      "id": "buyer-documents-objection",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Фотографии документов не подтверждают, кто ими пользуется и кому принадлежит объявление. На чужую карту задаток всё равно переводить не буду.",
       "nextNodeId": "seller-trust-pressure"
     },
     {

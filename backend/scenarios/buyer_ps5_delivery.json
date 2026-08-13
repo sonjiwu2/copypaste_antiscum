@@ -1,20 +1,34 @@
 {
   "id": "buyer-ps5-delivery",
-  "version": 3,
+  "version": 5,
   "slug": "buyer-ps5-delivery",
   "role": "buyer",
   "title": "Продавец сам оформляет доставку",
   "description": "Покупка PlayStation 5: продавец объясняет отсутствие доставки техническим сбоем и предлагает оформить заказ вручную.",
   "difficulty": "medium",
   "estimatedMinutes": 7,
-  "startNodeId": "seller-greeting",
+  "startNodeId": "buyer-opening",
   "isActive": true,
   "nodes": [
+    {
+      "id": "buyer-opening",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Здравствуйте! PlayStation 5 ещё продаётся?",
+      "nextNodeId": "seller-greeting"
+    },
     {
       "id": "seller-greeting",
       "type": "message",
       "sender": "seller",
       "text": "Здравствуйте! Да, приставка ещё продаётся.",
+      "nextNodeId": "buyer-kit-question"
+    },
+    {
+      "id": "buyer-kit-question",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Что входит в комплект? Есть коробка и чек?",
       "nextNodeId": "seller-kit"
     },
     {
@@ -22,6 +36,13 @@
       "type": "message",
       "sender": "seller",
       "text": "Полный комплект: два геймпада, коробка и чек.",
+      "nextNodeId": "buyer-reason-question"
+    },
+    {
+      "id": "buyer-reason-question",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Понял. А почему продаёте приставку?",
       "nextNodeId": "seller-reason"
     },
     {
@@ -29,6 +50,13 @@
       "type": "message",
       "sender": "seller",
       "text": "Недавно собрал себе новый компьютер, а приставкой пользоваться перестал. Теперь просто стоит без дела.",
+      "nextNodeId": "buyer-delivery-question"
+    },
+    {
+      "id": "buyer-delivery-question",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Можно оформить доставку через Авито? Я нахожусь в другом городе.",
       "nextNodeId": "seller-glitch"
     },
     {
@@ -145,7 +173,7 @@
         {
           "id": "yield-to-manual",
           "label": "Согласиться на ручное оформление",
-          "playerReply": "Ладно, оформляйте со своей стороны, я подтвержу.",
+          "playerReply": "Ладно, оформляйте со своей стороны. Мой город — Нижний Новгород.",
           "nextNodeId": "seller-pvz-options",
           "safetyScore": -20,
           "criticality": "medium",
@@ -188,6 +216,13 @@
       "type": "message",
       "sender": "seller",
       "text": "Понимаю. Я написал в поддержку, и мне прислали форму для оформления доставки. Это официальная партнёрская страница, через неё всё должно заработать. Напишите город — я выберу ближайший пункт выдачи.",
+      "nextNodeId": "buyer-support-city"
+    },
+    {
+      "id": "buyer-support-city",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Нижний Новгород. Покажите, какие пункты выдачи доступны.",
       "nextNodeId": "seller-pvz-options"
     },
     {
@@ -195,6 +230,13 @@
       "type": "message",
       "sender": "seller",
       "text": "Для Нижнего Новгорода нашёл два пункта: на улице Белинского и на площади Горького. Какой вам удобнее?",
+      "nextNodeId": "buyer-pvz-choice"
+    },
+    {
+      "id": "buyer-pvz-choice",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Мне удобнее пункт на улице Белинского.",
       "nextNodeId": "seller-external-link"
     },
     {

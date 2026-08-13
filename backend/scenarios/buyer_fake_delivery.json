@@ -1,15 +1,22 @@
 {
   "id": "buyer-fake-delivery",
-  "version": 2,
+  "version": 3,
   "slug": "buyer-fake-delivery",
   "role": "buyer",
   "title": "Ссылка на доставку",
   "description": "Покупка товара с доставкой: продавец предлагает оплату по ссылке.",
   "difficulty": "medium",
   "estimatedMinutes": 4,
-  "startNodeId": "greeting",
+  "startNodeId": "buyer-opening",
   "isActive": true,
   "nodes": [
+    {
+      "id": "buyer-opening",
+      "type": "message",
+      "sender": "buyer",
+      "text": "Здравствуйте! Подскажите, товар ещё продаётся? Сможете отправить доставкой?",
+      "nextNodeId": "greeting"
+    },
     {
       "id": "greeting",
       "type": "message",

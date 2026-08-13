@@ -1,6 +1,6 @@
 {
   "id": "seller-third-party-overpayment",
-  "version": 1,
+  "version": 2,
   "slug": "seller-third-party-overpayment",
   "role": "seller",
   "title": "Переплата от третьего лица",
@@ -15,6 +15,13 @@
       "type": "message",
       "sender": "buyer",
       "text": "Добрый день. Камера ещё продаётся? Я фотограф, модель знаю, торговаться не буду. Заберу сегодня через курьера.",
+      "nextNodeId": "seller-confirms-camera"
+    },
+    {
+      "id": "seller-confirms-camera",
+      "type": "message",
+      "sender": "seller",
+      "text": "Добрый день! Да, камера ещё продаётся. Перед передачей я покажу её работу и сверю оплату в своём банковском приложении.",
       "nextNodeId": "buyer-third-party-payment"
     },
     {

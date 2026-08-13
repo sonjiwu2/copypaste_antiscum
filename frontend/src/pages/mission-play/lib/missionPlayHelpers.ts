@@ -53,6 +53,19 @@ export function writeStoredAttemptId(scenarioId: string, attemptId: string | nul
   }
 }
 
+/** Нужно ли заменить сохранённую попытку новой версией сценария. */
+export function isAttemptVersionOutdated(
+  attempt: Attempt | undefined,
+  currentScenarioVersion: number | undefined
+): boolean {
+  return Boolean(
+    attempt &&
+      attempt.status === 'in_progress' &&
+      currentScenarioVersion &&
+      attempt.scenario.version < currentScenarioVersion
+  )
+}
+
 /**
  * Время сообщения в ленте. Метки декоративные: сервер время реплик не хранит,
  * поэтому диалог отсчитывается по минуте на сообщение от условного начала.
@@ -78,11 +91,11 @@ export function toneOf(severity: Severity): ChoiceTone {
 /**
  * Собирает ленту переписки из состояния попытки.
  *
- * В ленту попадают только слова двух сторон сделки. Игрок текст не пишет,
- * поэтому его ход показывается закреплённой за выбором репликой `playerReply`,
- * а не подписью кнопки: собеседник должен видеть живую фразу, а не название
- * действия. Факты обстановки и итог сделки в переписке не участвуют — их
- * возвращает buildEvents и итоговое окно.
+ * В ленту попадают только слова двух сторон сделки. Заранее подготовленные
+ * вопросы и связующие фразы игрока приходят обычными message-узлами. Его ход
+ * в точке решения показывается закреплённой за выбором репликой `playerReply`,
+ * а не подписью кнопки. Факты обстановки и итог сделки в переписке не
+ * участвуют — их возвращает buildEvents и итоговое окно.
  */
 export function buildMessages(attempt: Attempt): ChatMessage[] {
   const decisionsByNode = new Map<string, AttemptDecision>(
@@ -99,8 +112,8 @@ export function buildMessages(attempt: Attempt): ChatMessage[] {
       messages.push({
         id: node.id,
         role,
-        // Сценарий не описывает игрока узлом-сообщением, но попытка может идти
-        // по старой закреплённой версии, где такие узлы ещё встречались.
+        // Message-узел может быть заранее подготовленной репликой любой
+        // стороны; собственная роль всегда рисуется справа.
         own: role === playerRole,
         text: node.text,
         time: clockTime(messages.length),
